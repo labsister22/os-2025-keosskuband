@@ -5,7 +5,7 @@
 
 ![ikuyo kita](https://media.tenor.com/zOz6_h4rJTAAAAAM/bocchi-the-rock-kita-ikuyo.gif)
 
-![ryo yamada](https://i.namu.wiki/i/xY9YbIiPZ0WN7CB66n175GH5OUGa5EZqGyQl3BP0AglBM7nI-h_0lNZj9WFzqAWptmdL54vcaeiRI3jPIYtx_g.gif)
+![ryo yamada](https://i.pinimg.com/originals/a8/e5/9c/a8e59cd6a342cc3df98f793229f8bc91.gif)
 
 ![nijika](https://64.media.tumblr.com/d8cb6d904a4434d00710efccd6b68cf1/c79002f73b0ed652-bf/s540x810/accbca65608ef8e4155d54b8341554d214d7bcf3.gif)
 
