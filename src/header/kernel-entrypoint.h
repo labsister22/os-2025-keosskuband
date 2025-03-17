@@ -1,6 +1,7 @@
 #ifndef _KERNEL_ENTRYPOINT
 #define _KERNEL_ENTRYPOINT
 
+#include <stdbool.h>
 #include "header/cpu/gdt.h"
 
 /**
