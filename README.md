@@ -2,6 +2,7 @@
 # IF2130 - 2025       Keossku Band!
 
 ![gifs](https://media1.tenor.com/m/0zfqxlPxYOYAAAAC/bocchi-the-rock-bocchi.gif)
+![ikuyo kita](https://media.tenor.com/oudJ-ckzZLMAAAAM/bocchi-the-rock-kita-ikuyo.gif)
 
 
 **Seru Banget woilah😂**
