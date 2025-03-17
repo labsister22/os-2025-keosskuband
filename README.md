@@ -4,7 +4,7 @@
 ![gifs](https://media1.tenor.com/m/0zfqxlPxYOYAAAAC/bocchi-the-rock-bocchi.gif)
 ![ikuyo kita](https://media.tenor.com/oudJ-ckzZLMAAAAM/bocchi-the-rock-kita-ikuyo.gif)
 
-![ryo yamada](https://media.tenor.com/--6HY8Fev9cAAAAM/oke-yamada-ryo.gif)
+![ryo yamada](https://64.media.tumblr.com/22ec26e6eca23e06df4177689c02e79e/1ce7353ded2dc227-3a/s540x810/2a99d7cc0cc3c29e9d50474d6fee8a317e428b40.gif)
 ![nijika](https://64.media.tumblr.com/d8cb6d904a4434d00710efccd6b68cf1/c79002f73b0ed652-bf/s540x810/accbca65608ef8e4155d54b8341554d214d7bcf3.gif)
 
 
