@@ -4,22 +4,18 @@
 ## Mochammad Fariz Rifqi Rizqulloh (13523069)
 ---
 <img src="https://media1.tenor.com/m/tAyTQWwFDN0AAAAd/bocchi-the-rock-kita.gif" width="600">
----
 
 ## Muhammad Jibril Ibrahim (13523085)
 ---
 <img src="https://media1.tenor.com/m/0zfqxlPxYOYAAAAC/bocchi-the-rock-bocchi.gif" width="600">
----
 
 ## Nayaka Ghana Subrata (13253090)
 ---
 <img src="https://i.pinimg.com/originals/a8/e5/9c/a8e59cd6a342cc3df98f793229f8bc91.gif" width="600">
----
 
 ## Muhammad Adha Ridwan (13523098)
 ---
 <img src="https://64.media.tumblr.com/d8cb6d904a4434d00710efccd6b68cf1/c79002f73b0ed652-bf/s540x810/accbca65608ef8e4155d54b8341554d214d7bcf3.gif" width="600">
----
 
 **Izin tampil**
 
