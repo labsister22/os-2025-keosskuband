@@ -38,6 +38,15 @@ This page is intentionally left blank
 
 ---
 
+## How to Setup?
+    from root directory, do this:
+   ```bash
+   make build
+   cd bin (cd /bin)
+   qemu-system-i386 -s -cdrom OS2025.iso 
+   ```
+
+---
 ## ✨ Note
 
 ### ???
