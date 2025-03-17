@@ -1,7 +1,7 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/RYoGTaJ4)
 # IF2130 - 2025       Keossku Band!
 
-![ryo](https://i.pinimg.com/originals/97/01/da/9701da934de80a940f81b7c1137d361f.gif)
+![gifs](https://media1.tenor.com/m/0zfqxlPxYOYAAAAC/bocchi-the-rock-bocchi.gif)
 
 
 **Seru Banget woilah😂**
