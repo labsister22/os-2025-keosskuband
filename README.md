@@ -3,7 +3,7 @@
 
 ![gifs](https://media1.tenor.com/m/0zfqxlPxYOYAAAAC/bocchi-the-rock-bocchi.gif)
 
-![ikuyo kita](https://media.tenor.com/zOz6_h4rJTAAAAAM/bocchi-the-rock-kita-ikuyo.gif)
+![ikuyo kita](https://media1.tenor.com/m/tAyTQWwFDN0AAAAd/bocchi-the-rock-kita.gif)
 
 ![ryo yamada](https://i.pinimg.com/originals/a8/e5/9c/a8e59cd6a342cc3df98f793229f8bc91.gif)
 
