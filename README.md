@@ -1,7 +1,6 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/RYoGTaJ4)
 # IF2130 - 2025       Keossku Band!
 
-<br/>
 ## Mochammad Fariz Rifqi Rizqulloh (13523069)
 ---
 <img src="https://media1.tenor.com/m/tAyTQWwFDN0AAAAd/bocchi-the-rock-kita.gif" width="600">
