@@ -7,7 +7,7 @@
 
 <img src="https://i.pinimg.com/originals/a8/e5/9c/a8e59cd6a342cc3df98f793229f8bc91.gif" width="600">
 
-<img src="https://64.media.tumblr.com/d8cb6d904a4434d00710efccd6b68cf1/c79002f73b0ed652-bf/s540x810/accbca65608ef8e4155d54b8341554d214d7bcf3.gif" width="200">
+<img src="https://64.media.tumblr.com/d8cb6d904a4434d00710efccd6b68cf1/c79002f73b0ed652-bf/s540x810/accbca65608ef8e4155d54b8341554d214d7bcf3.gif" width="600">
 
 
 **Seru Banget woilah😂**
