@@ -4,6 +4,8 @@
 ![gifs](https://media1.tenor.com/m/0zfqxlPxYOYAAAAC/bocchi-the-rock-bocchi.gif)
 ![ikuyo kita](https://media.tenor.com/oudJ-ckzZLMAAAAM/bocchi-the-rock-kita-ikuyo.gif)
 
+![nijika](https://64.media.tumblr.com/d8cb6d904a4434d00710efccd6b68cf1/c79002f73b0ed652-bf/s540x810/accbca65608ef8e4155d54b8341554d214d7bcf3.gif)
+
 
 **Seru Banget woilah😂**
 
