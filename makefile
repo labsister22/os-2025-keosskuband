@@ -6,7 +6,7 @@ CC            = gcc
 # Directory
 SOURCE_FOLDER = src
 OUTPUT_FOLDER = bin
-ISO_NAME      = OS2024
+ISO_NAME      = KeosskuBand
 
 # Flags
 WARNING_CFLAG = -Wall -Wextra -Werror
@@ -48,5 +48,5 @@ iso: kernel
 	@cp other/grub1                 $(OUTPUT_FOLDER)/iso/boot/grub/
 	@cp $(SOURCE_FOLDER)/menu.lst   $(OUTPUT_FOLDER)/iso/boot/grub/
 # TODO: Create ISO image
-	@cd $(OUTPUT_FOLDER) && genisoimage -R -b boot/grub/grub1 -no-emul-boot -boot-load-size 4 -A os -input-charset utf8 -quiet -boot-info-table -o OS2025.iso iso
+	@cd $(OUTPUT_FOLDER) && genisoimage -R -b boot/grub/grub1 -no-emul-boot -boot-load-size 4 -A os -input-charset utf8 -quiet -boot-info-table -o KeosskuBand.iso iso
 	@rm -r $(OUTPUT_FOLDER)/iso/
