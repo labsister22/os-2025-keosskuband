@@ -5,6 +5,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "header/cpu/portio.h"
+#include "header/cpu/gdt.h"
+
 /* -- PIC constants -- */
 
 // PIC interrupt offset

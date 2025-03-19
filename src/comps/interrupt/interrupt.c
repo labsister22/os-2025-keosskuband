@@ -1,4 +1,10 @@
 #include "header/interrupt/interrupt.h"
+#include "header/driver/keyboard.h"
+
+
+void activate_keyboard_interrupt(void) {
+    out(PIC1_DATA, in(PIC1_DATA) & ~(1 << IRQ_KEYBOARD));
+}
 
 void io_wait(void) {
     out(0x80, 0);
@@ -43,7 +49,7 @@ void main_interrupt_handler(struct InterruptFrame frame) {
             
         // Keyboard interrupt
         case PIC1_OFFSET + IRQ_KEYBOARD:
-            pic_ack(IRQ_KEYBOARD);
+            keyboard_isr();
             break;
             
         default:
