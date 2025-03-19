@@ -109,7 +109,6 @@ void keyboard_isr(void) {
       keyboard_state.shift_pressed = true;
   }
   else if (scancode == KEYBOARD_SCANCODE_CAPS_LOCK) {
-      // Toggle caps lock state on press
       keyboard_state.caps_lock_on = !keyboard_state.caps_lock_on;
   }
   else if (keyboard_state.keyboard_input_on) {
@@ -119,19 +118,13 @@ void keyboard_isr(void) {
           mapped_key = keyboard_scancode_extended_map[scancode];
       } 
       else {
-          // Check if we need to use shifted mapping
-          // For letters: XOR shift and caps lock state
-          // For non-letters: Only use shift state
           bool use_shift_mapping = keyboard_state.shift_pressed;
           
           if (keyboard_state.caps_lock_on) {
-              // Get the non-shifted character to check if it's a letter
               char non_shifted = keyboard_scancode_1_to_ascii_map[scancode];
               if ((non_shifted >= 'a' && non_shifted <= 'z')) {
-                  // It's a letter - apply XOR
                   use_shift_mapping = use_shift_mapping != keyboard_state.caps_lock_on;
               }
-              // For non-letters, caps lock doesn't have an effect
           }
           
           if (use_shift_mapping) {
