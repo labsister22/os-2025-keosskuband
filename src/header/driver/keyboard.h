@@ -28,12 +28,17 @@ extern const char keyboard_scancode_1_to_ascii_map[256];
  * @param read_extended_mode Optional, can be used for signaling next read is extended scancode (ex. arrow keys)
  * @param keyboard_input_on  Indicate whether keyboard ISR is activated or not
  * @param keyboard_buffer    Storing keyboard input values in ASCII
+ * @param shift_pressed      Track if shift key is being pressed
+ * @param caps_lock_on       Track if caps lock is active
+ * @param extended_mode      Track if extended scancode mode is active
  */
-struct KeyboardDriverState {
-    bool read_extended_mode;
+ struct KeyboardDriverState {
     bool keyboard_input_on;
     char keyboard_buffer;
-} __attribute((packed));
+    bool shift_pressed;
+    bool caps_lock_on;
+    bool extended_mode;
+};
 
 
 
@@ -56,4 +61,5 @@ void get_keyboard_buffer(char *buf);
  */
 void keyboard_isr(void);
 
+void handle_key_release(uint8_t scancode);
 #endif
