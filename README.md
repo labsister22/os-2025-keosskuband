@@ -62,4 +62,5 @@ This page is intentionally left blank
 
 | Milestone    | Topic                                         | Progress  |
 |--------------|-----------------------------------------------|--------|
-| 0            | Kernel                                       | 0/100|
+| 0            | Kernel, GDT                                       | 100/100|
+| 1            | Framebuffer, Interrupter, Keyboard                                       | 80/100|
