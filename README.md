@@ -29,9 +29,15 @@
 
 ### Milestone 0
 - Kernel setup
-- ???
+- Global Descriptor Table (GDT) Setup
 ---
 
+### Milestone 1
+- Interrupter setup
+- Keyboard driver
+- Framebuffer setup
+
+---
 <div align="center">
 This page is intentionally left blank
 </div>
@@ -41,7 +47,7 @@ This page is intentionally left blank
 ## How to Setup?
    ```bash
    make build
-   cd bin (cd /bin)
+   cd bin/
    qemu-system-i386 -s -cdrom KeosskuBand.iso 
    ```
 
