@@ -4,7 +4,7 @@ LIN           = ld
 CC            = gcc
 
 # Disk (non-volatile storage)
-DISK_NAME          = storage
+DISK_NAME = storage
 
 # Directory
 SOURCE_FOLDER = src
@@ -21,13 +21,13 @@ LFLAGS        = -T $(SOURCE_FOLDER)/linker.ld -melf_i386
 
 
 run: all
-	@qemu-system-i386 -s -S -drive file=storage.bin,format=raw,if=ide,index=0,media=disk -cdrom $(OUTPUT_FOLDER)/$(ISO_NAME).iso
+	@qemu-system-i386 -s -drive file=${OUTPUT_FOLDER}/storage.bin,format=raw,if=ide,index=0,media=disk -cdrom $(OUTPUT_FOLDER)/$(ISO_NAME).iso
 all: build
 build: iso
 clean:
+	rm -rf $(OUTPUT_FOLDER)/*.o
 	rm -rf *.o *.iso $(OUTPUT_FOLDER)/kernel
-
-
+	rm -rf $(OUTPUT_FOLDER)/*.iso
 
 kernel:
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/kernel-entrypoint.s -o $(OUTPUT_FOLDER)/kernel-entrypoint.o
