@@ -20,7 +20,7 @@
 **Izin tampil**
 
 ---
-## 💻 Language Used
+## 💻 Language and Framework Used
 ![Assembly](https://img.shields.io/badge/assembly-%23525252.svg?style=for-the-badge&logo=assembly&logoColor=white) ![C](https://img.shields.io/badge/c-%2300599C.svg?style=for-the-badge&logo=c&logoColor=white) ![gdb](https://img.shields.io/badge/GDB-%23A42E2B.svg?style=for-the-badge&logo=gnu&logoColor=white)
 
 ---
@@ -49,7 +49,42 @@ This page is intentionally left blank
 
 ---
 
-## Guide for makefile
+## 📦 Installation & Setup
+
+### Requirements
+- Git
+- Any IDE (recommended: VSCode)
+- WSL2 (optional)
+- Ubuntu 20.04/22.04
+- Netwide Assembler (https://www.nasm.us/) 
+- GNU C Compiler (https://man7.org/linux/man-pages/man1/gcc.1.html) 
+- GNU Linker (https://linux.die.net/man/1/ld)
+- QEMU - System i386 (https://www.qemu.org/docs/master/system/target-i386.html) 
+- GNU Make (https://www.gnu.org/software/make/) 
+- genisoimage (https://linux.die.net/man/1/genisoimage) 
+- GDB (https://man7.org/linux/man-pages/man1/gdb.1.html) 
+
+### Installing dependencies
+#### On Windows, do this
+1. VSCode
+      ```bash
+   winget install microsoft.visualstudiocode
+   ```
+2. Extension for VSCode
+      ```bash
+   code --install-extension ms-vscode.cpptools-extension-pack
+   code --install-extension ms-vscode-remote.remote-wsl
+   ```
+
+#### On Linux, do this
+1. all dependencies and Qemu
+      ```bash
+   sudo apt update
+   sudo apt install -y nasm gcc qemu-system-x86 make genisoimage gdb
+   ```
+---
+
+## Guide For Makefile
 1.
       ```bash
    make run
@@ -87,7 +122,7 @@ This page is intentionally left blank
    Build non-volatile memory to bin folder
 ---
 
-## How to setup and run?
+## How To Run
 ### **1. Windows**
 #### **- Makefile**
 1. Open a terminal
