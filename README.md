@@ -23,10 +23,10 @@
 </div>
 
 ## Contributors
-- **[Mochammad Fariz Rifqi Rizqulloh](https://github.com/Fariz36)**
-- **[Muhammad Jibril Ibrahim](https://github.com/BoredAngel)**
-- **[Nayaka Ghana Subrata](https://github.com/Nayekah)**
-- **[Muhammad Adha Ridwan](https://github.com/adharidwan)**
+- **Mochammad Fariz Rifqi Rizqulloh** [(GitHub)](https://github.com/Fariz36)
+- **Muhammad Jibril Ibrahim** [(GitHub)](https://github.com/BoredAngel)
+- **Nayaka Ghana Subrata** [(GitHub)](https://github.com/Nayekah)
+- **Muhammad Adha Ridwan** [(GitHub)](https://github.com/adharidwan)
 
 **Izin tampil**
 
