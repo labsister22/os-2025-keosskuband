@@ -2,25 +2,25 @@
 # IF2130 - 2025       Keossku Band!
 
 <div align="center">
-  <table border="0" cellspacing="0" cellpadding="0">
+  <table>
     <tr>
       <td align="center">
-        <img src="https://media1.tenor.com/m/tAyTQWwFDN0AAAAd/bocchi-the-rock-kita.gif" width="250">
+        <img src="https://media1.tenor.com/m/tAyTQWwFDN0AAAAd/bocchi-the-rock-kita.gif" width="300">
       </td>
       <td align="center">
-        <img src="https://media1.tenor.com/m/0zfqxlPxYOYAAAAC/bocchi-the-rock-bocchi.gif" width="250">
+        <img src="https://media1.tenor.com/m/0zfqxlPxYOYAAAAC/bocchi-the-rock-bocchi.gif" width="300">
       </td>
     </tr>
     <tr>
       <td align="center">
-        <img src="https://i.pinimg.com/originals/a8/e5/9c/a8e59cd6a342cc3df98f793229f8bc91.gif" width="250">
+        <img src="https://i.pinimg.com/originals/a8/e5/9c/a8e59cd6a342cc3df98f793229f8bc91.gif" width="300">
       </td>
       <td align="center">
-        <img src="https://64.media.tumblr.com/d8cb6d904a4434d00710efccd6b68cf1/c79002f73b0ed652-bf/s540x810/accbca65608ef8e4155d54b8341554d214d7bcf3.gif" width="250">
+        <img src="https://64.media.tumblr.com/d8cb6d904a4434d00710efccd6b68cf1/c79002f73b0ed652-bf/s540x810/accbca65608ef8e4155d54b8341554d214d7bcf3.gif" width="300">
       </td>
     </tr>
   </table>
-</div
+</div>
 
 ## Contributors
 - **Mochammad Fariz Rifqi Rizqulloh** [@Fariz36](https://github.com/Fariz36)
