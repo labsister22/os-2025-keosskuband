@@ -37,6 +37,10 @@
 - Keyboard driver
 - Framebuffer setup
 
+### Milestone 2
+- Disk setup
+- Filesystem setup (EXT2)
+
 ---
 <div align="center">
 This page is intentionally left blank
@@ -63,4 +67,5 @@ This page is intentionally left blank
 | Milestone    | Topic                                         | Progress  |
 |--------------|-----------------------------------------------|--------|
 | 0            | Kernel, GDT                                       | 100/100|
-| 1            | Framebuffer, Interrupter, Keyboard                                       | 80/100|
+| 1            | Framebuffer, Interrupter, Keyboard                                       | 90/100|
+| 2            |Disk, filesys (EXT2)                                      | 50/100|
