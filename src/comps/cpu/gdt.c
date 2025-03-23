@@ -7,54 +7,48 @@
  */
 struct GlobalDescriptorTable global_descriptor_table = {
     .table = {
-        {
-            // Null Descriptor - Index 0
-            .segment_low = 0,
-            .base_low = 0,
-            .base_mid = 0,
-            .type_bit = 0,
-            .non_system = 0,
-            .privilege_level = 0,
-            .present = 0,
-            .limit_high = 0,
-            .available = 0,
-            .long_mode = 0,
-            .size = 0,
-            .granularity = 0,
-            .base_high = 0
+        {/* Null Descriptor */
+            .segment_high   = 0,
+            .segment_low    = 0,
+            .base_high      = 0,
+            .base_mid       = 0,
+            .base_low       = 0,
+            .non_system     = 0,
+            .type_bit       = 0,
+            .privilege      = 0,
+            .valid_bit      = 0,
+            .opr_32_bit     = 0,
+            .long_mode      = 0,
+            .granularity    = 0
         },
-        {
-            // Kernel Code Segment - Index 1
-            .segment_low = 0xFFFF,
-            .base_low = 0,
-            .base_mid = 0,
-            .type_bit = 0xA,        // Code, not accessed, readable, not conforming
-            .non_system = 1,        // Code or Data segment
-            .privilege_level = 0,   // Kernel privilege level
-            .present = 1,           // Present in memory
-            .limit_high = 0xF,      // Upper 4 bits of limit
-            .available = 0,
-            .long_mode = 0,
-            .size = 1,              // 32-bit operand size
-            .granularity = 1,       // 4KB granularity
-            .base_high = 0
+        {/* Kernel Code Descriptor */
+            .segment_high   = 0xF,
+            .segment_low    = 0xFFFF,
+            .base_high      = 0,
+            .base_mid       = 0,
+            .base_low       = 0,
+            .non_system     = 1,      // 1 for code and data segments
+            .type_bit       = 0xA,    // Code, Execute/Read
+            .privilege      = 0,      // Ring 0 (Kernel)
+            .valid_bit      = 1,      // Present in memory
+            .opr_32_bit     = 1,      // 32-bit protected mode
+            .long_mode      = 0,
+            .granularity    = 1       // Limit in 4 KiB blocks
         },
-        {
-            // Kernel Data Segment - Index 2
-            .segment_low = 0xFFFF,
-            .base_low = 0,
-            .base_mid = 0,
-            .type_bit = 0x2,        // Data, not accessed, writable, direction up
-            .non_system = 1,        // Code or Data segment
-            .privilege_level = 0,   // Kernel privilege level
-            .present = 1,           // Present in memory
-            .limit_high = 0xF,      // Upper 4 bits of limit
-            .available = 0,
-            .long_mode = 0,
-            .size = 1,              // 32-bit operand size
-            .granularity = 1,       // 4KB granularity
-            .base_high = 0
-        }
+        {/* Kernel Data Descriptor */
+            .segment_high   = 0xF,
+            .segment_low    = 0xFFFF,
+            .base_high      = 0,
+            .base_mid       = 0,
+            .base_low       = 0,
+            .non_system     = 1,      // 1 for code and data segments
+            .type_bit       = 0x2,    // Data, Read/Write
+            .privilege      = 0,      // Ring 0 (Kernel)
+            .valid_bit      = 1,      // Present in memory
+            .opr_32_bit     = 1,      // 32-bit protected mode
+            .long_mode      = 0,
+            .granularity    = 1       // Limit in 4 KiB blocks
+        },
     }
 };
 
