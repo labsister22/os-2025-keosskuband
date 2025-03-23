@@ -143,7 +143,7 @@ This page is intentionally left blank
 ---
 
 #### **VSCode debugger (Linux/Windows)**
-1. Open a terminal
+1. Open VSCode
 2. Clone the repository
       ```bash
    git clone https://github.com/labsister22/os-2025-keosskuband.git
