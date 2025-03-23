@@ -2,23 +2,45 @@
 # IF2130 - 2025       Keossku Band!
 
 ## Team Members
-<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
-  <div>
-    <img src="https://media1.tenor.com/m/tAyTQWwFDN0AAAAd/bocchi-the-rock-kita.gif" width="300">
-    <p>Mochammad Fariz Rifqi Rizqulloh (13523069)</p>
-  </div>
-  <div>
-    <img src="https://media1.tenor.com/m/0zfqxlPxYOYAAAAC/bocchi-the-rock-bocchi.gif" width="300">
-    <p>Muhammad Jibril Ibrahim (13523085)</p>
-  </div>
-  <div>
-    <img src="https://i.pinimg.com/originals/a8/e5/9c/a8e59cd6a342cc3df98f793229f8bc91.gif" width="300">
-    <p>Nayaka Ghana Subrata (13253090)</p>
-  </div>
-  <div>
-    <img src="https://64.media.tumblr.com/d8cb6d904a4434d00710efccd6b68cf1/c79002f73b0ed652-bf/s540x810/accbca65608ef8e4155d54b8341554d214d7bcf3.gif" width="300">
-    <p>Muhammad Adha Ridwan (13523098)</p>
-  </div>
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <div style="border: 2px solid #0078D7; border-radius: 8px; padding: 10px; margin: 10px;">
+          <div style="background-color: #0078D7; color: white; padding: 5px; margin-bottom: 10px; border-radius: 5px 5px 0 0;">
+            Mochammad Fariz Rifqi Rizqulloh (13523069)
+          </div>
+          <img src="https://media1.tenor.com/m/tAyTQWwFDN0AAAAd/bocchi-the-rock-kita.gif" width="300">
+        </div>
+      </td>
+      <td align="center">
+        <div style="border: 2px solid #0078D7; border-radius: 8px; padding: 10px; margin: 10px;">
+          <div style="background-color: #0078D7; color: white; padding: 5px; margin-bottom: 10px; border-radius: 5px 5px 0 0;">
+            Muhammad Jibril Ibrahim (13523085)
+          </div>
+          <img src="https://media1.tenor.com/m/0zfqxlPxYOYAAAAC/bocchi-the-rock-bocchi.gif" width="300">
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td align="center">
+        <div style="border: 2px solid #0078D7; border-radius: 8px; padding: 10px; margin: 10px;">
+          <div style="background-color: #0078D7; color: white; padding: 5px; margin-bottom: 10px; border-radius: 5px 5px 0 0;">
+            Nayaka Ghana Subrata (13253090)
+          </div>
+          <img src="https://i.pinimg.com/originals/a8/e5/9c/a8e59cd6a342cc3df98f793229f8bc91.gif" width="300">
+        </div>
+      </td>
+      <td align="center">
+        <div style="border: 2px solid #0078D7; border-radius: 8px; padding: 10px; margin: 10px;">
+          <div style="background-color: #0078D7; color: white; padding: 5px; margin-bottom: 10px; border-radius: 5px 5px 0 0;">
+            Muhammad Adha Ridwan (13523098)
+          </div>
+          <img src="https://64.media.tumblr.com/d8cb6d904a4434d00710efccd6b68cf1/c79002f73b0ed652-bf/s540x810/accbca65608ef8e4155d54b8341554d214d7bcf3.gif" width="300">
+        </div>
+      </td>
+    </tr>
+  </table>
 </div>
 
 ## Contributors
