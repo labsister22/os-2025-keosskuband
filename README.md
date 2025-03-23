@@ -54,7 +54,38 @@ This page is intentionally left blank
       ```bash
    make run
    ```
-   to build iso and kernel, also running the operating system
+   Build iso and kernel to bin folder, also running the operating system
+2.
+      ```bash
+   make build
+   ```
+   Build iso and kernel to bin folder
+3.
+      ```bash
+   make all
+   ```
+   Build iso and kernel to bin folder
+4.
+      ```bash
+   make clean
+   ```
+   to remove *.o and *.iso from the bin folder
+5.
+      ```bash
+   make kernel
+   ```
+   Build kernel to bin folder
+6.
+      ```bash
+   make iso
+   ```
+   Build iso to bin folder
+7.
+      ```bash
+   make disk
+   ```
+   Build non-volatile memory to bin folder
+---
 
 ## How to setup and run?
 ### **1. Windows**
