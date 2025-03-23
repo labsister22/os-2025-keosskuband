@@ -42,7 +42,6 @@ kernel:
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/interrupt/idt.c -o $(OUTPUT_FOLDER)/idt.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/driver/keyboard.c -o $(OUTPUT_FOLDER)/keyboard.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/driver/disk.c -o $(OUTPUT_FOLDER)/disk.o
-	#@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/filesys/ext2.c -o $(OUTPUT_FOLDER)/ext2.o
 	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/kernel
 	@echo Linking object files and generate elf32...
 	@rm -f *.o
