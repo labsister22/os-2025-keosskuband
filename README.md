@@ -36,6 +36,7 @@
 - Interrupter setup
 - Keyboard driver
 - Framebuffer setup
+---
 
 ### Milestone 2
 - Disk setup
@@ -48,14 +49,42 @@ This page is intentionally left blank
 
 ---
 
-## How to Setup?
-   ```bash
-   make build
-   cd bin/
-   qemu-system-i386 -s -cdrom KeosskuBand.iso 
-   ```
+## Guide for makefile
+1.
 
+## How to setup and run?
+### **1. Windows**
+#### **- Makefile**
+1. Open a terminal
+2. Clone the repository
+      ```bash
+   git clone https://github.com/labsister22/os-2025-keosskuband.git
+   ```
+3. Make os-2025-keosskuband as root directory
+4. Run the following command to start the application in Qemu:
+   ```bash
+   make run
+   ```
+5. If you want to develop it with non volatile memory, do:
+   ```bash
+   make disk
+   make run
+   ```
 ---
+
+#### **- VSCode debugger**
+1. Open a terminal
+2. Clone the repository
+      ```bash
+   git clone https://github.com/labsister22/os-2025-keosskuband.git
+   ```
+3. Make os-2025-keosskuband as root directory
+4. Press the following key:
+   ```bash
+   f5
+   ```
+---
+
 ## ✨ Note
 
 ### ???
