@@ -77,7 +77,7 @@ This page is intentionally left blank
    ```
 
 #### On Linux, do this
-1. all dependencies and Qemu
+1. All dependencies and Qemu
       ```bash
    sudo apt update
    sudo apt install -y nasm gcc qemu-system-x86 make genisoimage gdb
@@ -124,7 +124,7 @@ This page is intentionally left blank
 
 ## How To Run
 ### **1. Windows**
-#### **- Makefile**
+#### **Makefile (Linux)**
 1. Open a terminal
 2. Clone the repository
       ```bash
@@ -142,7 +142,7 @@ This page is intentionally left blank
    ```
 ---
 
-#### **- VSCode debugger**
+#### **VSCode debugger (Linux/Windows)**
 1. Open a terminal
 2. Clone the repository
       ```bash
