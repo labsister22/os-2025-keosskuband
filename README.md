@@ -51,6 +51,10 @@ This page is intentionally left blank
 
 ## Guide for makefile
 1.
+      ```bash
+   make run
+   ```
+   to build iso and kernel, also running the operating system
 
 ## How to setup and run?
 ### **1. Windows**
