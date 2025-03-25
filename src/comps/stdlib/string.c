@@ -30,6 +30,14 @@ int memcmp(const void *s1, const void *s2, size_t n) {
     return 0;
 }
 
+void* memcpy_rev(void* restrict dest, const void* restrict src, uint32_t n) {
+    uint8_t *dstbuf       = (uint8_t*) dest;
+    const uint8_t *srcbuf = (const uint8_t*) src;
+    for (int i = n-1; i >= 0; i--)
+        dstbuf[i] = srcbuf[i];
+    return dstbuf;
+}
+
 void *memmove(void *dest, const void *src, size_t n) {
     uint8_t *dstbuf       = (uint8_t*) dest;
     const uint8_t *srcbuf = (const uint8_t*) src;

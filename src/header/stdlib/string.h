@@ -41,6 +41,17 @@ void* memcpy(void* restrict dest, const void* restrict src, size_t n);
 int memcmp(const void *s1, const void *s2, size_t n);
 
 /**
+ * Copy memory area from source to destination in reverse order
+ * 
+ * @param dest Starting location for memory area to set
+ * @param src Pointer to source memory
+ * @param n Memory area size in byte 
+ * 
+ * @return Pointer dest
+*/
+void* memcpy_rev(void* restrict dest, const void* restrict src, uint32_t n);
+
+/**
  * C standard memmove, check man memmove or
  * https://man7.org/linux/man-pages/man3/memmove.3.html for more details
  * 
