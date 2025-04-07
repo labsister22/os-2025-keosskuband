@@ -1,12 +1,11 @@
 #include <stdint.h>
 #include "header/cpu/gdt.h"
-#include "header/text/framebuffer.h"
+#include "header/graphics/graphics.h"  
 #include "header/kernel-entrypoint.h"
 #include "header/interrupt/interrupt.h"
 #include "header/interrupt/idt.h"
 #include "header/driver/keyboard.h"
 #include "header/driver/disk.h"
-
 
 void kernel_setup(void) {
     load_gdt(&_gdt_gdtr);
@@ -14,11 +13,14 @@ void kernel_setup(void) {
     pic_remap();
     initialize_idt();
     activate_keyboard_interrupt();
-    framebuffer_clear();
-    framebuffer_set_cursor(0, 0);
+
+    graphics_initialize();
+    graphics_clear(COLOR_BLACK);
     
-    
-    int row = 0, col = 0;
+    graphics_set_cursor(0, 0);
+    graphics_store_char_at_cursor(0); 
+    graphics_draw_cursor();
+
     keyboard_state_activate();
 
     struct BlockBuffer b;
@@ -29,32 +31,54 @@ void kernel_setup(void) {
         char c;
         get_keyboard_buffer(&c);
 
-        // backspace  -jibs
-        if (c == '\b') {
-            if (col == 0 && row == 0) { // not sure what to do actually
-                row = 0;
-                col = 0;
+        // Only handle input if there is any
+        if (c != 0) {
+            graphics_erase_cursor();
+
+            // Handle backspace
+            if (c == '\b') {
+                uint16_t x, y;
+                graphics_get_cursor(&x, &y);
+                
+                if (x >= 8) {
+                    graphics_move_cursor(-8, 0);
+                } else if (y >= 8) {
+                    graphics_set_cursor(VGA_WIDTH - 8, y - 8);
+                }
+
+                graphics_get_cursor(&x, &y);
+                
+                graphics_rect_fill(x, y, 8, 8, COLOR_BLACK);
+                graphics_store_char_at_cursor(0); 
             }
-            else if (col == 0) { // go back one row
-                --row;
-                col = FRAMEBUFFER_WIDTH;
-            } 
-            else { // go back one col
-                --col;
+            // Handle printable characters
+            else if (c >= ' ' && c <= '~') {
+                uint16_t x, y;
+                graphics_get_cursor(&x, &y);
+                
+                graphics_char(x, y, c, COLOR_PINK, COLOR_BLACK);
+                
+                graphics_move_cursor(8, 0);
+                
+                graphics_store_char_at_cursor(0);
+                
+                graphics_get_cursor(&x, &y);
+                
+                if (x >= VGA_WIDTH - 8) { 
+                    graphics_set_cursor(0, y + 8);
+                }
+
+                // Check if we need to scroll
+                graphics_get_cursor(&x, &y);
+                if (y >= VGA_HEIGHT - 8) {
+                    graphics_clear(COLOR_BLACK);  
+                    graphics_set_cursor(0, 0);
+                    graphics_store_char_at_cursor(0); 
+                }
             }
-            framebuffer_write(row, col, '\0', 0xF, 0);  // replace printed char with \0 which is just empty
-            framebuffer_set_cursor(row, col);
+        
+            graphics_draw_cursor();
         }
-        // other char
-        else if (c) {
-            framebuffer_write(row, col, c, 0xF, 0);
-            if (col >= FRAMEBUFFER_WIDTH) {
-                ++row;
-                col = 0;
-            } else {
-                ++col;
-            }
-           framebuffer_set_cursor(row, col);
-        }
+        graphics_blink_cursor();
     }
 }
