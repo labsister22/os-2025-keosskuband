@@ -47,6 +47,7 @@
 - Interrupter setup
 - Keyboard driver
 - Framebuffer setup
+- Bonus : VGA Mode
 ---
 
 ### Milestone 2
