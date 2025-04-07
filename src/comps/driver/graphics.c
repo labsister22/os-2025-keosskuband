@@ -2,6 +2,7 @@
 #include "header/cpu/portio.h"
 #include "header/stdlib/string.h"
 #include "header/graphics/font.h"
+#include "header/stdlib/string.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -17,6 +18,10 @@ int abs(int x) {
 //     out(data_port, value);
 // }
 
+/*
+    Source osdev & stackoverflow
+*/
+
 #define MISC_OUT_REG        0x3C2
 #define CRT_ADDR_REG        0x3D4
 #define CRT_DATA_REG        0x3D5
@@ -29,6 +34,21 @@ int abs(int x) {
 #define DAC_WRITE_ADDR      0x3C8
 #define DAC_DATA_REG        0x3C9
 #define INPUT_STATUS_1      0x3DA
+
+// Define cursor appearance
+#define CURSOR_COLOR COLOR_GREEN
+#define CURSOR_HEIGHT 8
+#define CURSOR_WIDTH 1
+
+// For cursor blinking
+static uint32_t blink_counter = 0;
+static bool cursor_visible = true;
+#define CURSOR_BLINK_RATE 1000000  
+
+// Store the character at cursor position for blinking
+static char cursor_char = 0;
+static uint8_t cursor_fg_color = COLOR_PINK;
+static uint8_t cursor_bg_color = COLOR_BLACK;
 
 void graphics_initialize(void) {
     //Miscellaneous output register
@@ -165,223 +185,196 @@ void graphics_pixel(uint16_t x, uint16_t y, uint8_t color) {
     VGA_MEMORY[offset] = color;
 }
 
-//for testing
-void graphics_line_horizontal(uint16_t x1, uint16_t x2, uint16_t y, uint8_t color) {
-    // Ensure x1 <= x2
-    if (x1 > x2) {
-        uint16_t temp = x1;
-        x1 = x2;
-        x2 = temp;
-    }
-    
-    // Boundary check
-    if (y >= VGA_HEIGHT)
-        return;
-    if (x1 >= VGA_WIDTH)
-        return;
-    if (x2 >= VGA_WIDTH)
-        x2 = VGA_WIDTH - 1;
-    
-    // Draw horizontal line
-    for (uint16_t x = x1; x <= x2; x++) {
-        graphics_pixel(x, y, color);
-    }
-}
-
-void graphics_line_vertical(uint16_t x, uint16_t y1, uint16_t y2, uint8_t color) {
-    // Ensure y1 <= y2
-    if (y1 > y2) {
-        uint16_t temp = y1;
-        y1 = y2;
-        y2 = temp;
-    }
-    
-    // Boundary check
-    if (x >= VGA_WIDTH)
-        return;
-    if (y1 >= VGA_HEIGHT)
-        return;
-    if (y2 >= VGA_HEIGHT)
-        y2 = VGA_HEIGHT - 1;
-    
-    // Draw vertical line
-    for (uint16_t y = y1; y <= y2; y++) {
-        graphics_pixel(x, y, color);
-    }
-}
-
-void graphics_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t color) {
-    // Implementation of Bresenham's line algorithm
-    int16_t dx = abs(x2 - x1);
-    int16_t dy = -abs(y2 - y1);
-    int16_t sx = x1 < x2 ? 1 : -1;
-    int16_t sy = y1 < y2 ? 1 : -1;
-    int16_t err = dx + dy;
-    int16_t e2;
-    
-    while (1) {
-        graphics_pixel(x1, y1, color);
-        if (x1 == x2 && y1 == y2) break;
-        e2 = 2 * err;
-        if (e2 >= dy) { 
-            if (x1 == x2) break;
-            err += dy;
-            x1 += sx;
-        }
-        if (e2 <= dx) {
-            if (y1 == y2) break;
-            err += dx;
-            y1 += sy;
-        }
-    }
-}
-
-void graphics_rect(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t color) {
-    // Draw four lines to form a rectangle
-    graphics_line_horizontal(x, x + width - 1, y, color);                  // Top
-    graphics_line_horizontal(x, x + width - 1, y + height - 1, color);     // Bottom
-    graphics_line_vertical(x, y, y + height - 1, color);                   // Left
-    graphics_line_vertical(x + width - 1, y, y + height - 1, color);       // Right
-}
-
-void graphics_rect_fill(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t color) {
-    // Boundary check
-    if (x >= VGA_WIDTH || y >= VGA_HEIGHT)
-        return;
-    
-    // Adjust width and height if they go out of bounds
-    if (x + width > VGA_WIDTH)
-        width = VGA_WIDTH - x;
-    if (y + height > VGA_HEIGHT)
-        height = VGA_HEIGHT - y;
-    
-    // Draw filled rectangle using horizontal lines
-    for (uint16_t j = 0; j < height; j++) {
-        graphics_line_horizontal(x, x + width - 1, y + j, color);
-    }
-}
-
-void graphics_circle(uint16_t x, uint16_t y, uint16_t radius, uint8_t color) {
-    // Implementation of Midpoint Circle Algorithm
-    int16_t f = 1 - radius;
-    int16_t ddF_x = 1;
-    int16_t ddF_y = -2 * radius;
-    int16_t x0 = 0;
-    int16_t y0 = radius;
-    
-    graphics_pixel(x, y + radius, color);
-    graphics_pixel(x, y - radius, color);
-    graphics_pixel(x + radius, y, color);
-    graphics_pixel(x - radius, y, color);
-    
-    while (x0 < y0) {
-        if (f >= 0) {
-            y0--;
-            ddF_y += 2;
-            f += ddF_y;
-        }
-        x0++;
-        ddF_x += 2;
-        f += ddF_x;
-        
-        graphics_pixel(x + x0, y + y0, color);
-        graphics_pixel(x - x0, y + y0, color);
-        graphics_pixel(x + x0, y - y0, color);
-        graphics_pixel(x - x0, y - y0, color);
-        graphics_pixel(x + y0, y + x0, color);
-        graphics_pixel(x - y0, y + x0, color);
-        graphics_pixel(x + y0, y - x0, color);
-        graphics_pixel(x - y0, y - x0, color);
-    }
-}
-
-void graphics_circle_fill(uint16_t x, uint16_t y, uint16_t radius, uint8_t color) {
-    // Implementation using horizontal lines between points on the circle
-    int16_t f = 1 - radius;
-    int16_t ddF_x = 1;
-    int16_t ddF_y = -2 * radius;
-    int16_t x0 = 0;
-    int16_t y0 = radius;
-    
-    // Draw horizontal line through the center
-    graphics_line_horizontal(x - radius, x + radius, y, color);
-    
-    while (x0 < y0) {
-        if (f >= 0) {
-            y0--;
-            ddF_y += 2;
-            f += ddF_y;
-        }
-        x0++;
-        ddF_x += 2;
-        f += ddF_x;
-        
-        // Draw horizontal lines between points on the circle
-        graphics_line_horizontal(x - x0, x + x0, y + y0, color);
-        graphics_line_horizontal(x - x0, x + x0, y - y0, color);
-        graphics_line_horizontal(x - y0, x + y0, y + x0, color);
-        graphics_line_horizontal(x - y0, x + y0, y - x0, color);
-    }
-}
-
 void graphics_clear(uint8_t color) {
-    // Fill the entire screen with a specified color
     for (uint32_t i = 0; i < VGA_WIDTH * VGA_HEIGHT; i++) {
         VGA_MEMORY[i] = color;
     }
 }
 
 void graphics_char(uint16_t x, uint16_t y, unsigned char c, uint8_t color, uint8_t bgcolor) {
-    // Boundary check
     if (x >= VGA_WIDTH - 8 || y >= VGA_HEIGHT - 8 || c >= 128)
         return;
-    
-    // Get font data from lookup table
+
     const uint8_t* char_data = lookup[(uint8_t)c];
     uint8_t size = char_data[0];
-    
-    // Clear area for character (8x8 pixels)
+
     for (uint16_t row = 0; row < 8; row++) {
         for (uint16_t col = 0; col < 8; col++) {
             graphics_pixel(x + col, y + row, bgcolor);
         }
     }
-    
-    // Draw character pixels
+
+    // rotated 270 clockwise (why? ga tau soalnya font maling)
     for (uint8_t i = 1; i <= size; i++) {
         uint8_t data = char_data[i];
-        uint8_t row = data / 10;
-        uint8_t col = data % 10;
-        
+        uint8_t row = (data >> 4) & 0x0F;  
+        uint8_t col = data & 0x0F;         
+
         if (row < 8 && col < 8) {
-            graphics_pixel(x + col, y + row, color);
+          
+            graphics_pixel(x + row, y + (7 - col), color);
         }
     }
 }
+
+
 
 void graphics_string(uint16_t x, uint16_t y, const char* str, uint8_t color, uint8_t bgcolor) {
     uint16_t current_x = x;
     uint16_t current_y = y;
     
-    // Draw each character in the string
     for (size_t i = 0; str[i] != '\0'; i++) {
-        // Handle newline character
         if (str[i] == '\n') {
             current_x = x;
             current_y += 8;
             continue;
         }
-        
-        // Draw character
         graphics_char(current_x, current_y, str[i], color, bgcolor);
-        
-        // Move to next character position
         current_x += 8;
-        
-        // Wrap to next line if necessary
         if (current_x >= VGA_WIDTH - 8) {
             current_x = x;
             current_y += 8;
+        }
+    }
+}
+
+static uint16_t cursor_x = 0;
+static uint16_t cursor_y = 0;
+
+
+void graphics_set_cursor(uint16_t x, uint16_t y) {
+    if (x >= VGA_WIDTH) {
+        x = VGA_WIDTH - 1;
+    }
+    if (y >= VGA_HEIGHT) {
+        y = VGA_HEIGHT - 1;
+    }
+    
+    cursor_x = x;
+    cursor_y = y;
+}
+
+
+void graphics_get_cursor(uint16_t *x, uint16_t *y) {
+    if (x != NULL) {
+        *x = cursor_x;
+    }
+    if (y != NULL) {
+        *y = cursor_y;
+    }
+}
+
+
+void graphics_scroll_cursor(int16_t dx, int16_t dy) {
+    if ((int32_t)cursor_x + dx < 0) {
+        cursor_x = 0;
+    } else if (cursor_x + dx >= VGA_WIDTH) {
+        cursor_x = VGA_WIDTH - 1;
+    } else {
+        cursor_x += dx;
+    }
+    
+    if ((int32_t)cursor_y + dy < 0) {
+        cursor_y = 0;
+    } else if (cursor_y + dy >= VGA_HEIGHT) {
+        cursor_y = VGA_HEIGHT - 1;
+    } else {
+        cursor_y += dy;
+    }
+}
+
+
+void graphics_move_cursor(int16_t dx, int16_t dy) {
+    graphics_scroll_cursor(dx, dy);
+}
+
+void graphics_rect_fill(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t color) {
+    if (x >= VGA_WIDTH || y >= VGA_HEIGHT) {
+        return;
+    }
+    
+    if (x + width > VGA_WIDTH) {
+        width = VGA_WIDTH - x;
+    }
+    if (y + height > VGA_HEIGHT) {
+        height = VGA_HEIGHT - y;
+    }
+    
+    for (uint16_t i = 0; i < height; i++) {
+        for (uint16_t j = 0; j < width; j++) {
+            graphics_pixel(x + j, y + i, color);
+        }
+    }
+}
+
+void graphics_rect(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t color) {
+    if (x >= VGA_WIDTH || y >= VGA_HEIGHT) {
+        return;
+    }
+    
+    if (x + width > VGA_WIDTH) {
+        width = VGA_WIDTH - x;
+    }
+    if (y + height > VGA_HEIGHT) {
+        height = VGA_HEIGHT - y;
+    }
+    
+    for (uint16_t j = 0; j < width; j++) {
+        graphics_pixel(x + j, y, color);
+        graphics_pixel(x + j, y + height - 1, color);
+    }
+    
+    for (uint16_t i = 0; i < height; i++) {
+        graphics_pixel(x, y + i, color);
+        graphics_pixel(x + width - 1, y + i, color);
+    }
+}
+
+void graphics_draw_cursor(void) {
+    uint16_t x, y;
+    graphics_get_cursor(&x, &y);
+    
+    if (cursor_visible) {
+        for (int i = 0; i < CURSOR_HEIGHT; i++) {
+            graphics_pixel(x, y + i, CURSOR_COLOR);
+        }
+    } else if (cursor_char) {
+        graphics_char(x, y, cursor_char, cursor_fg_color, cursor_bg_color);
+    }
+}
+
+void graphics_erase_cursor(void) {
+    uint16_t x, y;
+    graphics_get_cursor(&x, &y);
+    
+    if (cursor_char) {
+        graphics_char(x, y, cursor_char, cursor_fg_color, cursor_bg_color);
+    } else {
+        for (int i = 0; i < CURSOR_HEIGHT; i++) {
+            graphics_pixel(x, y + i, cursor_bg_color);
+        }
+    }
+}
+
+void graphics_store_char_at_cursor(char c) {
+    cursor_char = c;
+}
+
+void graphics_set_cursor_colors(uint8_t fg_color, uint8_t bg_color) {
+    cursor_fg_color = fg_color;
+    cursor_bg_color = bg_color;
+}
+
+void graphics_blink_cursor(void) {
+    blink_counter++;
+    if (blink_counter >= CURSOR_BLINK_RATE) {
+        blink_counter = 0;
+        cursor_visible = !cursor_visible;
+        
+        if (cursor_visible) {
+            graphics_draw_cursor();
+        } else {
+            graphics_erase_cursor();
         }
     }
 }

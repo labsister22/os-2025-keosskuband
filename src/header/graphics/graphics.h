@@ -10,23 +10,6 @@
 #define VGA_HEIGHT  200
 #define VGA_MEMORY  ((uint8_t*)0xA0000)
 
-// VGA ports    
-#define VGA_AC_INDEX      0x3C0
-#define VGA_AC_WRITE      0x3C0
-#define VGA_AC_READ       0x3C1
-#define VGA_MISC_WRITE    0x3C2
-#define VGA_SEQ_INDEX     0x3C4
-#define VGA_SEQ_DATA      0x3C5
-#define VGA_DAC_INDEX_READ   0x3C7
-#define VGA_DAC_INDEX_WRITE  0x3C8
-#define VGA_DAC_DATA      0x3C9
-#define VGA_MISC_READ     0x3CC
-#define VGA_GC_INDEX      0x3CE
-#define VGA_GC_DATA       0x3CF
-#define VGA_CRTC_INDEX    0x3D4
-#define VGA_CRTC_DATA     0x3D5
-#define VGA_INSTAT_READ   0x3DA
-
 // Common colors in VGA palette
 #define COLOR_BLACK       0x00
 #define COLOR_BLUE        0x01
@@ -66,79 +49,6 @@ void graphics_exit(void);
 void graphics_pixel(uint16_t x, uint16_t y, uint8_t color);
 
 /**
- * Draw a horizontal line from (x1,y) to (x2,y).
- *
- * @param x1 Starting X coordinate
- * @param x2 Ending X coordinate
- * @param y Y coordinate
- * @param color Color value (0-255)
- */
-void graphics_line_horizontal(uint16_t x1, uint16_t x2, uint16_t y, uint8_t color);
-
-/**
- * Draw a vertical line from (x,y1) to (x,y2).
- *
- * @param x X coordinate
- * @param y1 Starting Y coordinate
- * @param y2 Ending Y coordinate
- * @param color Color value (0-255)
- */
-void graphics_line_vertical(uint16_t x, uint16_t y1, uint16_t y2, uint8_t color);
-
-/**
- * Draw a line from (x1,y1) to (x2,y2) using Bresenham's algorithm.
- *
- * @param x1 Starting X coordinate
- * @param y1 Starting Y coordinate
- * @param x2 Ending X coordinate
- * @param y2 Ending Y coordinate
- * @param color Color value (0-255)
- */
-void graphics_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t color);
-
-/**
- * Draw a rectangle with top-left corner at (x,y) with specified width, height and color.
- *
- * @param x X coordinate of top-left corner
- * @param y Y coordinate of top-left corner
- * @param width Width of rectangle
- * @param height Height of rectangle
- * @param color Color value (0-255)
- */
-void graphics_rect(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t color);
-
-/**
- * Draw a filled rectangle with top-left corner at (x,y) with specified width, height and color.
- *
- * @param x X coordinate of top-left corner
- * @param y Y coordinate of top-left corner
- * @param width Width of rectangle
- * @param height Height of rectangle
- * @param color Color value (0-255)
- */
-void graphics_rect_fill(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t color);
-
-/**
- * Draw a circle with center at (x,y) with specified radius and color.
- *
- * @param x X coordinate of center
- * @param y Y coordinate of center
- * @param radius Radius of circle
- * @param color Color value (0-255)
- */
-void graphics_circle(uint16_t x, uint16_t y, uint16_t radius, uint8_t color);
-
-/**
- * Draw a filled circle with center at (x,y) with specified radius and color.
- *
- * @param x X coordinate of center
- * @param y Y coordinate of center
- * @param radius Radius of circle
- * @param color Color value (0-255)
- */
-void graphics_circle_fill(uint16_t x, uint16_t y, uint16_t radius, uint8_t color);
-
-/**
  * Clear the screen with a specified color.
  *
  * @param color Color value (0-255)
@@ -168,5 +78,77 @@ void graphics_char(uint16_t x, uint16_t y, unsigned char c, uint8_t color, uint8
  * @param bgcolor Background color (0-255)
  */
 void graphics_string(uint16_t x, uint16_t y, const char* str, uint8_t color, uint8_t bgcolor);
+/**
+ * Set the cursor position to specific coordinates
+ * 
+ * @param x X coordinate
+ * @param y Y coordinate
+ */
+void graphics_set_cursor(uint16_t x, uint16_t y);
+/**
+ * Get the current cursor position
+ * 
+ * @param x Pointer to store X coordinate
+ * @param y Pointer to store Y coordinate
+ */
+void graphics_get_cursor(uint16_t *x, uint16_t *y);
+/**
+ * Scroll the cursor by the specified amounts, ensuring it remains within bounds
+ * 
+ * @param dx X direction change (can be negative)
+ * @param dy Y direction change (can be negative)
+ */
+void graphics_scroll_cursor(int16_t dx, int16_t dy);
+/**
+ * Move the cursor by the specified amounts, clamping at boundaries
+ * 
+ * @param dx X direction change (can be negative)
+ * @param dy Y direction change (can be negative)
+ */
+void graphics_move_cursor(int16_t dx, int16_t dy);
+
+void graphics_rect_fill(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t color);
+/**
+ * Draw a rectangle outline at the specified position
+ * 
+ * @param x X coordinate
+ * @param y Y coordinate
+ * @param width Width of the rectangle
+ * @param height Height of the rectangle
+ * @param color Color value (0-255)
+ */
+void graphics_rect(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t color);
+
+
+/**
+ * Draw the cursor at the current position
+ */
+void graphics_draw_cursor(void);
+/**
+ * Erase the cursor at the current position
+ */
+void graphics_erase_cursor(void);
+
+/**
+ * Store the character at the current cursor position for blinking
+ * 
+ * @param c Character to store
+ */
+void graphics_store_char_at_cursor(char c);
+
+/**
+ * Set the colors for the cursor
+ * 
+ * @param fg_color Foreground color (0-255)
+ * @param bg_color Background color (0-255)
+ */
+void graphics_set_cursor_colors(uint8_t fg_color, uint8_t bg_color);
+
+/**
+ * Set the cursor blink 
+ * 
+ */
+void graphics_blink_cursor(void);
+
 
 #endif
