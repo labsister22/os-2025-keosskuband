@@ -1,3 +1,6 @@
+#ifndef FONT_H
+#define FONT_H
+
 #include <stdint.h>
 
 
@@ -157,3 +160,5 @@ static const uint8_t* lookup[128] = {
     ascii110, ascii111, ascii112, ascii113, ascii114, ascii115, ascii116, ascii117, ascii118, ascii119,
     ascii120, ascii121, ascii122, ascii123, ascii124, ascii125, ascii126, ascii127
 };
+
+#endif
