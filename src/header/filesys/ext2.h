@@ -19,15 +19,12 @@
 #define INODES_TABLE_BLOCK_COUNT 16u 
 #define INODES_PER_GROUP (INODES_PER_TABLE * INODES_TABLE_BLOCK_COUNT) // number of inodes per group
 
-
-
 /**
  * inodes constant 
  * - reference: https://www.nongnu.org/ext2-doc/ext2.html#inode-table
  */
 #define EXT2_S_IFREG 0x8000 // regular file 
 #define EXT2_S_IFDIR 0x4000 // directory
-
 
 /* FILE TYPE CONSTANT*/
 /**
@@ -157,7 +154,7 @@ struct EXT2BlockGroupDescriptorTable
  * Inode stands for index node, it is a data structure in a Unix-style file system that describes a file-system object such as a file or a directory.
  */
 
-struct EXT2Inode
+struct  EXT2Inode
 {
     uint16_t i_mode; // 16bit value indicating the file type and the access rights.
     uint32_t i_size; // 32bit value indicating the size of the file in bytes.
@@ -192,28 +189,33 @@ struct EXT2InodeTable
  * - https://www.nongnu.org/ext2-doc/ext2.html#linked-directories
  */
 
-struct EXT2DirectoryEntry
-{
-    uint32_t inode; // 32bit value indicating the inode number of the file entry. A value of 0 indicate that the entry is not used.
-    /**
-     * 16bit unsigned displacement to the next directory entry from the start of the current directory entry.
-     * This field must have a value at least equal to the length of the current record.
-     * The directory entries must be aligned on 4 bytes boundaries and there cannot be any directory entry spanning multiple data blocks.
-     * If an entry cannot completely fit in one block, it must be pushed to the next data block and the rec_len of the previous entry properly adjusted.
-     */
-    uint16_t rec_len; 
+    struct EXT2DirectoryEntry
+    {
+        uint32_t inode; // 32bit value indicating the inode number of the file entry. A value of 0 indicate that the entry is not used.
+        /**
+         * 16bit unsigned displacement to the next directory entry from the start of the current directory entry.
+         * This field must have a value at least equal to the length of the current record.
+         * The directory entries must be aligned on 4 bytes boundaries and there cannot be any directory entry spanning multiple data blocks.
+         * If an entry cannot completely fit in one block, it must be pushed to the next data block and the rec_len of the previous entry properly adjusted.
+         */
+        uint16_t rec_len; 
 
-    /**
-     * 8bit value indicating the length of the file name.
-     */
-    uint16_t name_len;
+        /**
+         * 8bit value indicating the length of the file name.
+         */
+        uint8_t name_len;
 
-    /**
-     * 8bit unsigned value used to indicate file type.
-     */
-    uint8_t file_type;
+        /**
+         * 8bit unsigned value used to indicate file type.
+         */
+        uint8_t file_type;
 
-}__attribute__((packed));
+        /**
+         * 8bit value indicating the file name. The file name is null terminated and can be up to 255 bytes long.
+         */
+        char name[];
+
+    }__attribute__((packed));
 
 /**
  *  REGULAR function

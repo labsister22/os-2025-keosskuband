@@ -12,6 +12,9 @@
 #define FRAMEBUFFER_WIDTH  80
 #define FRAMEBUFFER_HEIGHT 25
 
+void write_buffer(char *buf, int size, int row, int col);
+void itoa(int value, char *str);
+
 /**
  * Terminal framebuffer
  * Resolution: 80x25

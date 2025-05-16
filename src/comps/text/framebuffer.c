@@ -5,6 +5,49 @@
 #include "header/stdlib/string.h"
 #include "header/cpu/portio.h"
 
+void write_buffer(char *buf, int size, int row, int col) {
+    for (int i = 0; i < size; ++i) {
+        framebuffer_write(row, col, buf[i], 0xF, 0);
+        ++col;
+        if (col >= FRAMEBUFFER_WIDTH) {
+            ++row;
+            col = 0;
+        }
+    }
+}
+
+void itoa(int value, char *str) {
+    char temp[16];
+    int i = 0, is_negative = 0;
+
+    if (value == 0) {
+        str[0] = '0';
+        str[1] = '\0';
+        return;
+    }
+
+    if (value < 0) {
+        is_negative = 1;
+        value = -value;
+    }
+
+    while (value > 0) {
+        temp[i++] = (value % 10) + '0';
+        value /= 10;
+    }
+
+    if (is_negative) {
+        temp[i++] = '-';
+    }
+
+    // Reverse string
+    int j = 0;
+    while (i--) {
+        str[j++] = temp[i];
+    }
+    str[j] = '\0';
+}
+
 void framebuffer_set_cursor(uint8_t r, uint8_t c) {
     // TODO : Implement
     uint16_t position = r * 80 + c;
@@ -19,7 +62,7 @@ void framebuffer_set_cursor(uint8_t r, uint8_t c) {
 }
 
 void framebuffer_write(uint8_t row, uint8_t col, char c, uint8_t fg, uint8_t bg) {
-    // TODO : Implement
+    // TODO : Implementa
 
     uint16_t offset = (row * 80 + col) * 2;
     FRAMEBUFFER_MEMORY_OFFSET[offset] = c;
