@@ -62,3 +62,12 @@ iso: kernel
 
 disk:
 	@qemu-img create -f raw $(OUTPUT_FOLDER)/$(DISK_NAME).bin 4M
+
+inserter:
+	@$(CC) -Wno-builtin-declaration-mismatch -g -I$(SOURCE_FOLDER) \
+		$(SOURCE_FOLDER)/comps/stdlib/string.c \
+		$(SOURCE_FOLDER)/comps/filesys/ext2.c \
+		$(SOURCE_FOLDER)/comps/inserter/external-inserter.c \
+		$(SOURCE_FOLDER)/comps/text/framebuffer.c \
+		$(SOURCE_FOLDER)/comps/cpu/portio.c \
+		-o $(OUTPUT_FOLDER)/inserter
