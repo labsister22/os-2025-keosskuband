@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include "header/stdlib/string.h"
-//#include "header/text/framebuffer.h"
+#include "header/text/framebuffer.h"
 #include "header/filesys/ext2.h"
 #include "header/driver/disk.h"
 //#include <stdio.h>
@@ -351,7 +351,7 @@ int8_t read(struct EXT2DriverRequest request) {
 
     char buffer[20];
     memset(buffer, 0, sizeof(buffer));
-    memcpy(buffer, "reading folder : ", 15);
+    memcpy(buffer, "reading folder/file : ", 15);
     //write_buffer(buffer, 15, local_row, local_col);
     memset(buffer, 0, sizeof(buffer));
     memcpy(buffer, request.name, request.name_len);
@@ -368,20 +368,23 @@ int8_t read(struct EXT2DriverRequest request) {
         //write_buffer(buffer, 15, local_row, local_col);
 
         memset(buffer, 0, sizeof(buffer));
-        //itoa(entry->inode, buffer);
+        // itoa(entry->inode, buffer);
         //write_buffer(buffer, 10, local_row, local_col + 20);
 
         memset(buffer, 0, sizeof(buffer));
         if (entry->file_type == EXT2_FT_DIR) {
             memcpy(buffer, "DIRECTORY", 10);
+            //write_buffer(buffer, 10, local_row, local_col + 30);
+            local_row++;
         } else if (entry->file_type == EXT2_FT_REG_FILE) {
             memcpy(buffer, "FILE", 5);
+            //write_buffer(buffer, 10, local_row, local_col + 30);
+            local_row++;
         } else {
             buffer[0] = 'U';
+            //write_buffer(buffer, 10, local_row, local_col + 30);
+            local_row++;
         }
-        //write_buffer(buffer, 10, local_row, local_col + 30);
-        local_row++;
-
         if (entry->inode != 0 &&
             entry->name_len == request.name_len &&
             memcmp(entry->name, request.name, request.name_len) == 0) {
@@ -422,6 +425,9 @@ int8_t read(struct EXT2DriverRequest request) {
             break;
         }
     }
+
+    // write_buffer(request.buf, target_node.i_size, local_row, local_col);
+    local_row++;
 
     return 0;
 }
@@ -588,14 +594,12 @@ int8_t write(struct EXT2DriverRequest *request) {
     struct EXT2Inode new_node;
     memset(&new_node, 0, sizeof(struct EXT2Inode));
 
-    // char buffer[] = "new inode : ";
+    char buffer[] = "new inode : ";
     // write_buffer(buffer, 15, local_row, local_col);
-    // memset(buffer, 0, sizeof(buffer));
+    memset(buffer, 0, sizeof(buffer));
     // itoa(new_inode, buffer);
     // write_buffer(buffer, 15, local_row, local_col + 20);
-    // local_row++;
-
-    //print("new_inode : %d", new_inode);
+    local_row++;
 
     if (request->is_directory) {
         init_directory_table(&new_node, new_inode, request->parent_inode);

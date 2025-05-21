@@ -1,6 +1,35 @@
 #include "header/interrupt/interrupt.h"
 #include "header/driver/keyboard.h"
+#include "header/filesys/ext2.h"
+#include "header/text/framebuffer.h"
 
+extern int local_row, local_col;
+
+void syscall(struct InterruptFrame frame) {
+    switch (frame.cpu.general.eax) {
+        case 0:
+            *((int8_t*) frame.cpu.general.ecx) = read(
+                *(struct EXT2DriverRequest*) frame.cpu.general.ebx
+            );
+            break;
+        case 4:
+            get_keyboard_buffer((char*) frame.cpu.general.ebx);
+            break;
+        case 6:
+            // please use write_buffer for this
+            write_buffer(
+                (char*) frame.cpu.general.ebx, 
+                frame.cpu.general.ecx, 
+                local_row, 
+                0
+            );
+            local_row++;
+            break;
+        case 7: 
+            keyboard_state_activate();
+            break;
+    }
+}
 
 struct TSSEntry _interrupt_tss_entry = {
     .ss0  = GDT_KERNEL_DATA_SEGMENT_SELECTOR,
@@ -55,6 +84,12 @@ void main_interrupt_handler(struct InterruptFrame frame) {
         case PIC1_OFFSET + IRQ_KEYBOARD:
             keyboard_isr();
             break;
+
+        // Other interrupts
+        case 0x30: // syscall
+            syscall(frame);
+            break;
+            
             
         default:
             if (frame.int_number >= PIC1_OFFSET) {
@@ -71,3 +106,4 @@ void set_tss_kernel_current_stack(void) {
     // Add 8 because 4 for ret address and other 4 is for stack_ptr variable
     _interrupt_tss_entry.esp0 = stack_ptr + 8; 
 }
+

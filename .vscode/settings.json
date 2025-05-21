@@ -62,6 +62,11 @@
     "*.ejs": "html",
     "ext2.h": "c",
     "string.h": "c",
-    "framebuffer.h": "c"
+    "framebuffer.h": "c",
+    "disk.h": "c",
+    "portio.h": "c",
+    "user-shell.h": "c",
+    "stdbool.h": "c",
+    "stdint.h": "c"
   }
 }

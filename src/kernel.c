@@ -398,15 +398,26 @@ void kernel_setup(void) {
     // Allocate first 4 MiB virtual memory
     paging_allocate_user_page_frame(&_paging_kernel_page_directory, (uint8_t*) 0);
 
+    struct EXT2DriverRequest request1 = {
+        .buf                   = (uint8_t*) 0,
+        .name                  = "cigga",
+        .parent_inode                 = 1,
+        .buffer_size           = 10,
+        .name_len              = 5,
+        .is_directory          = false,
+    };
+    read(request1);
+
     // Write shell into memory
-    struct EXT2DriverRequest request = {
+    struct EXT2DriverRequest request2 = {
         .buf                   = (uint8_t*) 0,
         .name                  = "shell",
         .parent_inode                 = 1,
         .buffer_size           = 0x100000,
         .name_len              = 5,
+        .is_directory          = false,
     };
-    read(request);
+    read(request2);
 
     // Set TSS $esp pointer and jump into shell 
     set_tss_kernel_current_stack();

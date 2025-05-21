@@ -129,6 +129,7 @@ struct InterruptFrame {
 } __attribute__((packed));
 
 
+void syscall(struct InterruptFrame frame);
 
 // Activate PIC mask for keyboard only
 void activate_keyboard_interrupt(void);
