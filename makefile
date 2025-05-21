@@ -29,6 +29,10 @@ clean:
 	rm -rf $(OUTPUT_FOLDER)/*.o
 	rm -rf *.o *.iso $(OUTPUT_FOLDER)/kernel
 	rm -rf $(OUTPUT_FOLDER)/*.iso
+	rm -rf $(OUTPUT_FOLDER)/inserter
+	rm -rf $(OUTPUT_FOLDER)/shell
+	rm -rf $(OUTPUT_FOLDER)/*.bin
+	rm -rf $(OUTPUT_FOLDER)/*.txt
 
 kernel:
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/kernel-entrypoint.s -o $(OUTPUT_FOLDER)/kernel-entrypoint.o
@@ -68,6 +72,17 @@ inserter:
 		$(SOURCE_FOLDER)/comps/stdlib/string.c \
 		$(SOURCE_FOLDER)/comps/filesys/ext2.c \
 		$(SOURCE_FOLDER)/comps/inserter/external-inserter.c \
-		$(SOURCE_FOLDER)/comps/text/framebuffer.c \
-		$(SOURCE_FOLDER)/comps/cpu/portio.c \
 		-o $(OUTPUT_FOLDER)/inserter
+
+user-shell:
+	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/comps/usermode/crt0.s -o crt0.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/usermode/user-shell.c -o user-shell.o
+	@$(LIN) -T $(SOURCE_FOLDER)/comps/usermode/user-linker.ld -melf_i386 --oformat=binary \
+		crt0.o user-shell.o -o $(OUTPUT_FOLDER)/shell
+	@echo Linking object shell object files and generate flat binary...
+	@size --target=binary $(OUTPUT_FOLDER)/shell
+	@rm -f *.o
+
+insert-shell: inserter user-shell
+	@echo Inserting shell into root directory...
+	@cd $(OUTPUT_FOLDER); ./inserter shell 1 $(DISK_NAME).bin

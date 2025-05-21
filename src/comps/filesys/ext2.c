@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include "header/stdlib/string.h"
-#include "header/text/framebuffer.h"
+//#include "header/text/framebuffer.h"
 #include "header/filesys/ext2.h"
 #include "header/driver/disk.h"
 //#include <stdio.h>
@@ -352,11 +352,11 @@ int8_t read(struct EXT2DriverRequest request) {
     char buffer[20];
     memset(buffer, 0, sizeof(buffer));
     memcpy(buffer, "reading folder : ", 15);
-    write_buffer(buffer, 15, local_row, local_col);
+    //write_buffer(buffer, 15, local_row, local_col);
     memset(buffer, 0, sizeof(buffer));
     memcpy(buffer, request.name, request.name_len);
     buffer[request.name_len] = '\0'; // Null-terminate the string
-    write_buffer(buffer, request.name_len, local_row, local_col + 15);
+    //write_buffer(buffer, request.name_len, local_row, local_col + 15);
     local_row++;
 
     while (offset < BLOCK_SIZE) {
@@ -365,11 +365,11 @@ int8_t read(struct EXT2DriverRequest request) {
         memcpy(buffer, entry->name, entry->name_len);
         buffer[entry->name_len] = '\0'; // Null-terminate the string
 
-        write_buffer(buffer, 15, local_row, local_col);
+        //write_buffer(buffer, 15, local_row, local_col);
 
         memset(buffer, 0, sizeof(buffer));
-        itoa(entry->inode, buffer);
-        write_buffer(buffer, 10, local_row, local_col + 20);
+        //itoa(entry->inode, buffer);
+        //write_buffer(buffer, 10, local_row, local_col + 20);
 
         memset(buffer, 0, sizeof(buffer));
         if (entry->file_type == EXT2_FT_DIR) {
@@ -379,7 +379,7 @@ int8_t read(struct EXT2DriverRequest request) {
         } else {
             buffer[0] = 'U';
         }
-        write_buffer(buffer, 10, local_row, local_col + 30);
+        //write_buffer(buffer, 10, local_row, local_col + 30);
         local_row++;
 
         if (entry->inode != 0 &&
