@@ -13,6 +13,7 @@ typedef struct {
 CP cursor = {0, 0};
 char input_buffer[MAX_INPUT_LENGTH];
 int input_length = 0;
+int cursor_position = 0;
 
 void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     __asm__ volatile("mov %0, %%ebx" : /* <Empty> */ : "r"(ebx));
@@ -27,6 +28,7 @@ void clear_input_buffer() {
         input_buffer[i] = '\0';
     }
     input_length = 0;
+    cursor_position = 0;
 }
 
 void set_hardware_cursor() {
@@ -76,6 +78,83 @@ void print_prompt() {
     set_hardware_cursor();
 }
 
+void redraw_input_line(int prompt_start_col) {
+    int current_row = cursor.row;
+    cursor.col = prompt_start_col;
+
+    for (int i = prompt_start_col; i < 80; i++) {
+        char space = ' ';
+        syscall(5, (uint32_t)&space, COLOR_LIGHT_GRAY, (uint32_t)&cursor);
+        cursor.col++;
+    }
+    
+    cursor.col = prompt_start_col;
+    
+    for (int i = 0; i < input_length; i++) {
+        syscall(5, (uint32_t)&input_buffer[i], COLOR_WHITE, (uint32_t)&cursor);
+        cursor.col++;
+    }
+
+    cursor.col = prompt_start_col + cursor_position;
+    cursor.row = current_row;
+
+    set_hardware_cursor();
+}
+
+void insert_char_at_cursor(char c) {
+    if (input_length >= MAX_INPUT_LENGTH - 1) {
+        return;
+    }
+    
+    for (int i = input_length; i > cursor_position; i--) {
+        input_buffer[i] = input_buffer[i - 1];
+    }
+
+    input_buffer[cursor_position] = c;
+    input_length++;
+    cursor_position++;
+    input_buffer[input_length] = '\0';
+}
+
+void delete_char_before_cursor() {
+    if (cursor_position <= 0 || input_length <= 0) {
+        return;
+    }
+
+    for (int i = cursor_position - 1; i < input_length - 1; i++) {
+        input_buffer[i] = input_buffer[i + 1];
+    }
+    
+    input_length--;
+    cursor_position--;
+    input_buffer[input_length] = '\0';
+}
+
+void delete_char_at_cursor() {
+    if (cursor_position >= input_length) {
+        return;
+    }
+
+    for (int i = cursor_position; i < input_length - 1; i++) {
+        input_buffer[i] = input_buffer[i + 1];
+    }
+    
+    input_length--;
+    input_buffer[input_length] = '\0';
+}
+
+void move_cursor_left() {
+    if (cursor_position > 0) {
+        cursor_position--;
+    }
+}
+
+void move_cursor_right() {
+    if (cursor_position < input_length) {
+        cursor_position++;
+    }
+}
+
 // ya ini dummy buat ngecek, harusnya kalian kalau mau ngetes pakai memset aja - Nayaka
 void process_command() {
     print_newline();
@@ -85,18 +164,32 @@ void process_command() {
             input_buffer[2] == 'l' && input_buffer[3] == 'p' && 
             input_buffer[4] == '\0') {
             
-            print_string_at_cursor("Available commands:");
+            print_string_colored("Available commands:", COLOR_YELLOW);
             print_newline();
-            print_string_at_cursor("  help - Show this help message");
+            print_string_colored("  help - Show this help message", COLOR_LIGHT_GRAY);
             print_newline();
-            print_string_at_cursor("  clear - Clear the screen");
+            print_string_colored("  clear - Clear the screen", COLOR_LIGHT_GRAY);
             print_newline();
-            print_string_at_cursor("  echo [text] - Echo the text");
+            print_string_colored("  echo [text] - Echo the text", COLOR_LIGHT_GRAY);
             print_newline();
-            print_string_at_cursor("  exit - Exit the shell");
+            print_string_colored("  edit - Test line editing features", COLOR_LIGHT_GRAY);
             print_newline();
-        }
-        else if (input_buffer[0] == 'c' && input_buffer[1] == 'l' && 
+            print_string_colored("  debug - Debug mode to see key scancodes", COLOR_LIGHT_GRAY);
+            print_newline();
+            print_string_colored("  exit - Exit the shell", COLOR_LIGHT_GRAY);
+            print_newline();
+            print_newline();
+            print_string_colored("Editing Features:", COLOR_YELLOW);
+            print_newline();
+            print_string_colored("  <- -> Arrow Keys - Move cursor in line", COLOR_LIGHT_GREEN);
+            print_newline();
+            print_string_colored("  Ctrl+A/Ctrl+D - Alternative cursor movement", COLOR_LIGHT_GREEN);
+            print_newline();
+            print_string_colored("  Backspace - Delete char before cursor", COLOR_LIGHT_GREEN);
+            print_newline();
+            print_string_colored("  Insert anywhere - Type to insert text", COLOR_LIGHT_GREEN);
+            print_newline();
+        } else if (input_buffer[0] == 'c' && input_buffer[1] == 'l' && 
                  input_buffer[2] == 'e' && input_buffer[3] == 'a' && 
                  input_buffer[4] == 'r' && input_buffer[5] == '\0') {
             
@@ -114,26 +207,45 @@ void process_command() {
             cursor.row = 0;
             cursor.col = 0;
         }
-        else if (input_buffer[0] == 'e' && input_buffer[1] == 'c' && 
-                 input_buffer[2] == 'h' && input_buffer[3] == 'o' && 
-                 input_buffer[4] == ' ') {
-
-            print_string_at_cursor(&input_buffer[5]);
+        else if (input_buffer[0] == 'd' && input_buffer[1] == 'e' && 
+                 input_buffer[2] == 'b' && input_buffer[3] == 'u' && 
+                 input_buffer[4] == 'g' && input_buffer[5] == '\0') {
+            
+            print_string_colored("Debug mode enabled!", COLOR_LIGHT_GREEN);
             print_newline();
-        }
-        else if (input_buffer[0] == 'e' && input_buffer[1] == 'x' && 
+            print_string_colored("Press any key (including arrows) to see scancode.", COLOR_LIGHT_GRAY);
+            print_newline();
+            print_string_colored("Press ESC to exit debug mode.", COLOR_LIGHT_GRAY);
+            print_newline();
+
+        } else if (input_buffer[0] == 'e' && input_buffer[1] == 'd' && 
                  input_buffer[2] == 'i' && input_buffer[3] == 't' && 
                  input_buffer[4] == '\0') {
             
-            print_string_at_cursor("Goodbye!");
+            print_string_colored("Line editing test mode!", COLOR_LIGHT_GREEN);
+            print_newline();
+            print_string_colored("Try typing, then use arrow keys to move cursor.", COLOR_LIGHT_GRAY);
+            print_newline();
+            print_string_colored("Insert text anywhere, delete with Backspace/Delete.", COLOR_LIGHT_GRAY);
+            print_newline();
+        } else if (input_buffer[0] == 'e' && input_buffer[1] == 'c' && 
+                 input_buffer[2] == 'h' && input_buffer[3] == 'o' && 
+                 input_buffer[4] == ' ') {
+
+            print_string_colored(&input_buffer[5], COLOR_LIGHT_GREEN);
+            print_newline();
+        } else if (input_buffer[0] == 'e' && input_buffer[1] == 'x' && 
+                 input_buffer[2] == 'i' && input_buffer[3] == 't' && 
+                 input_buffer[4] == '\0') {
+            
+            print_string_colored("Goodbye!", COLOR_LIGHT_RED);
             print_newline();
             while(1) {}
-        }
-        else {
-            print_string_at_cursor("Command not found: ");
-            print_string_at_cursor(input_buffer);
+        } else {
+            print_string_colored("Command not found: ", COLOR_LIGHT_RED);
+            print_string_colored(input_buffer, COLOR_WHITE);
             print_newline();
-            print_string_at_cursor("Type 'help' for available commands.");
+            print_string_colored("Type 'help' for available commands.", COLOR_DARK_GRAY);
             print_newline();
         }
     }
@@ -142,60 +254,52 @@ void process_command() {
 int main(void) {
     cursor.row = 0;
     cursor.col = 0;
-    
+        
     clear_input_buffer();
     print_prompt();
     
     syscall(7, 0, 0, 0);
 
     char c;
-    while (true) {
+    int prompt_start_col = cursor.col;
+    
+    while (1) {
         syscall(4, (uint32_t)&c, 0, 0);
         
         if (c != 0) {
-            if (c == '\n' || c == '\r') {
+            if (c == 0x11) { // Left arrow (0x4B -> 0x11)
+                move_cursor_left();
+                cursor.col = prompt_start_col + cursor_position;
+                set_hardware_cursor();
+                continue;
+            }
+            else if (c == 0x12) { // Right arrow (0x4D -> 0x12)
+                move_cursor_right();
+                cursor.col = prompt_start_col + cursor_position;
+                set_hardware_cursor();
+                continue;
+            }
+            else if (c == 0x10) { // Up arrow (0x48 -> 0x10)
+                // TODO: Implement i guess?
+                continue;
+            }
+            else if (c == 0x13) { // Down arrow (0x50 -> 0x13)
+                // TODO: What?
+                continue;
+            }
+            
+            if (c == '\n' || c == '\r') { // Enter key
                 print_newline();
                 process_command();
                 clear_input_buffer();
                 print_prompt();
-            }
-
-            else if (c == '\b') {
-                if (input_length > 0) {
-                    input_length--;
-                    input_buffer[input_length] = '\0';
-                    
-                    if (cursor.col > 0) {
-                        cursor.col--;
-                    } else if (cursor.row > 0) {
-                        cursor.row--;
-                        cursor.col = 79;
-                    }
-                    
-                    char space = ' ';
-                    syscall(5, (uint32_t)&space, COLOR_LIGHT_GRAY, (uint32_t)&cursor);
-                    set_hardware_cursor();
-                }
-            }
-
-            else if (c >= ' ' && c <= '~') {
-                if (input_length < MAX_INPUT_LENGTH - 1) {
-                    input_buffer[input_length] = c;
-                    input_length++;
-                    input_buffer[input_length] = '\0';
-                    
-                    syscall(5, (uint32_t)&c, COLOR_WHITE, (uint32_t)&cursor);
-                    cursor.col++;
-                    
-                    if (cursor.col >= 80) {
-                        cursor.col = 0;
-                        cursor.row++;
-                        if (cursor.row >= 25) {
-                            cursor.row = 24;
-                        }
-                    }
-                    set_hardware_cursor();
-                }
+                prompt_start_col = cursor.col;
+            } else if (c == '\b') { // Backspace
+                delete_char_before_cursor();
+                redraw_input_line(prompt_start_col);
+            } else if (c >= ' ' && c <= '~') {
+                insert_char_at_cursor(c);
+                redraw_input_line(prompt_start_col);
             }
         }
     }
