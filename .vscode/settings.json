@@ -67,6 +67,8 @@
     "portio.h": "c",
     "user-shell.h": "c",
     "stdbool.h": "c",
-    "stdint.h": "c"
+    "stdint.h": "c",
+    "keyboard.h": "c",
+    "interrupt.h": "c"
   }
 }

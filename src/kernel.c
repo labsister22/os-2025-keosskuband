@@ -162,6 +162,7 @@ void kernel_setup(void) {
 
 /*
 // Helper functions for printing to the framebuffer
+*/
 void print_string(const char* message, int row, int col, uint8_t color) {
     int i = 0;
     while (message[i] != '\0') {
@@ -169,6 +170,8 @@ void print_string(const char* message, int row, int col, uint8_t color) {
         i++;
     }
 }
+
+/*
 
 // Function to print a hexadecimal number
 void print_hex(uint32_t number, int row, int col, uint8_t color) {
@@ -422,6 +425,4 @@ void kernel_setup(void) {
     // Set TSS $esp pointer and jump into shell 
     set_tss_kernel_current_stack();
     kernel_execute_user_program((uint8_t*) 0);
-
-    while (true);
 }

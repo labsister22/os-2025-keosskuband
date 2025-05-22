@@ -3,7 +3,10 @@
 #include "header/filesys/ext2.h"
 #include "header/text/framebuffer.h"
 
-extern int local_row, local_col;
+typedef struct {
+    int32_t row;
+    int32_t col;
+} CP;
 
 void syscall(struct InterruptFrame frame) {
     switch (frame.cpu.general.eax) {
@@ -11,19 +14,27 @@ void syscall(struct InterruptFrame frame) {
             *((int8_t*) frame.cpu.general.ecx) = read(
                 *(struct EXT2DriverRequest*) frame.cpu.general.ebx
             );
-            break;
+            break;          
         case 4:
             get_keyboard_buffer((char*) frame.cpu.general.ebx);
             break;
-        case 6:
-            // please use write_buffer for this
-            write_buffer(
+        case 5:
+            // 1 character writing
+            put_char(
                 (char*) frame.cpu.general.ebx, 
                 frame.cpu.general.ecx, 
-                local_row, 
-                0
+                ((CP*) frame.cpu.general.edx)->row, 
+                ((CP*) frame.cpu.general.edx)->col
             );
-            local_row++;
+            break;
+        case 6:
+            // please use write_buffer for this
+            puts(
+                (char*) frame.cpu.general.ebx, 
+                frame.cpu.general.ecx, 
+                ((CP*) frame.cpu.general.edx)->row, 
+                ((CP*) frame.cpu.general.edx)->col
+            );
             break;
         case 7: 
             keyboard_state_activate();

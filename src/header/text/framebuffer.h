@@ -12,6 +12,9 @@
 #define FRAMEBUFFER_WIDTH  80
 #define FRAMEBUFFER_HEIGHT 25
 
+void puts(char *buf, int size, int row, int col);
+void put_char(char *buf, int size, int row, int col);
+
 void write_buffer(char *buf, int size, int row, int col);
 void itoa(int value, char *str);
 

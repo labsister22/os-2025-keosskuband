@@ -16,6 +16,21 @@ void write_buffer(char *buf, int size, int row, int col) {
     }
 }
 
+void puts(char *buf, int size, int row, int col) {
+    for (int i = 0; i < size; ++i) {
+        framebuffer_write(row, col, buf[i], 0xF, 0);
+        col++;
+        if (col >= FRAMEBUFFER_WIDTH) {
+            ++row;
+            col = 0;
+        }
+    }
+}
+
+void put_char(char *buf, int size, int row, int col) {
+    framebuffer_write(row, col, *buf, 0xF, 0);
+}
+
 void itoa(int value, char *str) {
     char temp[16];
     int i = 0, is_negative = 0;
