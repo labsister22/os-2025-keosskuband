@@ -14,6 +14,7 @@ CP cursor = {0, 0};
 char input_buffer[MAX_INPUT_LENGTH];
 int input_length = 0;
 char args[MAX_ARGS_AMOUNT][MAX_ARGS_LENGTH];
+int cursor_position = 0;
 
 void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     __asm__ volatile("mov %0, %%ebx" : /* <Empty> */ : "r"(ebx));
@@ -28,6 +29,7 @@ void clear_input_buffer() {
         input_buffer[i] = '\0';
     }
     input_length = 0;
+    cursor_position = 0;
 }
 
 void set_hardware_cursor() {
@@ -75,6 +77,83 @@ void print_prompt() {
         i++;
     }
     set_hardware_cursor();
+}
+
+void redraw_input_line(int prompt_start_col) {
+    int current_row = cursor.row;
+    cursor.col = prompt_start_col;
+
+    for (int i = prompt_start_col; i < 80; i++) {
+        char space = ' ';
+        syscall(5, (uint32_t)&space, COLOR_LIGHT_GRAY, (uint32_t)&cursor);
+        cursor.col++;
+    }
+    
+    cursor.col = prompt_start_col;
+    
+    for (int i = 0; i < input_length; i++) {
+        syscall(5, (uint32_t)&input_buffer[i], COLOR_WHITE, (uint32_t)&cursor);
+        cursor.col++;
+    }
+
+    cursor.col = prompt_start_col + cursor_position;
+    cursor.row = current_row;
+
+    set_hardware_cursor();
+}
+
+void insert_char_at_cursor(char c) {
+    if (input_length >= MAX_INPUT_LENGTH - 1) {
+        return;
+    }
+    
+    for (int i = input_length; i > cursor_position; i--) {
+        input_buffer[i] = input_buffer[i - 1];
+    }
+
+    input_buffer[cursor_position] = c;
+    input_length++;
+    cursor_position++;
+    input_buffer[input_length] = '\0';
+}
+
+void delete_char_before_cursor() {
+    if (cursor_position <= 0 || input_length <= 0) {
+        return;
+    }
+
+    for (int i = cursor_position - 1; i < input_length - 1; i++) {
+        input_buffer[i] = input_buffer[i + 1];
+    }
+    
+    input_length--;
+    cursor_position--;
+    input_buffer[input_length] = '\0';
+}
+
+void delete_char_at_cursor() {
+    if (cursor_position >= input_length) {
+        return;
+    }
+
+    for (int i = cursor_position; i < input_length - 1; i++) {
+        input_buffer[i] = input_buffer[i + 1];
+    }
+    
+    input_length--;
+    input_buffer[input_length] = '\0';
+}
+
+void move_cursor_left() {
+    if (cursor_position > 0) {
+        cursor_position--;
+    }
+}
+
+void move_cursor_right() {
+    if (cursor_position < input_length) {
+        cursor_position++;
+    }
 }
 
 // ya ini dummy buat ngecek, harusnya kalian kalau mau ngetes pakai memset aja - Nayaka
@@ -130,12 +209,11 @@ void process_command() {
             print_string_at_cursor("Goodbye!");
             print_newline();
             while(1) {}
-        }
-        else {
-            print_string_at_cursor("Command not found: ");
-            print_string_at_cursor(input_buffer);
+        } else {
+            print_string_colored("Command not found: ", COLOR_LIGHT_RED);
+            print_string_colored(input_buffer, COLOR_WHITE);
             print_newline();
-            print_string_at_cursor("Type 'help' for available commands.");
+            print_string_colored("Type 'help' for available commands.", COLOR_DARK_GRAY);
             print_newline();
         }
     }
@@ -151,53 +229,45 @@ int main(void) {
     syscall(7, 0, 0, 0); // activate keyboard
 
     char c;
-    while (true) {
+    int prompt_start_col = cursor.col;
+    
+    while (1) {
         syscall(4, (uint32_t)&c, 0, 0);
         
         if (c != 0) {
-            if (c == '\n' || c == '\r') {
+            if (c == 0x11) { // Left arrow (0x4B -> 0x11)
+                move_cursor_left();
+                cursor.col = prompt_start_col + cursor_position;
+                set_hardware_cursor();
+                continue;
+            }
+            else if (c == 0x12) { // Right arrow (0x4D -> 0x12)
+                move_cursor_right();
+                cursor.col = prompt_start_col + cursor_position;
+                set_hardware_cursor();
+                continue;
+            }
+            else if (c == 0x10) { // Up arrow (0x48 -> 0x10)
+                // TODO: Implement i guess?
+                continue;
+            }
+            else if (c == 0x13) { // Down arrow (0x50 -> 0x13)
+                // TODO: What?
+                continue;
+            }
+            
+            if (c == '\n' || c == '\r') { // Enter key
                 print_newline();
                 process_command();
                 clear_input_buffer();
                 print_prompt();
-            }
-
-            else if (c == '\b') {
-                if (input_length > 0) {
-                    input_length--;
-                    input_buffer[input_length] = '\0';
-                    
-                    if (cursor.col > 0) {
-                        cursor.col--;
-                    } else if (cursor.row > 0) {
-                        cursor.row--;
-                        cursor.col = 79;
-                    }
-                    
-                    char space = ' ';
-                    syscall(5, (uint32_t)&space, COLOR_LIGHT_GRAY, (uint32_t)&cursor);
-                    set_hardware_cursor();
-                }
-            }
-
-            else if (c >= ' ' && c <= '~') {
-                if (input_length < MAX_INPUT_LENGTH - 1) {
-                    input_buffer[input_length] = c;
-                    input_length++;
-                    input_buffer[input_length] = '\0';
-                    
-                    syscall(5, (uint32_t)&c, COLOR_WHITE, (uint32_t)&cursor);
-                    cursor.col++;
-                    
-                    if (cursor.col >= 80) {
-                        cursor.col = 0;
-                        cursor.row++;
-                        if (cursor.row >= 25) {
-                            cursor.row = 24;
-                        }
-                    }
-                    set_hardware_cursor();
-                }
+                prompt_start_col = cursor.col;
+            } else if (c == '\b') { // Backspace
+                delete_char_before_cursor();
+                redraw_input_line(prompt_start_col);
+            } else if (c >= ' ' && c <= '~') {
+                insert_char_at_cursor(c);
+                redraw_input_line(prompt_start_col);
             }
         }
     }
