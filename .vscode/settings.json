@@ -70,6 +70,12 @@
     "stdint.h": "c",
     "keyboard.h": "c",
     "interrupt.h": "c",
-    "apple.h": "c"
+    "apple.h": "c",
+    "help.h": "c",
+    "deque": "c",
+    "string": "c",
+    "unordered_map": "c",
+    "vector": "c",
+    "system_error": "c"
   }
 }

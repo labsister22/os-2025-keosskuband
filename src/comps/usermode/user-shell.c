@@ -4,15 +4,20 @@
 #include "header/filesys/ext2.h"
 #include "header/usermode/user-shell.h"
 #include "comps/usermode/commands/apple.h"
+#include "header/usermode/commands/help.h"
+#include "header/usermode/commands/clear.h"
+#include "header/usermode/commands/echo.h"
 
-#define MAX_INPUT_LENGTH 256
+#define MAX_INPUT_LENGTH 2048
+#define MAX_ARGS_AMOUNT 10
+#define MAX_ARGS_LENGTH 32
 #define SHELL_PROMPT "Keossku-Band$/ "
-
 
 
 CP cursor = {0, 0};
 char input_buffer[MAX_INPUT_LENGTH];
 int input_length = 0;
+char args[MAX_ARGS_AMOUNT][MAX_ARGS_LENGTH];
 int cursor_position = 0;
 
 void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
@@ -158,87 +163,54 @@ void move_cursor_right() {
 // ya ini dummy buat ngecek, harusnya kalian kalau mau ngetes pakai memset aja - Nayaka
 void process_command() {
     print_newline();
+    int cmd_length = 0;
+    
     
     if (input_length > 0) {
-        if (input_buffer[0] == 'h' && input_buffer[1] == 'e' && 
-            input_buffer[2] == 'l' && input_buffer[3] == 'p' && 
-            input_buffer[4] == '\0') {
-            
-            print_string_colored("Available commands:", COLOR_YELLOW);
-            print_newline();
-            print_string_colored("  help - Show this help message", COLOR_LIGHT_GRAY);
-            print_newline();
-            print_string_colored("  clear - Clear the screen", COLOR_LIGHT_GRAY);
-            print_newline();
-            print_string_colored("  echo [text] - Echo the text", COLOR_LIGHT_GRAY);
-            print_newline();
-            print_string_colored("  edit - Test line editing features", COLOR_LIGHT_GRAY);
-            print_newline();
-            print_string_colored("  debug - Debug mode to see key scancodes", COLOR_LIGHT_GRAY);
-            print_newline();
-            print_string_colored("  exit - Exit the shell", COLOR_LIGHT_GRAY);
-            print_newline();
-            print_newline();
-            print_string_colored("Editing Features:", COLOR_YELLOW);
-            print_newline();
-            print_string_colored("  <- -> Arrow Keys - Move cursor in line", COLOR_LIGHT_GREEN);
-            print_newline();
-            print_string_colored("  Ctrl+A/Ctrl+D - Alternative cursor movement", COLOR_LIGHT_GREEN);
-            print_newline();
-            print_string_colored("  Backspace - Delete char before cursor", COLOR_LIGHT_GREEN);
-            print_newline();
-            print_string_colored("  Insert anywhere - Type to insert text", COLOR_LIGHT_GREEN);
-            print_newline();
-        } else if (input_buffer[0] == 'c' && input_buffer[1] == 'l' && 
-                 input_buffer[2] == 'e' && input_buffer[3] == 'a' && 
-                 input_buffer[4] == 'r' && input_buffer[5] == '\0') {
-            
-            cursor.row = 0;
-            cursor.col = 0;
-            set_hardware_cursor();
-            
-            for (int i = 0; i < 25; i++) {
-                for (int j = 0; j < 80; j++) {
-                    CP temp = {i, j};
-                    char space = ' ';
-                    syscall(5, (uint32_t)&space, 0x07, (uint32_t)&temp);
-                }
+        // process input 
+        
+        int i = 0;
+        // get command length
+        while (i < input_length && input_buffer[i] != ' ' && 
+               input_buffer[i] != '\n' && input_buffer[i] != '\r') i++;
+        cmd_length = i;
+
+        // skip the whitespaces to get to first args
+        while (input_buffer[i] == ' ') i++; 
+
+        int args_idx = 0;
+        int args_buffer_idx = 0;
+        while (i < input_length && args_idx < MAX_ARGS_AMOUNT) {
+
+            while (i < input_length && input_buffer[i] != ' ' && 
+                   input_buffer[i] != '\n' && input_buffer[i] != '\r') {
+                args[args_idx][args_buffer_idx] = input_buffer[i];
+                args_buffer_idx++;
+                i++;
             }
-            cursor.row = 0;
-            cursor.col = 0;
+            
+            if (args_buffer_idx > 0) {
+                args_buffer_idx = 0;
+                args_idx++;
+            }
+
+            i++; // skip whitespace
         }
-        else if (input_buffer[0] == 'd' && input_buffer[1] == 'e' && 
-                 input_buffer[2] == 'b' && input_buffer[3] == 'u' && 
-                 input_buffer[4] == 'g' && input_buffer[5] == '\0') {
-            
-            print_string_colored("Debug mode enabled!", COLOR_LIGHT_GREEN);
-            print_newline();
-            print_string_colored("Press any key (including arrows) to see scancode.", COLOR_LIGHT_GRAY);
-            print_newline();
-            print_string_colored("Press ESC to exit debug mode.", COLOR_LIGHT_GRAY);
-            print_newline();
+        
 
-        } else if (input_buffer[0] == 'e' && input_buffer[1] == 'd' && 
-                 input_buffer[2] == 'i' && input_buffer[3] == 't' && 
-                 input_buffer[4] == '\0') {
-            
-            print_string_colored("Line editing test mode!", COLOR_LIGHT_GREEN);
-            print_newline();
-            print_string_colored("Try typing, then use arrow keys to move cursor.", COLOR_LIGHT_GRAY);
-            print_newline();
-            print_string_colored("Insert text anywhere, delete with Backspace/Delete.", COLOR_LIGHT_GRAY);
-            print_newline();
-        } else if (input_buffer[0] == 'e' && input_buffer[1] == 'c' && 
-                 input_buffer[2] == 'h' && input_buffer[3] == 'o' && 
-                 input_buffer[4] == ' ') {
-
-            print_string_colored(&input_buffer[5], COLOR_LIGHT_GREEN);
-            print_newline();
-        } else if (input_buffer[0] == 'e' && input_buffer[1] == 'x' && 
-                 input_buffer[2] == 'i' && input_buffer[3] == 't' && 
-                 input_buffer[4] == '\0') {
-            
-            print_string_colored("Goodbye!", COLOR_LIGHT_RED);
+        // do commands
+        if (!memcmp("help", input_buffer, cmd_length)) {
+            help();
+        }
+        else if (!memcmp(input_buffer, "clear", cmd_length)) {
+            clear();
+        }
+        else if (!memcmp("echo", input_buffer, cmd_length)) {
+            echo(args[0]);
+        }
+        else if (!memcmp("exit", input_buffer, cmd_length)) {
+            // gk tau implemennya gmn
+            print_string_at_cursor("Goodbye!");
             print_newline();
             while(1) {}
         } else if (input_buffer[0] == 'a' && input_buffer[1] == 'p' && 
@@ -275,11 +247,11 @@ int main(void) {
 
     cursor.row = 0;
     cursor.col = 0;
-        
-    clear_input_buffer();
+    
+    clear_input_buffer(); 
     print_prompt();
     
-    syscall(7, 0, 0, 0);
+    syscall(7, 0, 0, 0); // activate keyboard
 
     char c;
     int prompt_start_col = cursor.col;
