@@ -69,6 +69,7 @@
     "stdbool.h": "c",
     "stdint.h": "c",
     "keyboard.h": "c",
-    "interrupt.h": "c"
+    "interrupt.h": "c",
+    "apple.h": "c"
   }
 }

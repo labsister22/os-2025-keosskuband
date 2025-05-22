@@ -1,5 +1,15 @@
+#ifndef USER_SHELL_H
+#define USER_SHELL_H
+
 #include <stdint.h>
 #include "header/filesys/ext2.h"
+
+
+typedef struct {
+    int32_t row;
+    int32_t col;
+} CP;
+
 
 #define BLOCK_COUNT 16
 
@@ -21,3 +31,5 @@
 #define COLOR_WHITE       0x0F
 
 void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx);
+
+#endif

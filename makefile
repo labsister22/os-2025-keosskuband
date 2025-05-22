@@ -78,11 +78,12 @@ user-shell:
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/comps/usermode/crt0.s -o crt0.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/usermode/user-shell.c -o user-shell.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/stdlib/string.c -o string.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/usermode/commands/apple.c -o apple.o
 	@$(LIN) -T $(SOURCE_FOLDER)/comps/usermode/user-linker.ld -melf_i386 --oformat=binary \
-		crt0.o user-shell.o string.o -o $(OUTPUT_FOLDER)/shell
+		crt0.o user-shell.o string.o apple.o -o $(OUTPUT_FOLDER)/shell
 	@echo Linking object shell object files and generate flat binary...
 	@$(LIN) -T $(SOURCE_FOLDER)/comps/usermode/user-linker.ld -melf_i386 --oformat=elf32-i386 \
-		crt0.o user-shell.o string.o -o $(OUTPUT_FOLDER)/shell_elf
+		crt0.o user-shell.o string.o apple.o -o $(OUTPUT_FOLDER)/shell_elf
 	@echo Linking object shell object files and generate ELF32 for debugging...
 	@size --target=binary $(OUTPUT_FOLDER)/shell
 	@rm -f *.o

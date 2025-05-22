@@ -16,6 +16,17 @@ void write_buffer(char *buf, int size, int row, int col) {
     }
 }
 
+void puts_with_color(char *buf, int size, int row, int col, uint8_t fg, uint8_t bg) {
+    for (int i = 0; i < size; ++i) {
+        framebuffer_write(row, col, buf[i], fg, bg);
+        ++col;
+        if (col >= FRAMEBUFFER_WIDTH) {
+            ++row;
+            col = 0;
+        }
+    }
+}
+
 void puts(char *buf, int size, int row, int col) {
     for (int i = 0; i < size; ++i) {
         framebuffer_write(row, col, buf[i], 0xF, 0);

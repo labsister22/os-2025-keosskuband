@@ -159,6 +159,7 @@ void kernel_setup(void) {
 #include "header/filesys/ext2.h"
 #include "header/text/framebuffer.h"
 #include "header/memory/paging.h"
+#include "misc/apple.h"
 
 /*
 // Helper functions for printing to the framebuffer
@@ -402,14 +403,14 @@ void kernel_setup(void) {
     paging_allocate_user_page_frame(&_paging_kernel_page_directory, (uint8_t*) 0);
 
     struct EXT2DriverRequest request1 = {
-        .buf                   = (uint8_t*) 0,
-        .name                  = "cigga",
-        .parent_inode                 = 1,
-        .buffer_size           = 10,
-        .name_len              = 5,
+        .buf                   = apple_frames,
+        .name                  = "apple.txt",
+        .parent_inode          = 1,
+        .buffer_size           = 50*512,
+        .name_len              = 9,
         .is_directory          = false,
     };
-    read(request1);
+    write(&request1);
 
     // Write shell into memory
     struct EXT2DriverRequest request2 = {
