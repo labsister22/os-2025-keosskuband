@@ -4,13 +4,6 @@
 #include <stdint.h>
 #include "header/filesys/ext2.h"
 
-
-typedef struct {
-    int32_t row;
-    int32_t col;
-} CP;
-
-
 #define BLOCK_COUNT 16
 
 #define COLOR_BLACK       0x00
