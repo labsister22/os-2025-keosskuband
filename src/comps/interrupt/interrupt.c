@@ -39,6 +39,12 @@ void syscall(struct InterruptFrame frame) {
         case 7: 
             keyboard_state_activate();
             break;
+        case 8: // NEW: Set cursor syscall untuk shell
+            framebuffer_set_cursor(
+                (uint8_t)frame.cpu.general.ebx,  // row
+                (uint8_t)frame.cpu.general.ecx   // col
+            );
+            break;
     }
 }
 
@@ -101,7 +107,6 @@ void main_interrupt_handler(struct InterruptFrame frame) {
             syscall(frame);
             break;
             
-            
         default:
             if (frame.int_number >= PIC1_OFFSET) {
                 pic_ack(frame.int_number - PIC1_OFFSET);
@@ -117,4 +122,3 @@ void set_tss_kernel_current_stack(void) {
     // Add 8 because 4 for ret address and other 4 is for stack_ptr variable
     _interrupt_tss_entry.esp0 = stack_ptr + 8; 
 }
-
