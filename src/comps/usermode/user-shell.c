@@ -1,6 +1,9 @@
+
+
 #include <stdint.h>
 #include "header/filesys/ext2.h"
 #include "header/usermode/user-shell.h"
+#include "comps/usermode/commands/apple.h"
 #include "header/usermode/commands/help.h"
 #include "header/usermode/commands/clear.h"
 #include "header/usermode/commands/echo.h"
@@ -9,6 +12,7 @@
 #define MAX_ARGS_AMOUNT 10
 #define MAX_ARGS_LENGTH 32
 #define SHELL_PROMPT "Keossku-Band$/ "
+
 
 CP cursor = {0, 0};
 char input_buffer[MAX_INPUT_LENGTH];
@@ -209,7 +213,16 @@ void process_command() {
             print_string_at_cursor("Goodbye!");
             print_newline();
             while(1) {}
-        } else {
+        } else if (input_buffer[0] == 'a' && input_buffer[1] == 'p' && 
+                 input_buffer[2] == 'p' && input_buffer[3] == 'l' && 
+                 input_buffer[4] == 'e' && input_buffer[5] == '\0') {
+
+            apple(&cursor);
+        } else if (input_buffer[0] == 0x1B) { // ESC key
+            print_string_colored("Exiting debug mode...", COLOR_LIGHT_RED);
+            print_newline();
+        }
+        else {
             print_string_colored("Command not found: ", COLOR_LIGHT_RED);
             print_string_colored(input_buffer, COLOR_WHITE);
             print_newline();
@@ -220,6 +233,18 @@ void process_command() {
 }
 
 int main(void) {
+    struct BlockBuffer      bl[10]   = {0};
+    struct EXT2DriverRequest request = {
+        .buf                   = &bl,
+        .name                  = "shell",
+        .parent_inode          = 1,
+        .buffer_size           = BLOCK_SIZE * 10,
+        .name_len = 5,
+    };
+    int32_t retcode;
+    syscall(0, (uint32_t) &request, (uint32_t) &retcode, 0);
+
+
     cursor.row = 0;
     cursor.col = 0;
     

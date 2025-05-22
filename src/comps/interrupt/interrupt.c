@@ -8,6 +8,12 @@ typedef struct {
     int32_t col;
 } CP;
 
+typedef struct {
+    int size;
+    uint8_t font_color;
+    uint8_t bg_color;
+} PrintRequest;
+
 void syscall(struct InterruptFrame frame) {
     switch (frame.cpu.general.eax) {
         case 0:
@@ -43,6 +49,16 @@ void syscall(struct InterruptFrame frame) {
             framebuffer_set_cursor(
                 (uint8_t)frame.cpu.general.ebx,  // row
                 (uint8_t)frame.cpu.general.ecx   // col
+            );
+            break;
+        case 9: // NEW: puts with color
+            puts_with_color(
+                (char*) frame.cpu.general.ebx, 
+                ((PrintRequest*) frame.cpu.general.ecx)->size, 
+                ((CP*) frame.cpu.general.edx)->row, 
+                ((CP*) frame.cpu.general.edx)->col,
+                ((PrintRequest*) frame.cpu.general.ecx)->font_color,
+                ((PrintRequest*) frame.cpu.general.ecx)->bg_color
             );
             break;
     }

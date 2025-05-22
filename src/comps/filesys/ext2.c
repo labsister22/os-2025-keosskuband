@@ -410,14 +410,22 @@ int8_t read(struct EXT2DriverRequest request) {
     uint32_t blocks_to_read = (target_node.i_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
     uint8_t *buf = (uint8_t *)request.buf;
 
+    bool is_indirect_block_already_readed = false;
+    uint32_t indirect_block[BLOCK_SIZE / 4] = {0};
+
     for (uint32_t i = 0; i < blocks_to_read; i++) {
         if (i < 12) {
             if (target_node.i_block[i] == 0) break;
             read_blocks(buf + (i * BLOCK_SIZE), target_node.i_block[i], 1);
-        } else if (i < 268) {
+        } else if (i < 140) {
             if (target_node.i_block[12] == 0) return 3; // no indirect block
-            uint32_t indirect_block[BLOCK_SIZE / sizeof(uint32_t)] = {0};
-            read_blocks(indirect_block, target_node.i_block[12], 1);
+
+            
+            if (!is_indirect_block_already_readed) {
+                is_indirect_block_already_readed = true;
+                read_blocks(indirect_block, target_node.i_block[12], 1);
+            }
+
             if (indirect_block[i - 12] == 0) break;
             read_blocks(buf + (i * BLOCK_SIZE), indirect_block[i - 12], 1);
         } else {
@@ -471,6 +479,11 @@ void allocate_node_blocks(void *ptr, struct EXT2Inode *node, uint32_t prefered_b
 
     // Clear direct blocks
     for (int i = 0; i < 15; ++i) node->i_block[i] = 0;
+    uint32_t indirect_block_entries[BLOCK_SIZE / 4]; 
+    memset(indirect_block_entries, 0, sizeof(indirect_block_entries));
+    
+    uint32_t indirect_count = 0;
+    bool indirect_block_allocated = false;
 
     // Search from preferred group onward
     for (uint32_t g = prefered_bgd; g < GROUPS_COUNT && blocks_allocated < blocks_needed; g++) {
@@ -490,6 +503,7 @@ void allocate_node_blocks(void *ptr, struct EXT2Inode *node, uint32_t prefered_b
 
                 // Mark block as used
                 bitmap[byte_idx] |= (1 << bit_idx);
+                group_blocks_taken++;
 
                 // Assign to direct blocks only
                 if (blocks_allocated < 12) {
@@ -499,12 +513,19 @@ void allocate_node_blocks(void *ptr, struct EXT2Inode *node, uint32_t prefered_b
                         write_blocks(data + (blocks_allocated * BLOCK_SIZE), block_id, 1);
                     }
                 } else {
-                    // Indirect block support not implemented
-                    // return false;
+                    if (!indirect_block_allocated) {
+                        node->i_block[12] = block_id;
+                        indirect_block_allocated = true;
+                        continue;
+                    }
+                    indirect_block_entries[indirect_count++] = block_id;
+
+                    if (data != NULL) {
+                        write_blocks(data + (blocks_allocated * BLOCK_SIZE), block_id, 1);
+                    }
                 }
 
                 blocks_allocated++;
-                group_blocks_taken++;
             }
         }
 
@@ -514,8 +535,12 @@ void allocate_node_blocks(void *ptr, struct EXT2Inode *node, uint32_t prefered_b
         write_blocks(&bgdt, 2, 1);
     }
 
+    if (indirect_block_allocated && indirect_count > 0) {
+        write_blocks(indirect_block_entries, node->i_block[12], 1);
+    }
+
     // Update i_blocks in 512-byte units
-    node->i_blocks = blocks_allocated * (BLOCK_SIZE / 512);
+    node->i_blocks = blocks_allocated;
 }
 
 
@@ -610,7 +635,7 @@ int8_t write(struct EXT2DriverRequest *request) {
         new_node.i_mode = EXT2_S_IFREG;
         new_node.i_size = request->buffer_size;
         uint32_t blocks_needed = (request->buffer_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
-        new_node.i_blocks = blocks_needed * (BLOCK_SIZE / 512);
+        new_node.i_blocks = blocks_needed;
 
         allocate_node_blocks(request->buf, &new_node, inode_to_bgd(new_inode));
     }
