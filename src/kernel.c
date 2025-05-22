@@ -388,10 +388,13 @@ void kernel_setup(void) {
 */
 
 void kernel_setup(void) {
+    paging_initialize();
     load_gdt(&_gdt_gdtr);
     pic_remap();
     initialize_idt();
     activate_keyboard_interrupt();
+    // graphics_initialize();
+    // graphics_clear(COLOR_BLACK);
     framebuffer_clear();
     framebuffer_set_cursor(0, 0);
     initialize_filesystem_ext2();
