@@ -1,3 +1,6 @@
+#ifndef USER_SHELL
+#define USER_SHELL
+
 #include <stdint.h>
 #include "header/filesys/ext2.h"
 
@@ -20,4 +23,18 @@
 #define COLOR_YELLOW      0x0E
 #define COLOR_WHITE       0x0F
 
+typedef struct {
+    int32_t row;
+    int32_t col;
+} CP;
+
+
 void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx);
+
+// output commands
+void print_string_at_cursor(const char* str);
+void print_string_colored(const char* str, uint8_t color);
+void print_newline();
+void set_hardware_cursor();
+
+#endif

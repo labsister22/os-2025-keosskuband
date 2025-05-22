@@ -1,18 +1,19 @@
 #include <stdint.h>
 #include "header/filesys/ext2.h"
 #include "header/usermode/user-shell.h"
+#include "header/usermode/commands/help.h"
+#include "header/usermode/commands/clear.h"
+#include "header/usermode/commands/echo.h"
 
-#define MAX_INPUT_LENGTH 256
+#define MAX_INPUT_LENGTH 2048
+#define MAX_ARGS_AMOUNT 10
+#define MAX_ARGS_LENGTH 32
 #define SHELL_PROMPT "Keossku-Band$/ "
-
-typedef struct {
-    int32_t row;
-    int32_t col;
-} CP;
 
 CP cursor = {0, 0};
 char input_buffer[MAX_INPUT_LENGTH];
 int input_length = 0;
+char args[MAX_ARGS_AMOUNT][MAX_ARGS_LENGTH];
 
 void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     __asm__ volatile("mov %0, %%ebx" : /* <Empty> */ : "r"(ebx));
@@ -79,52 +80,53 @@ void print_prompt() {
 // ya ini dummy buat ngecek, harusnya kalian kalau mau ngetes pakai memset aja - Nayaka
 void process_command() {
     print_newline();
+    int cmd_length = 0;
+    
     
     if (input_length > 0) {
-        if (input_buffer[0] == 'h' && input_buffer[1] == 'e' && 
-            input_buffer[2] == 'l' && input_buffer[3] == 'p' && 
-            input_buffer[4] == '\0') {
-            
-            print_string_at_cursor("Available commands:");
-            print_newline();
-            print_string_at_cursor("  help - Show this help message");
-            print_newline();
-            print_string_at_cursor("  clear - Clear the screen");
-            print_newline();
-            print_string_at_cursor("  echo [text] - Echo the text");
-            print_newline();
-            print_string_at_cursor("  exit - Exit the shell");
-            print_newline();
-        }
-        else if (input_buffer[0] == 'c' && input_buffer[1] == 'l' && 
-                 input_buffer[2] == 'e' && input_buffer[3] == 'a' && 
-                 input_buffer[4] == 'r' && input_buffer[5] == '\0') {
-            
-            cursor.row = 0;
-            cursor.col = 0;
-            set_hardware_cursor();
-            
-            for (int i = 0; i < 25; i++) {
-                for (int j = 0; j < 80; j++) {
-                    CP temp = {i, j};
-                    char space = ' ';
-                    syscall(5, (uint32_t)&space, 0x07, (uint32_t)&temp);
-                }
-            }
-            cursor.row = 0;
-            cursor.col = 0;
-        }
-        else if (input_buffer[0] == 'e' && input_buffer[1] == 'c' && 
-                 input_buffer[2] == 'h' && input_buffer[3] == 'o' && 
-                 input_buffer[4] == ' ') {
+        // process input 
+        
+        int i = 0;
+        // get command length
+        while (i < input_length && input_buffer[i] != ' ' && 
+               input_buffer[i] != '\n' && input_buffer[i] != '\r') i++;
+        cmd_length = i;
 
-            print_string_at_cursor(&input_buffer[5]);
-            print_newline();
-        }
-        else if (input_buffer[0] == 'e' && input_buffer[1] == 'x' && 
-                 input_buffer[2] == 'i' && input_buffer[3] == 't' && 
-                 input_buffer[4] == '\0') {
+        // skip the whitespaces to get to first args
+        while (input_buffer[i] == ' ') i++; 
+
+        int args_idx = 0;
+        int args_buffer_idx = 0;
+        while (i < input_length && args_idx < MAX_ARGS_AMOUNT) {
+
+            while (i < input_length && input_buffer[i] != ' ' && 
+                   input_buffer[i] != '\n' && input_buffer[i] != '\r') {
+                args[args_idx][args_buffer_idx] = input_buffer[i];
+                args_buffer_idx++;
+                i++;
+            }
             
+            if (args_buffer_idx > 0) {
+                args_buffer_idx = 0;
+                args_idx++;
+            }
+
+            i++; // skip whitespace
+        }
+        
+
+        // do commands
+        if (!memcmp("help", input_buffer, cmd_length)) {
+            help();
+        }
+        else if (!memcmp(input_buffer, "clear", cmd_length)) {
+            clear();
+        }
+        else if (!memcmp("echo", input_buffer, cmd_length)) {
+            echo(args[0]);
+        }
+        else if (!memcmp("exit", input_buffer, cmd_length)) {
+            // gk tau implemennya gmn
             print_string_at_cursor("Goodbye!");
             print_newline();
             while(1) {}
@@ -143,10 +145,10 @@ int main(void) {
     cursor.row = 0;
     cursor.col = 0;
     
-    clear_input_buffer();
+    clear_input_buffer(); 
     print_prompt();
     
-    syscall(7, 0, 0, 0);
+    syscall(7, 0, 0, 0); // activate keyboard
 
     char c;
     while (true) {
