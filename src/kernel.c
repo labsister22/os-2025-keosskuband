@@ -389,12 +389,15 @@ void kernel_setup(void) {
 */
 
 void kernel_setup(void) {
+    paging_initialize();
     load_gdt(&_gdt_gdtr);
     pic_remap();
     initialize_idt();
     activate_keyboard_interrupt();
-    framebuffer_clear();
-    framebuffer_set_cursor(0, 0);
+    graphics_initialize();
+    graphics_clear(COLOR_BLACK);
+    // framebuffer_clear();
+    // framebuffer_set_cursor(0, 0);
     initialize_filesystem_ext2();
     gdt_install_tss();
     set_tss_register();
@@ -411,6 +414,7 @@ void kernel_setup(void) {
         .is_directory          = false,
     };
     write(&request1);
+
 
     // Write shell into memory
     struct EXT2DriverRequest request2 = {

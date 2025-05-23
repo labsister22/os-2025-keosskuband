@@ -2,6 +2,7 @@
 #include "header/driver/keyboard.h"
 #include "header/filesys/ext2.h"
 #include "header/text/framebuffer.h"
+#include "header/graphics/graphics.h"
 
 typedef struct {
     int32_t row;
@@ -26,12 +27,24 @@ void syscall(struct InterruptFrame frame) {
             break;
         case 5:
             // 1 character writing
-            put_char(
-                (char*) frame.cpu.general.ebx, 
-                frame.cpu.general.ecx, 
-                ((CP*) frame.cpu.general.edx)->row, 
-                ((CP*) frame.cpu.general.edx)->col
+            // put_char(
+            //     (char*) frame.cpu.general.ebx, 
+            //     frame.cpu.general.ecx, 
+            //     ((CP*) frame.cpu.general.edx)->row, 
+            //     ((CP*) frame.cpu.general.edx)->col
+            // );
+            char ch = *((char*) frame.cpu.general.ebx);
+            uint8_t color = frame.cpu.general.ecx;
+            CP* cursor_pos = (CP*) frame.cpu.general.edx;
+            
+            graphics_char(
+                cursor_pos->col * 8,  // Convert column to X pixel
+                cursor_pos->row * 8,  // Convert row to Y pixel
+                ch,
+                color,
+                COLOR_BLACK
             );
+            
             break;
         case 6:
             // please use write_buffer for this

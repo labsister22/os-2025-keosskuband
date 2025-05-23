@@ -8,7 +8,7 @@
 // VGA Settings
 #define VGA_WIDTH   320
 #define VGA_HEIGHT  200
-#define VGA_MEMORY  ((uint8_t*)0xA0000)
+#define VGA_MEMORY ((uint8_t*)0xC00A0000) // Higher-half mapping for 0xA0000
 
 // Common colors in VGA palette
 #define COLOR_BLACK       0x00
