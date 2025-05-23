@@ -180,8 +180,8 @@ void process_command() {
 
         int args_idx = 0;
         int args_buffer_idx = 0;
+        int args_used_amount = 0;
         while (i < input_length && args_idx < MAX_ARGS_AMOUNT) {
-
             while (i < input_length && input_buffer[i] != ' ' && 
                    input_buffer[i] != '\n' && input_buffer[i] != '\r') {
                 args[args_idx][args_buffer_idx] = input_buffer[i];
@@ -192,6 +192,7 @@ void process_command() {
             if (args_buffer_idx > 0) {
                 args_buffer_idx = 0;
                 args_idx++;
+                args_used_amount++;
             }
 
             i++; // skip whitespace
@@ -229,6 +230,13 @@ void process_command() {
             print_string_colored("Type 'help' for available commands.", COLOR_DARK_GRAY);
             print_newline();
         }
+
+        // cleanup args
+        for (int i = 0; i < args_used_amount; i++) {
+            for (int j = 0; j < MAX_ARGS_LENGTH; j++) {
+                args[i][j] = '\0';
+            }
+        } 
     }
 }
 
