@@ -389,7 +389,6 @@ void kernel_setup(void) {
 */
 
 void kernel_setup(void) {
-    paging_initialize();
     load_gdt(&_gdt_gdtr);
     pic_remap();
     initialize_idt();
