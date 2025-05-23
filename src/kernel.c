@@ -406,7 +406,7 @@ void kernel_setup(void) {
         .buf                   = apple_frames,
         .name                  = "apple.txt",
         .parent_inode          = 1,
-        .buffer_size           = 50*512,
+        .buffer_size           = 1095*512,
         .name_len              = 9,
         .is_directory          = false,
     };

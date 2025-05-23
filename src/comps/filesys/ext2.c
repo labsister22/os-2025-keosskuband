@@ -413,6 +413,11 @@ int8_t read(struct EXT2DriverRequest request) {
     bool is_indirect_block_already_readed = false;
     uint32_t indirect_block[BLOCK_SIZE / 4] = {0};
 
+    bool is_double_indirect_loaded = false;
+    uint32_t level1_block[BLOCK_SIZE / 4] = {0};
+    uint32_t level2_block[BLOCK_SIZE / 4];
+
+
     for (uint32_t i = 0; i < blocks_to_read; i++) {
         if (i < 12) {
             if (target_node.i_block[i] == 0) break;
@@ -429,8 +434,25 @@ int8_t read(struct EXT2DriverRequest request) {
             if (indirect_block[i - 12] == 0) break;
             read_blocks(buf + (i * BLOCK_SIZE), indirect_block[i - 12], 1);
         } else {
-            // Beyond supported range
-            break;
+            if (target_node.i_block[13] == 0) return 3; 
+
+            if (!is_double_indirect_loaded) {
+                is_double_indirect_loaded = true;
+                read_blocks(level1_block, target_node.i_block[13], 1);
+            }
+
+            uint32_t relative_index = i - 140;
+            uint32_t level1_index = relative_index / 128;
+            uint32_t level2_index = relative_index % 128;
+
+            if (level1_block[level1_index] == 0) break;
+
+            read_blocks(level2_block, level1_block[level1_index], 1);
+
+            if (level2_block[level2_index] == 0) break;
+
+            read_blocks(buf + (i * BLOCK_SIZE), level2_block[level2_index], 1);
+
         }
     }
 
@@ -479,11 +501,18 @@ void allocate_node_blocks(void *ptr, struct EXT2Inode *node, uint32_t prefered_b
 
     // Clear direct blocks
     for (int i = 0; i < 15; ++i) node->i_block[i] = 0;
+
+
     uint32_t indirect_block_entries[BLOCK_SIZE / 4]; 
     memset(indirect_block_entries, 0, sizeof(indirect_block_entries));
-    
     uint32_t indirect_count = 0;
     bool indirect_block_allocated = false;
+
+    uint32_t double_indirect_level1[BLOCK_SIZE / 4] = {0};
+    uint32_t double_indirect_level2[BLOCK_SIZE / 4] = {0};
+    uint32_t double_level1_count = 0;
+    uint32_t double_level2_count = 0;
+    bool double_indirect_block_allocated = false;
 
     // Search from preferred group onward
     for (uint32_t g = prefered_bgd; g < GROUPS_COUNT && blocks_allocated < blocks_needed; g++) {
@@ -512,7 +541,7 @@ void allocate_node_blocks(void *ptr, struct EXT2Inode *node, uint32_t prefered_b
                     if (data != NULL) {
                         write_blocks(data + (blocks_allocated * BLOCK_SIZE), block_id, 1);
                     }
-                } else {
+                } else if (blocks_allocated < 140) {
                     if (!indirect_block_allocated) {
                         node->i_block[12] = block_id;
                         indirect_block_allocated = true;
@@ -522,6 +551,28 @@ void allocate_node_blocks(void *ptr, struct EXT2Inode *node, uint32_t prefered_b
 
                     if (data != NULL) {
                         write_blocks(data + (blocks_allocated * BLOCK_SIZE), block_id, 1);
+                    }
+                } else {
+                    if (!double_indirect_block_allocated) {
+                        node->i_block[13] = block_id;
+                        double_indirect_block_allocated = true;
+                        continue;
+                    }
+                    if (double_level2_count == 0) {
+                        double_indirect_level2[0] = block_id;
+                        double_level2_count++;
+                        continue;
+                    }
+                    if (double_level2_count < BLOCK_SIZE / 4) {
+                        write_blocks(data + blocks_allocated * BLOCK_SIZE, block_id, 1);
+                        double_indirect_level2[double_level2_count++] = block_id;
+                    }
+
+                    if (double_level2_count == BLOCK_SIZE / 4) {
+                        uint32_t level2_block_id = double_indirect_level2[0];
+                        write_blocks(&double_indirect_level2, level2_block_id, 1);
+                        double_indirect_level1[double_level1_count++] = level2_block_id;
+                        double_level2_count = 0;
                     }
                 }
 
@@ -537,6 +588,10 @@ void allocate_node_blocks(void *ptr, struct EXT2Inode *node, uint32_t prefered_b
 
     if (indirect_block_allocated && indirect_count > 0) {
         write_blocks(indirect_block_entries, node->i_block[12], 1);
+    }
+
+     if (double_indirect_block_allocated && double_level1_count > 0) {
+        write_blocks(double_indirect_level1, node->i_block[13], 1);
     }
 
     // Update i_blocks in 512-byte units
