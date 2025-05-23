@@ -12,7 +12,7 @@
 #define MAX_ARGS_LENGTH 32
 #define SHELL_PROMPT "Keossku-Band$/ "
 
-#define SCREEN_WIDTH 80
+#define SCREEN_WIDTH 39
 #define SCREEN_HEIGHT 25
 
 // Add cursor visibility tracking
@@ -154,6 +154,7 @@ void print_prompt() {
 
 // Update cursor row and col based on cursor_position and prompt start
 void update_cursor_row_col() {
+    hide_cursor();
     int total_pos = prompt_start_col + cursor_position;
     cursor.row = prompt_start_row + total_pos / SCREEN_WIDTH;
     cursor.col = total_pos % SCREEN_WIDTH;
@@ -161,6 +162,7 @@ void update_cursor_row_col() {
     if (cursor.row >= SCREEN_HEIGHT) {
         cursor.row = SCREEN_HEIGHT - 1;
     }
+    set_hardware_cursor();
 }
 
 void redraw_input_line() {
