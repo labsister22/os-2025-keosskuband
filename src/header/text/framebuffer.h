@@ -54,4 +54,6 @@ void framebuffer_set_cursor(uint8_t r, uint8_t c);
  */
 void framebuffer_clear(void);
 
+void puts_with_color(char *buf, int size, int row, int col, uint8_t fg, uint8_t bg);
+
 #endif
