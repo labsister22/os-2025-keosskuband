@@ -5,19 +5,16 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-// Note: MB often referring to MiB in context of memory management
 #define SYSTEM_MEMORY_MB     128
 
 #define PAGE_ENTRY_COUNT     1024
-// Page Frame (PF) Size: (1 << 22) B = 4*1024*1024 B = 4 MiB
 #define PAGE_FRAME_SIZE      (1 << (2 + 10 + 10))
-// Maximum usable page frame. Default count: 128 / 4 = 32 page frame
 #define PAGE_FRAME_MAX_COUNT ((SYSTEM_MEMORY_MB << 20) / PAGE_FRAME_SIZE)
+#define PAGING_DIRECTORY_TABLE_MAX_COUNT 32
 
 // Used for higher half kernel mapping
 #define KERNEL_VIRTUAL_BASE 0xC0000000
 
-// Operating system page directory, using page size PAGE_FRAME_SIZE (4 MiB)
 extern struct PageDirectory _paging_kernel_page_directory;
 
 /**
@@ -29,7 +26,7 @@ extern struct PageDirectory _paging_kernel_page_directory;
  * @param pwt_bit           Page write-through control
  * @param pcd_bit           Page cache disable
  * @param accessed_bit      Was this entry used for translation?
- * @param reserved_1        Reserved bit (1-bit)
+ * @param dirty_bit         Indicates whether software has written to the 4-KByte page referenced by this entry
  * @param use_pagesize_4_mb Set to true if page size 4MB is used
  */
 struct PageDirectoryEntryFlag {
@@ -39,7 +36,7 @@ struct PageDirectoryEntryFlag {
     uint8_t pwt_bit            : 1;
     uint8_t pcd_bit            : 1;
     uint8_t accessed_bit       : 1;
-    uint8_t reserved_1         : 1;
+    uint8_t dirty_bit          : 1;
     uint8_t use_pagesize_4_mb  : 1;
 } __attribute__((packed));
 
@@ -49,10 +46,10 @@ struct PageDirectoryEntryFlag {
  *
  * @param flag            Contain 8-bit page directory entry flag
  * @param global_page     Is this page translation global & cannot be flushed?
- * @param reserved_2      Reserved bit (3-bit)
+ * @param ignored         Ignored bit (3-bit)
  * @param pat_bit         Page attribute table bit
  * @param higher_address  Bits 39:32 of physical address
- * @param reserved_3      Reserved bit (1-bit)
+ * @param reserved        Reserved bit (1-bit)
  * @param lower_address   10-bit page frame lower address, note directly correspond with 4 MiB memory (= 0x40 0000 = 1)
  * Note:
  * - "Bits 39:32 of address" (higher_address) is 8-bit
@@ -61,10 +58,10 @@ struct PageDirectoryEntryFlag {
 struct PageDirectoryEntry {
     struct PageDirectoryEntryFlag flag;
     uint16_t global_page    : 1;
-    uint16_t reserved_2     : 3;
+    uint16_t ignored        : 3;
     uint16_t pat_bit        : 1;
     uint16_t higher_address : 8;
-    uint16_t reserved_3     : 1;
+    uint16_t reserved       : 1;
     uint16_t lower_address  : 10;
 } __attribute__((packed));
 
@@ -145,9 +142,34 @@ bool paging_allocate_user_page_frame(struct PageDirectory *page_dir, void *virtu
 bool paging_free_user_page_frame(struct PageDirectory *page_dir, void *virtual_addr);
 
 /**
- * Initialize paging by completing the setup that was started in kernel-entrypoint.s
- * This includes removing identity mapping and setting up memory management
+ * Create new page directory prefilled with 1 page directory entry for kernel higher half mapping
+ * 
+ * @return Pointer to page directory virtual address. Return NULL if allocation failed
  */
-void paging_initialize(void);
+struct PageDirectory* paging_create_new_page_directory(void);
+
+/**
+ * Free page directory and delete all page directory entry
+ * 
+ * @param page_dir Pointer to page directory virtual address
+ * @return         True if free operation success 
+ */
+bool paging_free_page_directory(struct PageDirectory *page_dir);
+
+/**
+ * Get currently active page directory virtual address from CR3 register
+ * 
+ * @note   Assuming page directories lives in kernel memory
+ * @return Page directory virtual address currently active (CR3)
+ */
+struct PageDirectory* paging_get_current_page_directory_addr(void);
+
+/**
+ * Change active page directory (indirectly trigger TLB flush for all non-global entry)
+ * 
+ * @note                        Assuming page directories lives in kernel memory
+ * @param page_dir_virtual_addr Page directory virtual address to switch into
+ */
+void paging_use_page_directory(struct PageDirectory *page_dir_virtual_addr);
 
 #endif

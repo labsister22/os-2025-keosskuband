@@ -59,30 +59,9 @@ void flush_single_tlb(void *virtual_addr) {
     asm volatile("invlpg (%0)" : /* <Empty> */ : "b"(virtual_addr): "memory");
 }
 
-void paging_initialize(void) {
-    // Note: The kernel-entrypoint.s has already:
-    // 1. Loaded page directory into CR3
-    // 2. Enabled PSE for 4MB pages
-    // 3. Enabled paging by setting PG bit in CR0
-    // 4. Jumped to higher half
-    // 5. Removed identity mapping
-    
-    // Update framebuffer memory to higher half address
-    // This step is crucial because our framebuffer code will use virtual addresses
-    
-    // Initialize page frame map - mark kernel physical frame (first 4MB) as used
-    page_manager_state.page_frame_map[0] = true;
-    page_manager_state.free_page_frame_count = PAGE_FRAME_MAX_COUNT - 1;
-    page_manager_state.last_allocated_frame = 0;
-}
-
 /* --- Memory Management --- */
 bool paging_allocate_check(uint32_t amount) {
-    // Calculate how many page frames are needed for the requested amount
-    uint32_t frames_needed = (amount + PAGE_FRAME_SIZE - 1) / PAGE_FRAME_SIZE;
-    
-    // Check if we have enough free frames
-    return page_manager_state.free_page_frame_count >= frames_needed;
+    return page_manager_state.free_page_frame_count >= amount;
 }
 
 bool paging_allocate_user_page_frame(struct PageDirectory *page_dir, void *virtual_addr) {
