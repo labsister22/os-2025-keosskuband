@@ -2,7 +2,7 @@
 
 void cd(char* str) {
     absolute_dir_info bef = DIR_INFO;
-    char parsed_dir[20][12];
+    char parsed_dir[20][12] = {0};
     int parsed_count = 0;
 
     int j = 0;
@@ -193,7 +193,7 @@ void cd(char* str) {
 void cd_root() {
     DIR_INFO.current_dir = 0;
     DIR_INFO.dir[0].inode = 1;
-    memcpy(DIR_INFO.dir[0].dir_name, "root", 1);
-    DIR_INFO.dir[0].dir_name[4] = '\0'; // Null-terminate the string
-    DIR_INFO.dir[0].dir_name_len = 4;
+    memcpy(DIR_INFO.dir[0].dir_name, ".", 1);
+    DIR_INFO.dir[0].dir_name[1] = '\0'; // Null-terminate the string
+    DIR_INFO.dir[0].dir_name_len = 1;
 } 

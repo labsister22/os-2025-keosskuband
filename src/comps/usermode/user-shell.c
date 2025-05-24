@@ -9,6 +9,7 @@
 #include "header/usermode/commands/ls.h"
 #include "header/usermode/commands/cd.h"
 #include "header/usermode/commands/mkdir.h"
+#include "header/usermode/commands/find.h"
 
 #define MAX_INPUT_LENGTH 2048
 #define MAX_ARGS_AMOUNT 10
@@ -384,7 +385,26 @@ void process_command() {
         else if (!strcmp("mkdir", command)) {
             mkdir(args[0]);
         }
-       else if (!strcmp("exit", command)) {
+        else if (!strcmp("find", command)) {
+            if (args_used_amount > 0) {
+                find(args[0]);
+            } else {
+                print_string_colored("Usage: find <filename>", COLOR_LIGHT_RED);
+                print_newline();
+            }
+        } else if (!strcmp("cls", command)) {
+            clear_input_buffer();
+            print_prompt();
+        } else if (!strcmp("reboot", command)) {
+            print_string_at_cursor("Rebooting...");
+            print_newline();
+            syscall(2, 0, 0, 0); // Reboot syscall
+        } else if (!strcmp("shutdown", command)) {
+            print_string_at_cursor("Shutting down...");
+            print_newline();
+            syscall(3, 0, 0, 0); // Shutdown syscall
+        }
+        else if (!strcmp("exit", command)) {
             print_string_at_cursor("Goodbye!");
             print_newline();
             while (1) {
