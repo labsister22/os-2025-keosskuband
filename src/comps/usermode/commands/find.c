@@ -65,7 +65,7 @@ void find_recursive(char* str) {
             cur_find_path[cur_find_path_len] = '\0';
             
             if (entry->file_type == EXT2_FT_DIR) {
-                print_string_colored(cur_find_path, COLOR_BLUE);
+                print_string_colored(cur_find_path, COLOR_GREEN);
                 cursor.row++;
                 cursor.col = 0;
             } else {
