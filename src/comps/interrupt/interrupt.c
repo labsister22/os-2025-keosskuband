@@ -2,6 +2,7 @@
 #include "header/driver/keyboard.h"
 #include "header/filesys/ext2.h"
 #include "header/text/framebuffer.h"
+#include "header/graphics/graphics.h"
 
 typedef struct {
     int32_t row;
@@ -41,11 +42,16 @@ void syscall(struct InterruptFrame frame) {
             break;
         case 5:
             // 1 character writing
-            put_char(
-                (char*) frame.cpu.general.ebx, 
-                frame.cpu.general.ecx, 
-                ((CP*) frame.cpu.general.edx)->row, 
-                ((CP*) frame.cpu.general.edx)->col
+            char ch = *((char*) frame.cpu.general.ebx);
+            uint8_t color = frame.cpu.general.ecx;
+            CP* cursor_pos = (CP*) frame.cpu.general.edx;
+            
+            graphics_char(
+                cursor_pos->col * 8,  // Convert column to X pixel
+                cursor_pos->row * 8,  // Convert row to Y pixel
+                ch,
+                color,
+                COLOR_BLACK
             );
             break;
         case 6:
@@ -60,20 +66,47 @@ void syscall(struct InterruptFrame frame) {
         case 7: 
             keyboard_state_activate();
             break;
-        case 8: // NEW: Set cursor syscall untuk shell
-            framebuffer_set_cursor(
-                (uint8_t)frame.cpu.general.ebx,  // row
-                (uint8_t)frame.cpu.general.ecx   // col
+        case 8:
+            graphics_set_cursor(
+                (uint16_t)frame.cpu.general.ebx, 
+                (uint16_t)frame.cpu.general.ecx
             );
             break;
-        case 9: // NEW: puts with color
-            puts_with_color(
-                (char*) frame.cpu.general.ebx, 
-                ((PrintRequest*) frame.cpu.general.ecx)->size, 
-                ((CP*) frame.cpu.general.edx)->row, 
-                ((CP*) frame.cpu.general.edx)->col,
-                ((PrintRequest*) frame.cpu.general.ecx)->font_color,
+        case 9:
+            graphics_char(
+                ((CP*) frame.cpu.general.edx)->col * 8, 
+                ((CP*) frame.cpu.general.edx)->row * 8, 
+                *((char*) frame.cpu.general.ebx), 
+                ((PrintRequest*) frame.cpu.general.ecx)->font_color, 
                 ((PrintRequest*) frame.cpu.general.ecx)->bg_color
+            );
+            break;
+        case 10: 
+            graphics_draw_cursor();
+            break;
+        case 11: 
+            graphics_erase_cursor();
+            break;
+        case 12: 
+            graphics_store_char_at_cursor((char)frame.cpu.general.ebx);
+            graphics_set_cursor_colors(
+                (uint8_t)frame.cpu.general.ecx,
+                COLOR_BLACK                       
+            );
+            break;
+        case 13: 
+            graphics_set_cursor(
+                (uint16_t)frame.cpu.general.ebx,  
+                (uint16_t)frame.cpu.general.ecx  
+            );
+            break;
+        case 14: 
+            graphics_blink_cursor();
+            break;
+        case 15: 
+            graphics_set_cursor_colors(
+                (uint8_t)frame.cpu.general.ebx,  
+                (uint8_t)frame.cpu.general.ecx   
             );
             break;
         case 20:
@@ -85,7 +118,6 @@ void syscall(struct InterruptFrame frame) {
             break;
     }
 }
-
 struct TSSEntry _interrupt_tss_entry = {
     .ss0  = GDT_KERNEL_DATA_SEGMENT_SELECTOR,
 };

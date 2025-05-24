@@ -41,14 +41,14 @@ static const uint8_t ascii31[1] = {0};
 static const uint8_t ascii32[1] = {0};
 
 // ASCII 33: !
-static const uint8_t ascii33[7] = {7, 0x17, 0x16, 0x15, 0x14, 0x13, 0x11};
+static const uint8_t ascii33[7] = {6, 0x17, 0x16, 0x15, 0x14, 0x13, 0x11};
 
 // ASCII 34: "
-static const uint8_t ascii34[3] = {3, 0x07, 0x27};
+static const uint8_t ascii34[3] = {2, 0x07, 0x27};
 
 // ASCII 35: #
 static const uint8_t ascii35[17] = {
-    17,
+    16,
     0x04, 0x03, 0x02, 0x01,
     0x17, 0x16, 0x15, 0x13,
     0x25, 0x23, 0x22, 0x21,
@@ -57,7 +57,7 @@ static const uint8_t ascii35[17] = {
 
 // ASCII 36: $
 static const uint8_t ascii36[12] = {
-    12,
+    11,
     0x06, 0x05, 0x02,
     0x17, 0x16, 0x14, 0x12, 0x11,
     0x26, 0x23, 0x22
@@ -65,7 +65,7 @@ static const uint8_t ascii36[12] = {
 
 // ASCII 37: %
 static const uint8_t ascii37[12] = {
-    12,
+    11,
     0x07, 0x06, 0x03,
     0x17, 0x16, 0x14, 0x12, 0x11,
     0x25, 0x22, 0x21
@@ -73,7 +73,7 @@ static const uint8_t ascii37[12] = {
 
 // ASCII 38: &
 static const uint8_t ascii38[16] = {
-    16,
+    15,
     0x06, 0x05, 0x03, 0x02, 0x01,
     0x17, 0x15, 0x14, 0x11,
     0x26, 0x23, 0x22,
@@ -81,43 +81,43 @@ static const uint8_t ascii38[16] = {
 };
 
 // ASCII 39: '
-static const uint8_t ascii39[4] = {4, 0x05, 0x17, 0x16};
+static const uint8_t ascii39[4] = {3, 0x05, 0x17, 0x16};
 
 // ASCII 40: (
 static const uint8_t ascii40[9] = {
-    9,
+    8,
     0x06, 0x05, 0x04, 0x03, 0x02, 0x01,
     0x17, 0x10
 };
 
 // ASCII 41: )
 static const uint8_t ascii41[9] = {
-    9,
+    8,
     0x07, 0x00,
     0x16, 0x15, 0x14, 0x13, 0x12, 0x11
 };
 
 // ASCII 42: *
 static const uint8_t ascii42[6] = {
-    6,
+    5,
     0x07, 0x05, 0x16, 0x27, 0x25
 };
 
 // ASCII 43: +
-static const uint8_t ascii43[6] = {6, 0x03, 0x14, 0x13, 0x12, 0x23};
+static const uint8_t ascii43[6] = {5, 0x03, 0x14, 0x13, 0x12, 0x23};
 
 // ASCII 44: ,
-static const uint8_t ascii44[3] = {3, 0x01, 0x00};
+static const uint8_t ascii44[3] = {2, 0x01, 0x00};
 
 // ASCII 45: -
-static const uint8_t ascii45[4] = {4, 0x03, 0x13, 0x23};
+static const uint8_t ascii45[4] = {3, 0x03, 0x13, 0x23};
 
 // ASCII 46: .
-static const uint8_t ascii46[2] = {2, 0x01};
+static const uint8_t ascii46[2] = {1, 0x01};
 
 // ASCII 47: /
 static const uint8_t ascii47[9] = {
-    9,
+    8,
     0x02, 0x01, 0x00,
     0x15, 0x14, 0x13,
     0x27, 0x26
@@ -125,7 +125,7 @@ static const uint8_t ascii47[9] = {
 
 // ASCII 48: 0
 static const uint8_t ascii48[17] = {
-    17,
+    16,
     0x06, 0x05, 0x04, 0x03, 0x02,
     0x17, 0x15, 0x11,
     0x27, 0x24, 0x21,
@@ -134,14 +134,14 @@ static const uint8_t ascii48[17] = {
 
 // ASCII 49: 1
 static const uint8_t ascii49[9] = {
-    9,
+    8,
     0x06,
     0x17, 0x16, 0x15, 0x14, 0x13, 0x12, 0x11
 };
 
 // ASCII 50: 2
 static const uint8_t ascii50[13] = {
-    13,
+    12,
     0x06,
     0x02, 0x01,
     0x17,
@@ -157,7 +157,7 @@ static const uint8_t ascii50[13] = {
 
 // ASCII 51: 3
 static const uint8_t ascii51[12] = {
-    12,
+    11,
     0x01,
     0x17,
     0x11,
@@ -169,7 +169,7 @@ static const uint8_t ascii51[12] = {
 
 // ASCII 52: 4
 static const uint8_t ascii52[12] = {
-    12,
+    11,
     0x06, 0x05, 0x04,
     0x17,
     0x14,
@@ -179,7 +179,7 @@ static const uint8_t ascii52[12] = {
 
 // ASCII 53: 5
 static const uint8_t ascii53[14] = {
-    14,
+    13,
     0x07, 0x06, 0x05, 0x01,
     0x17, 0x15, 0x11,
     0x27, 0x25, 0x21,
@@ -188,7 +188,7 @@ static const uint8_t ascii53[14] = {
 
 // ASCII 54: 6
 static const uint8_t ascii54[15] = {
-    15,
+    14,
     0x06, 0x05, 0x04, 0x03, 0x02,
     0x17, 0x15, 0x11,
     0x27, 0x25, 0x21,
@@ -197,7 +197,7 @@ static const uint8_t ascii54[15] = {
 
 // ASCII 55: 7
 static const uint8_t ascii55[11] = {
-    11,
+    10,
     0x07,
     0x17,
     0x13,
@@ -210,7 +210,7 @@ static const uint8_t ascii55[11] = {
 
 // ASCII 56: 8
 static const uint8_t ascii56[15] = {
-    15,
+    14,
     0x06,
     0x04,
     0x03,
@@ -224,7 +224,7 @@ static const uint8_t ascii56[15] = {
 
 // ASCII 57: 9
 static const uint8_t ascii57[13] = {
-    13,
+    12,
     0x06,
     0x17,
     0x15,
@@ -237,23 +237,23 @@ static const uint8_t ascii57[13] = {
 };
 
 // ASCII 58: :
-static const uint8_t ascii58[3] = {3, 0x24, 0x22};
+static const uint8_t ascii58[3] = {2, 0x24, 0x22};
 
 // ASCII 59: ;
-static const uint8_t ascii59[4] = {4, 0x03, 0x01, 0x00};
+static const uint8_t ascii59[4] = {3, 0x03, 0x01, 0x00};
 
 // ASCII 60: <
-static const uint8_t ascii60[6] = {6, 0x04, 0x15, 0x13, 0x25, 0x23};
+static const uint8_t ascii60[6] = {5, 0x04, 0x15, 0x13, 0x25, 0x23};
 
 // ASCII 61: =
-static const uint8_t ascii61[7] = {7, 0x05, 0x03, 0x15, 0x13, 0x25, 0x23};
+static const uint8_t ascii61[7] = {6, 0x05, 0x03, 0x15, 0x13, 0x25, 0x23};
 
 // ASCII 62: >
-static const uint8_t ascii62[6] = {6, 0x05, 0x03, 0x15, 0x13, 0x24};
+static const uint8_t ascii62[6] = {5, 0x05, 0x03, 0x15, 0x13, 0x24};
 
 // ASCII 63: ?
 static const uint8_t ascii63[10] = {
-    10,
+    9,
     0x06,
     0x17,
     0x14,
@@ -267,7 +267,7 @@ static const uint8_t ascii63[10] = {
 
 // ASCII 64: @
 static const uint8_t ascii64[16] = {
-    16,
+    15,
     0x07,
     0x04,
     0x02,
@@ -287,7 +287,7 @@ static const uint8_t ascii64[16] = {
 
 // ASCII 65: A
 static const uint8_t ascii65[17] = {
-    17,
+    16,
     0x06, 0x05, 0x04, 0x03, 0x02, 0x01,
     0x17, 0x15,
     0x27, 0x25,
@@ -296,7 +296,7 @@ static const uint8_t ascii65[17] = {
 
 // ASCII 66: B
 static const uint8_t ascii66[18] = {
-    18,
+    17,
     0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01,
     0x17, 0x15, 0x11,
     0x27, 0x25, 0x21,
@@ -305,7 +305,7 @@ static const uint8_t ascii66[18] = {
 
 // ASCII 67: C
 static const uint8_t ascii67[12] = {
-    12,
+    11,
     0x06, 0x05, 0x04, 0x03, 0x02,
     0x17,
     0x11,
@@ -317,7 +317,7 @@ static const uint8_t ascii67[12] = {
 
 // ASCII 68: D
 static const uint8_t ascii68[17] = {
-    17,
+    16,
     0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01,
     0x17,
     0x11,
@@ -328,7 +328,7 @@ static const uint8_t ascii68[17] = {
 
 // ASCII 69: E
 static const uint8_t ascii69[16] = {
-    16,
+    15,
     0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01,
     0x17, 0x15,
     0x11,
@@ -338,7 +338,7 @@ static const uint8_t ascii69[16] = {
 
 // ASCII 70: F
 static const uint8_t ascii70[13] = {
-    13,
+    12,
     0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01,
     0x17, 0x15,
     0x27, 0x25,
@@ -347,7 +347,7 @@ static const uint8_t ascii70[13] = {
 
 // ASCII 71: G
 static const uint8_t ascii71[15] = {
-    15,
+    14,
     0x06, 0x05, 0x04, 0x03, 0x02,
     0x17,
     0x11,
@@ -359,7 +359,7 @@ static const uint8_t ascii71[15] = {
 
 // ASCII 72: H
 static const uint8_t ascii72[17] = {
-    17,
+    16,
     0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01,
     0x14,
     0x24,
@@ -368,13 +368,13 @@ static const uint8_t ascii72[17] = {
 
 // ASCII 73: I
 static const uint8_t ascii73[8] = {
-    8,
+    7,
     0x27, 0x26, 0x25, 0x24, 0x23, 0x22, 0x21
 };
 
 // ASCII 74: J
 static const uint8_t ascii74[10] = {
-    10,
+    9,
     0x02,
     0x11,
     0x21,
@@ -383,7 +383,7 @@ static const uint8_t ascii74[10] = {
 
 // ASCII 75: K
 static const uint8_t ascii75[16] = {
-    16,
+    15,
     0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01,
     0x15,
     0x27,
@@ -394,7 +394,7 @@ static const uint8_t ascii75[16] = {
 
 // ASCII 76: L
 static const uint8_t ascii76[10] = {
-    10,
+    9,
     0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01,
     0x11,
     0x21
@@ -402,7 +402,7 @@ static const uint8_t ascii76[10] = {
 
 // ASCII 77: M
 static const uint8_t ascii77[17] = {
-    17,
+    16,
     0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01,
     0x16,
     0x26,
@@ -411,7 +411,7 @@ static const uint8_t ascii77[17] = {
 
 // ASCII 78: N
 static const uint8_t ascii78[17] = {
-    17,
+    16,
     0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01,
     0x16,
     0x25,
@@ -420,18 +420,18 @@ static const uint8_t ascii78[17] = {
 
 // ASCII 79: O
 static const uint8_t ascii79[15] = {
-    15,
+    14,
     0x06, 0x05, 0x04, 0x03, 0x02,
     0x17,
     0x11,
     0x27,
-    0x21,
+     0x21,
     0x36, 0x35, 0x34, 0x33, 0x32
 };
 
 // ASCII 80: P
 static const uint8_t ascii80[14] = {
-    14,
+    13,
     0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01,
     0x17, 0x15,
     0x27, 0x25,
@@ -440,7 +440,7 @@ static const uint8_t ascii80[14] = {
 
 // ASCII 81: Q
 static const uint8_t ascii81[18] = {
-    18,
+    17,
     0x06, 0x05, 0x04, 0x03, 0x02,
     0x17, 0x11,
     0x27, 0x21,
@@ -451,7 +451,7 @@ static const uint8_t ascii81[18] = {
 
 // ASCII 82: R
 static const uint8_t ascii82[17] = {
-    17,
+    16,
     0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01,
     0x17, 0x15,
     0x27, 0x25,
@@ -460,7 +460,7 @@ static const uint8_t ascii82[17] = {
 
 // ASCII 83: S
 static const uint8_t ascii83[13] = {
-    13,
+    12,
     0x06,
     0x01,
     0x17, 0x15, 0x11,
@@ -471,7 +471,7 @@ static const uint8_t ascii83[13] = {
 
 // ASCII 84: T
 static const uint8_t ascii84[11] = {
-    11,
+    10,
     0x07,
     0x17,
     0x27,
@@ -481,7 +481,7 @@ static const uint8_t ascii84[11] = {
 
 // ASCII 85: U
 static const uint8_t ascii85[15] = {
-    15,
+    14,
     0x07, 0x06, 0x05, 0x04, 0x03, 0x02,
     0x11,
     0x21,
@@ -490,7 +490,7 @@ static const uint8_t ascii85[15] = {
 
 // ASCII 86: V
 static const uint8_t ascii86[14] = {
-    14,
+    13,
     0x07, 0x06, 0x05, 0x04, 0x03, 0x02,
     0x11,
     0x22,
@@ -499,7 +499,7 @@ static const uint8_t ascii86[14] = {
 
 // ASCII 87: W
 static const uint8_t ascii87[17] = {
-    17,
+    16,
     0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01,
     0x12,
     0x22,
@@ -508,7 +508,7 @@ static const uint8_t ascii87[17] = {
 
 // ASCII 88: X
 static const uint8_t ascii88[15] = {
-    15,
+    14,
     0x07, 0x06,
     0x04,
     0x03,
@@ -521,7 +521,7 @@ static const uint8_t ascii88[15] = {
 
 // ASCII 89: Y
 static const uint8_t ascii89[12] = {
-    12,
+    11,
     0x07, 0x06, 0x05,
     0x14,
     0x13,
@@ -533,7 +533,7 @@ static const uint8_t ascii89[12] = {
 
 // ASCII 90: Z
 static const uint8_t ascii90[13] = {
-    13,
+    12,
     0x07,
     0x03,
     0x02,
@@ -548,14 +548,14 @@ static const uint8_t ascii90[13] = {
 
 // ASCII 91: [
 static const uint8_t ascii91[11] = {
-    11,
+    10,
     0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00,
     0x17, 0x10
 };
 
 // ASCII 92: backslash
 static const uint8_t ascii92[9] = {
-    9,
+    8,
     0x07, 0x06,
     0x15, 0x14, 0x13,
     0x22, 0x21, 0x20
@@ -563,23 +563,23 @@ static const uint8_t ascii92[9] = {
 
 // ASCII 93: ]
 static const uint8_t ascii93[11] = {
-    11,
+    10,
     0x07, 0x00,
     0x17, 0x16, 0x15, 0x14, 0x13, 0x12, 0x11, 0x10
 };
 
 // ASCII 94: ^
-static const uint8_t ascii94[6] = {6, 0x06, 0x05, 0x17, 0x26, 0x25};
+static const uint8_t ascii94[6] = {5, 0x06, 0x05, 0x17, 0x26, 0x25};
 
 // ASCII 95: _
-static const uint8_t ascii95[5] = {5, 0x00, 0x10, 0x20, 0x30};
+static const uint8_t ascii95[5] = {4, 0x00, 0x10, 0x20, 0x30};
 
 // ASCII 96: `
-static const uint8_t ascii96[4] = {4, 0x07, 0x17, 0x16};
+static const uint8_t ascii96[4] = {3, 0x07, 0x17, 0x16};
 
 // ASCII 97: a
 static const uint8_t ascii97[13] = {
-    13,
+    12,
     0x02, 0x03, 0x04,
     0x15,
     0x11,
@@ -589,7 +589,7 @@ static const uint8_t ascii97[13] = {
 
 // ASCII 98: b
 static const uint8_t ascii98[15] = {
-    15,
+    14,
     0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01,
     0x15,
     0x11,
@@ -600,7 +600,7 @@ static const uint8_t ascii98[15] = {
 
 // ASCII 99: c
 static const uint8_t ascii99[10] = {
-    10,
+    9,
     0x04, 0x03, 0x02,
     0x15,
     0x11,
@@ -612,7 +612,7 @@ static const uint8_t ascii99[10] = {
 
 // ASCII 100: d
 static const uint8_t ascii100[15] = {
-    15,
+    14,
     0x04, 0x03, 0x02,
     0x15,
     0x11,
@@ -623,7 +623,7 @@ static const uint8_t ascii100[15] = {
 
 // ASCII 101: e
 static const uint8_t ascii101[13] = {
-    13,
+    12,
     0x04, 0x03, 0x02,
     0x15,
     0x12,
@@ -638,7 +638,7 @@ static const uint8_t ascii101[13] = {
 
 // ASCII 102: f
 static const uint8_t ascii102[12] = {
-    12,
+    11,
     0x05,
     0x00,
     0x16, 0x15, 0x14, 0x13, 0x12, 0x11,
@@ -648,7 +648,7 @@ static const uint8_t ascii102[12] = {
 
 // ASCII 103: g
 static const uint8_t ascii103[15] = {
-    15,
+    14,
     0x04, 0x03, 0x00,
     0x15,
     0x12,
@@ -659,7 +659,7 @@ static const uint8_t ascii103[15] = {
 
 // ASCII 104: h
 static const uint8_t ascii104[14] = {
-    14,
+    13,
     0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01,
     0x14,
     0x25,
@@ -667,11 +667,11 @@ static const uint8_t ascii104[14] = {
 };
 
 // ASCII 105: i
-static const uint8_t ascii105[7] = {7, 0x27, 0x25, 0x24, 0x23, 0x22, 0x21};
+static const uint8_t ascii105[7] = {6, 0x27, 0x25, 0x24, 0x23, 0x22, 0x21};
 
 // ASCII 106: j
 static const uint8_t ascii106[10] = {
-    10,
+    9,
     0x01,
     0x10,
     0x20,
@@ -681,7 +681,7 @@ static const uint8_t ascii106[10] = {
 
 // ASCII 107: k
 static const uint8_t ascii107[14] = {
-    14,
+    13,
     0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01,
     0x14,
     0x25,
@@ -693,7 +693,7 @@ static const uint8_t ascii107[14] = {
 
 // ASCII 108: l
 static const uint8_t ascii108[9] = {
-    9,
+    8,
     0x07,
     0x17, 0x16, 0x15, 0x14, 0x13, 0x12,
     0x21
@@ -701,7 +701,7 @@ static const uint8_t ascii108[9] = {
 
 // ASCII 109: m
 static const uint8_t ascii109[13] = {
-    13,
+    12,
     0x05, 0x04, 0x03, 0x02, 0x01,
     0x14,
     0x25, 0x24,
@@ -710,7 +710,7 @@ static const uint8_t ascii109[13] = {
 
 // ASCII 110: n
 static const uint8_t ascii110[12] = {
-    12,
+    11,
     0x05, 0x04, 0x03, 0x02, 0x01,
     0x15,
     0x25,
@@ -719,7 +719,7 @@ static const uint8_t ascii110[12] = {
 
 // ASCII 111: o
 static const uint8_t ascii111[11] = {
-    11,
+    10,
     0x04, 0x03, 0x02,
     0x15,
     0x11,
@@ -730,7 +730,7 @@ static const uint8_t ascii111[11] = {
 
 // ASCII 112: p
 static const uint8_t ascii112[13] = {
-    13,
+    12,
     0x05, 0x04, 0x03, 0x02, 0x01,
     0x00,
     0x15, 0x12,
@@ -740,7 +740,7 @@ static const uint8_t ascii112[13] = {
 
 // ASCII 113: q
 static const uint8_t ascii113[13] = {
-    13,
+    12,
     0x04, 0x03,
     0x15, 0x12,
     0x25,
@@ -750,7 +750,7 @@ static const uint8_t ascii113[13] = {
 
 // ASCII 114: r
 static const uint8_t ascii114[9] = {
-    9,
+    8,
     0x05, 0x04, 0x03, 0x02, 0x01,
     0x14,
     0x25,
@@ -759,7 +759,7 @@ static const uint8_t ascii114[9] = {
 
 // ASCII 115: s
 static const uint8_t ascii115[11] = {
-    11,
+    10,
     0x04,
     0x01,
     0x15,
@@ -774,7 +774,7 @@ static const uint8_t ascii115[11] = {
 
 // ASCII 116: t
 static const uint8_t ascii116[12] = {
-    12,
+    11,
     0x05,
     0x17, 0x16, 0x15, 0x14, 0x13, 0x12,
     0x25,
@@ -785,7 +785,7 @@ static const uint8_t ascii116[12] = {
 
 // ASCII 117: u
 static const uint8_t ascii117[12] = {
-    12,
+    11,
     0x05, 0x04, 0x03, 0x02,
     0x11,
     0x21,
@@ -794,7 +794,7 @@ static const uint8_t ascii117[12] = {
 
 // ASCII 118: v
 static const uint8_t ascii118[10] = {
-    10,
+    9,
     0x05, 0x04, 0x03, 0x02,
     0x11,
     0x23,
@@ -804,7 +804,7 @@ static const uint8_t ascii118[10] = {
 
 // ASCII 119: w
 static const uint8_t ascii119[13] = {
-    13,
+    12,
     0x05, 0x04, 0x03, 0x02,
     0x12,
     0x11,
@@ -814,7 +814,7 @@ static const uint8_t ascii119[13] = {
 
 // ASCII 120: x
 static const uint8_t ascii120[11] = {
-    11,
+    10,
     0x05, 0x04,
     0x02, 0x01,
     0x13,
@@ -824,7 +824,7 @@ static const uint8_t ascii120[11] = {
 
 // ASCII 121: y
 static const uint8_t ascii121[13] = {
-    13,
+    12,
     0x05, 0x04, 0x03,
     0x12,
     0x10,
@@ -835,7 +835,7 @@ static const uint8_t ascii121[13] = {
 
 // ASCII 122: z
 static const uint8_t ascii122[12] = {
-    12,
+    11,
     0x05,
     0x02,
     0x01,
@@ -851,7 +851,7 @@ static const uint8_t ascii122[12] = {
 
 // ASCII 123: {
 static const uint8_t ascii123[11] = {
-    11,
+    10,
     0x04,
     0x16,
     0x15,
@@ -866,7 +866,7 @@ static const uint8_t ascii123[11] = {
 
 // ASCII 124: |
 static const uint8_t ascii124[10] = {
-    10,
+    9,
     0x04,
     0x17, 0x16, 0x15, 0x13, 0x12, 0x11, 0x10,
     0x24
@@ -874,7 +874,7 @@ static const uint8_t ascii124[10] = {
 
 // ASCII 125: }
 static const uint8_t ascii125[11] = {
-    11,
+    10,
     0x07,
     0x00,
     0x17,
@@ -888,7 +888,7 @@ static const uint8_t ascii125[11] = {
 };
 
 // ASCII 126: ~
-static const uint8_t ascii126[7] = {7, 0x04, 0x03, 0x14, 0x24, 0x35, 0x33};
+static const uint8_t ascii126[7] = {6, 0x04, 0x03, 0x14, 0x24, 0x35, 0x33};
 
 // ASCII 127: DEL (empty)
 static const uint8_t ascii127[1] = {0};

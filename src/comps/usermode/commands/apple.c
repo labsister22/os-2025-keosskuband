@@ -12,7 +12,7 @@ void apple(CP* cursor){
     .is_directory = false,
   };
   uint32_t res = 10;
-  syscall(0, (uint32_t) &request, &res, 0);
+  syscall(0, (uint32_t) &request, (uint32_t) &res, 0);
 
   char buffer = ' '; 
   for (int i = 10; i < FRAME_COUNT / 2; i++) {

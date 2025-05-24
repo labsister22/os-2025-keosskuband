@@ -42,7 +42,7 @@ int abs(int x) {
 // For cursor blinking
 static uint32_t blink_counter = 0;
 static bool cursor_visible = true;
-#define CURSOR_BLINK_RATE 1000000  
+#define CURSOR_BLINK_RATE 500000  
 
 // Store the character at cursor position for blinking
 static char cursor_char = 0;
@@ -203,7 +203,6 @@ void graphics_char(uint16_t x, uint16_t y, unsigned char c, uint8_t color, uint8
         }
     }
 
-    // rotated 270 clockwise (why? ga tau soalnya font maling)
     for (uint8_t i = 1; i <= size; i++) {
         uint8_t data = char_data[i];
         uint8_t row = (data >> 4) & 0x0F;  
