@@ -85,8 +85,20 @@ uint32_t get_dir_first_child_offset(void *ptr) {
     return first->rec_len + second->rec_len;
 }
 
-// Main Filesystem Functions
+struct EXT2Inode load_inode(uint32_t inode_num) {
+    struct EXT2InodeTable inode_table;
+    struct EXT2Inode result;
 
+    uint32_t bgd_index = inode_to_bgd(inode_num);
+    uint32_t local_index = inode_to_local(inode_num);
+
+    read_blocks(&inode_table, bgdt.table[bgd_index].bg_inode_table, 1);
+    result = inode_table.table[local_index];
+
+    return result;
+}
+
+// Main Filesystem Functions
 uint32_t inode_to_bgd(uint32_t inode) {
     // Convert inode number to block group descriptor index
     // Inodes start at 1, so we subtract 1 to make it 0-based

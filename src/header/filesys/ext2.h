@@ -257,6 +257,27 @@ uint16_t get_entry_record_len(uint8_t name_len);
  */
 uint32_t get_dir_first_child_offset(void *ptr);
 
+/**
+ * @brief Loads an inode structure from disk given its inode number.
+ * @param inode_num The inode number to load (starting from 1).
+ * @return The EXT2Inode structure corresponding to the inode number.
+ */
+struct EXT2Inode load_inode(uint32_t inode_num);
+
+/*
+* get the parent inode of the directory
+* @param inode the inode of the directory
+* @return the parent inode of the directory
+*/
+uint32_t get_parent_inode(uint32_t inode);
+
+/*
+* get the grandparent inode of the directory
+* @param inode the inode of the directory
+* @return the grandparent inode of the directory
+*/
+uint32_t get_grandparent_inode(uint32_t inode);
+
 
 /* =================== MAIN FUNCTION OF EXT32 FILESYSTEM ============================*/
 

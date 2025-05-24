@@ -4,11 +4,11 @@ void mkdir(char* str) {
     struct EXT2DriverRequest request = {
         .name = str,
         .name_len = strlen(str),
-        .parent_inode = cur_directory.inode,
+        .parent_inode = DIR_INFO.dir[DIR_INFO.current_dir].inode,
         .is_directory = true
     }; 
 
-    int32_t retcode;
+    int32_t retcode = 0;
     syscall(2, (uint32_t)&request, (uint32_t)&retcode, 0);
 
     if (retcode == 1) {

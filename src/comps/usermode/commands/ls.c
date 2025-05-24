@@ -1,12 +1,18 @@
 #include "header/usermode/commands/ls.h"
 
 void ls(char* str) {
+    if (strlen(str) > 12) {
+        syscall(6, (uint32_t)"Directory name too long\n", 24, (uint32_t)&cursor);
+        cursor.row++;
+        return;
+    }
+    
     uint8_t dir_data[BLOCK_SIZE];
     struct EXT2DriverRequest request = {
         .buf = dir_data,
-        .name = cur_directory.dir_name,
-        .name_len = strlen(cur_directory.dir_name),
-        .parent_inode = cur_directory.parent_inode,
+        .name = DIR_INFO.dir[DIR_INFO.current_dir].dir_name,
+        .name_len = strlen(DIR_INFO.dir[DIR_INFO.current_dir].dir_name),
+        .parent_inode = DIR_INFO.current_dir == 0 ? 1 : DIR_INFO.dir[DIR_INFO.current_dir - 1].inode,
         .buffer_size = BLOCK_SIZE,
         .is_directory = true
     };

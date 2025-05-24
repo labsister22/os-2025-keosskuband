@@ -55,13 +55,26 @@ void syscall(struct InterruptFrame frame) {
             );
             break;
         case 6:
-            // please use write_buffer for this
-            puts(
-                (char*) frame.cpu.general.ebx, 
-                frame.cpu.general.ecx, 
-                ((CP*) frame.cpu.general.edx)->row, 
-                ((CP*) frame.cpu.general.edx)->col
-            );
+            char* str = (char*) frame.cpu.general.ebx;
+            int size = frame.cpu.general.ecx;
+            int row = ((CP*) frame.cpu.general.edx)->row;
+            int col = ((CP*) frame.cpu.general.edx)->col;
+            
+            for (int i = 0; i < size; i++) {
+                graphics_char(
+                    col * 8, 
+                    row * 8, 
+                    str[i], 
+                    COLOR_WHITE, 
+                    COLOR_BLACK
+                );
+                col++;
+                if (col >= 80) {
+                    col = 0;
+                    row++;
+                }
+            }
+
             break;
         case 7: 
             keyboard_state_activate();
@@ -107,13 +120,6 @@ void syscall(struct InterruptFrame frame) {
             graphics_set_cursor_colors(
                 (uint8_t)frame.cpu.general.ebx,  
                 (uint8_t)frame.cpu.general.ecx   
-            );
-            break;
-        case 20:
-            read_blocks(
-                (void*) frame.cpu.general.ebx, 
-                frame.cpu.general.ecx, 
-                (uint8_t) frame.cpu.general.edx
             );
             break;
     }

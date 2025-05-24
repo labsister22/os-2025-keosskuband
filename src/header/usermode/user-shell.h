@@ -34,14 +34,19 @@ typedef struct {
 } str_path;
 
 typedef struct {
+    char dir_name[12];
+    uint8_t dir_name_len;
     uint32_t inode;
-    uint32_t parent_inode;
-    char* dir_name;
 } dir_info; 
+
+typedef struct {
+    int current_dir;
+    dir_info dir[50];
+} absolute_dir_info;
 
 extern CP cursor;
 extern str_path path;
-extern dir_info cur_directory;
+extern absolute_dir_info DIR_INFO;
 
 void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx);
 

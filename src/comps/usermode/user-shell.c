@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include <string.h>
+// #include <string.h>
 #include "header/filesys/ext2.h"
 #include "header/usermode/user-shell.h"
 #include "comps/usermode/commands/apple.h"
@@ -13,7 +13,7 @@
 #define MAX_INPUT_LENGTH 2048
 #define MAX_ARGS_AMOUNT 10
 #define MAX_ARGS_LENGTH 32
-#define SHELL_PROMPT "Keossku-Band:"
+#define SHELL_PROMPT "Keossku-Band$ "
 
 #define SCREEN_WIDTH 39
 #define SCREEN_HEIGHT 25
@@ -28,7 +28,10 @@ str_path path = {
     .path = "",
     .len = 0
 };
-dir_info cur_directory;
+absolute_dir_info DIR_INFO = {
+    .current_dir = 0,
+    .dir = {".", 1, 1},
+};
 
 char input_buffer[MAX_INPUT_LENGTH];
 int input_length = 0;
@@ -171,15 +174,6 @@ void update_cursor_row_col() {
     if (cursor.row >= SCREEN_HEIGHT) {
         cursor.row = SCREEN_HEIGHT - 1;
     }
-    i = 0;
-    while (i != path.len) {
-        syscall(5, (uint32_t)&path.path[i], COLOR_LIGHT_GRAY, (uint32_t)&cursor);
-        cursor.col++;
-        i++;
-    }
-    syscall(5, (uint32_t)"$ ", COLOR_LIGHT_GRAY, (uint32_t)&cursor);
-    cursor.col++;
-
     set_hardware_cursor();
 }
 

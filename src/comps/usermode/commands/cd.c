@@ -1,12 +1,18 @@
 #include "header/usermode/commands/cd.h"
 
 void cd(char* str) {
+    if (strlen(str) > 12) {
+        syscall(6, (uint32_t)"Directory name too long\n", 24, (uint32_t)&cursor);
+        cursor.row++;
+        return;
+    }
+
     uint8_t dir_data[BLOCK_SIZE];
     struct EXT2DriverRequest request = {
         .buf = dir_data,
-        .name = cur_directory.dir_name,
-        .name_len = strlen(cur_directory.dir_name),
-        .parent_inode = cur_directory.parent_inode,
+        .name = DIR_INFO.dir[DIR_INFO.current_dir].dir_name,
+        .name_len = strlen(DIR_INFO.dir[DIR_INFO.current_dir].dir_name),
+        .parent_inode = DIR_INFO.current_dir == 0 ? 1 : DIR_INFO.dir[DIR_INFO.current_dir - 1].inode,
         .buffer_size = BLOCK_SIZE,
         .is_directory = true
     };
@@ -22,9 +28,9 @@ void cd(char* str) {
     bool found = false;
     uint32_t offset = 0;
     while (offset < BLOCK_SIZE) {
-        syscall(6, entry->name, entry->name_len, (uint32_t)&cursor);
-        cursor.row++;
-        
+        // syscall(6, entry->name, entry->name_len, (uint32_t)&cursor);
+        // cursor.row++;
+
         if (entry->inode != 0 && entry->name_len == strlen(str) &&
             memcmp(entry->name, str, strlen(str)) == 0) {
             found = true;
@@ -43,35 +49,31 @@ void cd(char* str) {
         return;
     }
 
-    // update current directory
-    cur_directory.parent_inode = cur_directory.inode;
-    cur_directory.inode = entry->inode;
-    memcpy(cur_directory.dir_name, entry->name, entry->name_len);
-    
-    path.path[path.len++] = '/';
-    for (int i = 0; i < entry->name_len; i++) {
-        path.path[path.len++] = entry->name[i];
+    // handle "cd .."
+    if (!memcmp(str, "..", 2)) {
+        // update current directory to grandparent
+        DIR_INFO.current_dir = DIR_INFO.current_dir == 0 ? 0 : DIR_INFO.current_dir - 1;
     }
-    path.path[path.len++] = '\0';
-
-    // update path
-    // if (!memcmp(str, "..", 2)) {
-    //     //remove some last char
-    //     path.len -= strlen(cur_directory.dir_name) + 1;
-    // }
-    // else {
-    //     path.path[path.len++] = '/';
-    //     for (int i = 0; i < entry->name_len; i++) {
-    //         path.path[path.len++] = entry->name[i];
-    //     }
-    //     path.path[path.len++] = '\0';
-    // }
+    else {
+        // update current directory
+        DIR_INFO.current_dir++;
+        DIR_INFO.dir[DIR_INFO.current_dir].inode = entry->inode;
+        memcpy(DIR_INFO.dir[DIR_INFO.current_dir].dir_name, entry->name, entry->name_len);
+        DIR_INFO.dir[DIR_INFO.current_dir].dir_name[entry->name_len] = '\0';
+        
+        // path.path[path.len++] = '/';
+        // for (int i = 0; i < entry->name_len; i++) {
+        //     path.path[path.len++] = entry->name[i];
+        // }
+        // path.path[path.len++] = '\0';
+    }
 }
 
 void cd_root() {
-    cur_directory.inode = 1;
-    cur_directory.parent_inode = 1;
-    cur_directory.dir_name = ".";
+    DIR_INFO.current_dir = 0;
+    DIR_INFO.dir[0].inode = 1;
+    memcpy(DIR_INFO.dir[0].dir_name, ".", 1);
 
-    path.len = 0;
+    path.path[0] = '.';
+    path.len = 1;
 } 

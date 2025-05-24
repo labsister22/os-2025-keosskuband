@@ -6,6 +6,6 @@
 #include "header/stdlib/string.h"
 #include "header/stdlib/strops.h"
 
-void ls();
+void ls(char* str);
 
 #endif 
