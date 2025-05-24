@@ -16,7 +16,7 @@
 #define MAX_ARGS_LENGTH 32
 #define SHELL_PROMPT "Keossku-Band"
 
-#define SCREEN_WIDTH 39
+#define SCREEN_WIDTH 64
 #define SCREEN_HEIGHT 25
 
 // Add cursor visibility tracking
@@ -103,7 +103,7 @@ void clear_input_buffer() {
 void set_hardware_cursor() {
     syscall(8, cursor.row, cursor.col, 0);
 
-    uint16_t pixel_x = cursor.col * 8;
+    uint16_t pixel_x = cursor.col * 5;
     uint16_t pixel_y = cursor.row * 8;
     syscall(13, pixel_x, pixel_y, 0);
 }

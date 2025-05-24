@@ -47,7 +47,7 @@ void syscall(struct InterruptFrame frame) {
             CP* cursor_pos = (CP*) frame.cpu.general.edx;
             
             graphics_char(
-                cursor_pos->col * 8,  // Convert column to X pixel
+                cursor_pos->col * 5,  // Convert column to X pixel
                 cursor_pos->row * 8,  // Convert row to Y pixel
                 ch,
                 color,
@@ -62,7 +62,7 @@ void syscall(struct InterruptFrame frame) {
             
             for (int i = 0; i < size; i++) {
                 graphics_char(
-                    col * 8, 
+                    col * 5, 
                     row * 8, 
                     str[i], 
                     COLOR_WHITE, 
@@ -87,7 +87,7 @@ void syscall(struct InterruptFrame frame) {
             break;
         case 9:
             graphics_char(
-                ((CP*) frame.cpu.general.edx)->col * 8, 
+                ((CP*) frame.cpu.general.edx)->col * 5, 
                 ((CP*) frame.cpu.general.edx)->row * 8, 
                 *((char*) frame.cpu.general.ebx), 
                 ((PrintRequest*) frame.cpu.general.ecx)->font_color, 
