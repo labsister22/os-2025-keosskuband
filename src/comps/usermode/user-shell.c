@@ -30,12 +30,13 @@ str_path path = {
 };
 absolute_dir_info DIR_INFO = {
     .current_dir = 0,
-    .dir = {".", 1, 1},
+    .dir = {{".", 1, 1}}
 };
 
 char input_buffer[MAX_INPUT_LENGTH];
 int input_length = 0;
 char args[MAX_ARGS_AMOUNT][MAX_ARGS_LENGTH];
+char command[MAX_INPUT_LENGTH + 1];
 int cursor_position = 0;
 
 static int prompt_start_row = 0;
@@ -156,6 +157,19 @@ void print_newline() {
     set_hardware_cursor();
 }
 
+// Update cursor row and col based on cursor_position and prompt start
+void update_cursor_row_col() {
+    hide_cursor();
+    int total_pos = prompt_start_col + cursor_position;
+    cursor.row = prompt_start_row + total_pos / SCREEN_WIDTH;
+    cursor.col = total_pos % SCREEN_WIDTH;
+
+    if (cursor.row >= SCREEN_HEIGHT) {
+        cursor.row = SCREEN_HEIGHT - 1;
+    }
+    set_hardware_cursor();
+}
+
 void print_prompt() {
     print_string_colored(SHELL_PROMPT, COLOR_LIGHT_CYAN);
     syscall(5, (uint32_t)":", COLOR_LIGHT_CYAN, (uint32_t)&cursor);
@@ -188,18 +202,7 @@ void print_prompt() {
     show_cursor();
 }
 
-// Update cursor row and col based on cursor_position and prompt start
-void update_cursor_row_col() {
-    hide_cursor();
-    int total_pos = prompt_start_col + cursor_position;
-    cursor.row = prompt_start_row + total_pos / SCREEN_WIDTH;
-    cursor.col = total_pos % SCREEN_WIDTH;
 
-    if (cursor.row >= SCREEN_HEIGHT) {
-        cursor.row = SCREEN_HEIGHT - 1;
-    }
-    set_hardware_cursor();
-}
 
 void redraw_input_line() {
     hide_cursor();
@@ -309,7 +312,6 @@ void move_cursor_right() {
 void process_command() {
     hide_cursor();
     print_newline();
-    int cmd_length = 0;
 
     if (input_length > 0) {
         // Clear args array first
@@ -320,11 +322,15 @@ void process_command() {
         }
 
         int i = 0;
-        // get command length
+        // get command
         while (i < input_length && input_buffer[i] != ' ' &&
-               input_buffer[i] != '\n' && input_buffer[i] != '\r')
-            i++;
-        cmd_length = i;
+               input_buffer[i] != '\n' && input_buffer[i] != '\r') {
+               
+           command[i] = input_buffer[i];   
+           i++;
+        }
+        command[i] = '\0';
+            
 
         // skip the whitespaces to get to first args
         while (i < input_length && input_buffer[i] == ' ')
@@ -355,28 +361,28 @@ void process_command() {
         }
 
         // do commands
-        if (!memcmp("help", input_buffer, cmd_length) && cmd_length == 4) {
+        if (!strcmp("help", command)) {
             help();
-        } else if (!memcmp("clear", input_buffer, cmd_length) && cmd_length == 5) {
+        } else if (!strcmp("clear", command)) {
             clear();
-        } else if (!memcmp("echo", input_buffer, cmd_length) && cmd_length == 4) {
+        } else if (!strcmp("echo", command)) {
             echo(args[0]);
         }
-        else if (!memcmp("ls", input_buffer, cmd_length)) {
+        else if (!strcmp("ls", command)) {
             ls(args[0]);
         }
-        else if (!memcmp("cd", input_buffer, cmd_length)) {
+        else if (!strcmp("cd", command)) {
             cd(args[0]);
         }
-        else if (!memcmp("mkdir", input_buffer, cmd_length)) {
+        else if (!strcmp("mkdir", command)) {
             mkdir(args[0]);
         }
-       else if (!memcmp("exit", input_buffer, cmd_length) && cmd_length == 4) {
+       else if (!strcmp("exit", command)) {
             print_string_at_cursor("Goodbye!");
             print_newline();
             while (1) {
             }
-        } else if (!memcmp("apple", input_buffer, cmd_length) && cmd_length == 5) {
+        } else if (!strcmp("apple", command)) {
             apple(&cursor);
         } else if (input_buffer[0] == 0x1B) { // ESC key
             print_string_colored("Exiting debug mode...", COLOR_LIGHT_RED);
@@ -384,24 +390,10 @@ void process_command() {
         } else {
             print_string_colored("Command not found: ", COLOR_LIGHT_RED);
 
-            // Print command with proper null termination
-            char temp_cmd[MAX_INPUT_LENGTH + 1];
-            for (int j = 0; j < cmd_length && j < MAX_INPUT_LENGTH; j++) {
-                temp_cmd[j] = input_buffer[j];
-            }
-            temp_cmd[cmd_length] = '\0';
-
-            print_string_colored(temp_cmd, COLOR_WHITE);
+            print_string_colored(command, COLOR_WHITE);
             print_newline();
             print_string_colored("Type 'help' for available commands.", COLOR_DARK_GRAY);
             print_newline();
-        }
-
-        // cleanup args
-        for (int i = 0; i < args_used_amount; i++) {
-            for (int j = 0; j < MAX_ARGS_LENGTH; j++) {
-                args[i][j] = '\0';
-            }
         }
     }
 }
