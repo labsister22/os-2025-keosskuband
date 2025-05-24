@@ -376,3 +376,25 @@ void graphics_blink_cursor(void) {
         }
     }
 }
+
+void graphics_scroll(uint16_t lines, uint8_t fill_color) {
+    if (lines == 0 || lines >= VGA_HEIGHT) {
+        graphics_clear(fill_color);
+        return;
+    }
+    
+    uint32_t pixels_per_line = VGA_WIDTH;
+    uint32_t total_pixels_to_move = pixels_per_line * (VGA_HEIGHT - lines);
+    uint32_t source_offset = pixels_per_line * lines;
+    
+    for (uint32_t i = 0; i < total_pixels_to_move; i++) {
+        VGA_MEMORY[i] = VGA_MEMORY[i + source_offset];
+    }
+    
+    uint32_t start_clear = total_pixels_to_move;
+    uint32_t pixels_to_clear = pixels_per_line * lines;
+    
+    for (uint32_t i = 0; i < pixels_to_clear; i++) {
+        VGA_MEMORY[start_clear + i] = fill_color;
+    }
+}

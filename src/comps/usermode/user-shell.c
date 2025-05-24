@@ -19,10 +19,9 @@
 #define SCREEN_WIDTH 64
 #define SCREEN_HEIGHT 25
 
-// Add cursor visibility tracking
 static bool cursor_shown = false;
-static char char_under_cursor = ' '; // Store character that cursor is over
-static uint8_t char_color_under_cursor = COLOR_WHITE; // Store original color
+static char char_under_cursor = ' '; 
+static uint8_t char_color_under_cursor = COLOR_WHITE; 
 
 CP cursor = {0, 0};
 str_path path = {
@@ -51,7 +50,6 @@ void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     __asm__ volatile("int $0x30");
 }
 
-// New syscall for cursor operations
 void graphics_draw_cursor_syscall() {
     syscall(10, 0, 0, 0);
 }
@@ -109,10 +107,18 @@ void set_hardware_cursor() {
 }
 
 void scroll_screen() {
-    // Simple: just move cursor to last line for now
-    cursor.row = SCREEN_HEIGHT - 1;
-    cursor.col = 0;
+    syscall(18, 8, COLOR_BLACK, 0); // Scroll 1 line up
     set_hardware_cursor();
+}
+
+void check_and_scroll() {
+    while (cursor.row >= SCREEN_HEIGHT) {
+        scroll_screen();
+        if (prompt_start_row > 0) {
+            prompt_start_row--;
+            cursor.row--;
+        }
+    }
 }
 
 void advance_cursor() {
@@ -121,12 +127,9 @@ void advance_cursor() {
     if (cursor.col >= SCREEN_WIDTH) {
         cursor.col = 0;
         cursor.row++;
-
-        if (cursor.row >= SCREEN_HEIGHT) {
-            scroll_screen();
-        }
     }
 
+    check_and_scroll();
     set_hardware_cursor();
 }
 
@@ -135,6 +138,7 @@ void print_string_colored(const char* str, uint8_t color) {
 
     int i = 0;
     while (str[i] != '\0') {
+        check_and_scroll();
         syscall(5, (uint32_t)&str[i], color, (uint32_t)&cursor);
         advance_cursor();
         i++;
@@ -151,10 +155,7 @@ void print_newline() {
     cursor.col = 0;
     cursor.row++;
 
-    if (cursor.row >= SCREEN_HEIGHT) {
-        scroll_screen();
-    }
-
+    check_and_scroll();
     set_hardware_cursor();
 }
 
@@ -165,13 +166,15 @@ void update_cursor_row_col() {
     cursor.row = prompt_start_row + total_pos / SCREEN_WIDTH;
     cursor.col = total_pos % SCREEN_WIDTH;
 
-    if (cursor.row >= SCREEN_HEIGHT) {
-        cursor.row = SCREEN_HEIGHT - 1;
-    }
+    // Check if we need to scroll due to cursor position
+    check_and_scroll();
     set_hardware_cursor();
 }
 
 void print_prompt() {
+    // Check if we need to scroll before printing prompt
+    check_and_scroll();
+    
     print_string_colored(SHELL_PROMPT, COLOR_LIGHT_CYAN);
     syscall(5, (uint32_t)":", COLOR_LIGHT_CYAN, (uint32_t)&cursor);
     cursor.col++;
@@ -183,19 +186,24 @@ void print_prompt() {
             if (cursor.col >= SCREEN_WIDTH) {
                 cursor.col = 0;
                 cursor.row++;
-                if (cursor.row >= SCREEN_HEIGHT) {
-                    scroll_screen();
-                }
+                check_and_scroll();
             }
         }
         if (i < DIR_INFO.current_dir) {
             syscall(5, (uint32_t)"/", COLOR_LIGHT_CYAN, (uint32_t)&cursor);
             cursor.col++;
+            if (cursor.col >= SCREEN_WIDTH) {
+                cursor.col = 0;
+                cursor.row++;
+                check_and_scroll();
+            }
         }
     }
 
-    cursor.row++;
     cursor.col = 0;
+    cursor.row++;
+    check_and_scroll();
+    
     syscall(5, (uint32_t)":", COLOR_LIGHT_CYAN, (uint32_t)&cursor);
     cursor.col++;
     syscall(5, (uint32_t)"$", COLOR_LIGHT_CYAN, (uint32_t)&cursor);
@@ -210,16 +218,23 @@ void print_prompt() {
     show_cursor();
 }
 
-
-
 void redraw_input_line() {
     hide_cursor();
 
+    // Calculate how many rows the input will take
     int total_chars = prompt_start_col + input_length;
     int total_rows = (total_chars + SCREEN_WIDTH - 1) / SCREEN_WIDTH;
+    int end_row = prompt_start_row + total_rows - 1;
+
+    // Check if input would extend beyond screen and scroll if needed
+    while (end_row >= SCREEN_HEIGHT) {
+        scroll_screen();
+        prompt_start_row--;
+        end_row--;
+    }
 
     // Clear only input area, not prompt
-    for (int row = prompt_start_row; row < prompt_start_row + total_rows && row < SCREEN_HEIGHT; row++) {
+    for (int row = prompt_start_row; row <= end_row && row < SCREEN_HEIGHT; row++) {
         int start_col = (row == prompt_start_row) ? prompt_start_col : 0;
         for (int col = start_col; col < SCREEN_WIDTH; col++) {
             char space = ' ';
@@ -486,6 +501,9 @@ int main(void) {
                 redraw_input_line();
             }
         }
+        
+        // Additional scroll check in main loop
+        check_and_scroll();
         syscall(14, 0, 0, 0);
     }
 
