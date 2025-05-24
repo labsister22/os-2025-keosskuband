@@ -7,6 +7,10 @@ void cd(char* str) {
         return;
     }
 
+    if (!memcmp(str, ".", 1) && strlen(str) == 1) {
+        return;
+    }
+
     uint8_t dir_data[BLOCK_SIZE];
     struct EXT2DriverRequest request = {
         .buf = dir_data,
@@ -16,7 +20,7 @@ void cd(char* str) {
         .buffer_size = BLOCK_SIZE,
         .is_directory = true
     };
-    int32_t retcode;
+    int32_t retcode = 0;
     syscall(1, (uint32_t)&request, (uint32_t)&retcode, 0);
     if (retcode != 0) {
         // error
