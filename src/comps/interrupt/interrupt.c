@@ -122,6 +122,12 @@ void syscall(struct InterruptFrame frame) {
                 (uint8_t)frame.cpu.general.ecx   
             );
             break;
+        case 16:
+            graphics_pixel(
+                (uint16_t)frame.cpu.general.ebx, 
+                (uint16_t)frame.cpu.general.ecx, 
+                (uint8_t)frame.cpu.general.edx
+            );
     }
 }
 struct TSSEntry _interrupt_tss_entry = {

@@ -22,7 +22,7 @@ LFLAGS        = -T $(SOURCE_FOLDER)/linker.ld -melf_i386
 
 
 run: all
-	@qemu-system-i386 -s -drive file=bin/storage.bin,format=raw,if=ide,index=0,media=disk -cdrom $(OUTPUT_FOLDER)/$(ISO_NAME).iso
+	@qemu-system-i386 -s -m 1024M -drive file=bin/storage.bin,format=raw,if=ide,index=0,media=disk -cdrom $(OUTPUT_FOLDER)/$(ISO_NAME).iso
 all: build
 build: iso
 clean:
@@ -65,7 +65,7 @@ iso: kernel
 	@rm -r $(OUTPUT_FOLDER)/iso/
 
 disk:
-	@qemu-img create -f raw $(OUTPUT_FOLDER)/$(DISK_NAME).bin 4M
+	@qemu-img create -f raw $(OUTPUT_FOLDER)/$(DISK_NAME).bin 32M
 
 inserter:
 	@$(CC) -Wno-builtin-declaration-mismatch -g -I$(SOURCE_FOLDER) \
