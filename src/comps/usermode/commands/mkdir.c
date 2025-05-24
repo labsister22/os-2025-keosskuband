@@ -1,7 +1,7 @@
 #include "header/usermode/commands/mkdir.h"
 
 void mkdir(char* str) {
-    if (len(str) > 12) {
+    if (strlen(str) > 12) {
         syscall(6, (uint32_t)"Directory name too long\n", 24, (uint32_t)&cursor);
         cursor.row++;
         return;
