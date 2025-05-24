@@ -49,6 +49,12 @@ void cd(char* str) {
         return;
     }
 
+    if (entry->file_type != EXT2_FT_DIR) {
+        syscall(6, (uint32_t)"Not a directory\n", 16, (uint32_t)&cursor);
+        cursor.row++;
+        return;
+    }
+
     // handle "cd .."
     if (!memcmp(str, "..", 2)) {
         // update current directory to grandparent
@@ -60,6 +66,7 @@ void cd(char* str) {
         DIR_INFO.dir[DIR_INFO.current_dir].inode = entry->inode;
         memcpy(DIR_INFO.dir[DIR_INFO.current_dir].dir_name, entry->name, entry->name_len);
         DIR_INFO.dir[DIR_INFO.current_dir].dir_name[entry->name_len] = '\0';
+        DIR_INFO.dir[DIR_INFO.current_dir].dir_name_len = entry->name_len;
         
         // path.path[path.len++] = '/';
         // for (int i = 0; i < entry->name_len; i++) {

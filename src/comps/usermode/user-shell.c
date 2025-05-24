@@ -13,7 +13,7 @@
 #define MAX_INPUT_LENGTH 2048
 #define MAX_ARGS_AMOUNT 10
 #define MAX_ARGS_LENGTH 32
-#define SHELL_PROMPT "Keossku-Band$ "
+#define SHELL_PROMPT "Keossku-Band"
 
 #define SCREEN_WIDTH 39
 #define SCREEN_HEIGHT 25
@@ -158,10 +158,34 @@ void print_newline() {
 
 void print_prompt() {
     print_string_colored(SHELL_PROMPT, COLOR_LIGHT_CYAN);
+    syscall(5, (uint32_t)":", COLOR_LIGHT_CYAN, (uint32_t)&cursor);
+    cursor.col++;
+
+    for (int i = 0; i <= DIR_INFO.current_dir; i++) {
+        for (int j = 0; j < DIR_INFO.dir[i].dir_name_len; j++) {
+            syscall(5, (uint32_t)&DIR_INFO.dir[i].dir_name[j], COLOR_LIGHT_CYAN, (uint32_t)&cursor);
+            cursor.col++;
+        }
+        if (i < DIR_INFO.current_dir) {
+            syscall(5, (uint32_t)"/", COLOR_LIGHT_CYAN, (uint32_t)&cursor);
+            cursor.col++;
+        }
+    }
+
+    cursor.row++;
+    cursor.col = 0;
+    syscall(5, (uint32_t)":", COLOR_LIGHT_CYAN, (uint32_t)&cursor);
+    cursor.col++;
+    syscall(5, (uint32_t)"$", COLOR_LIGHT_CYAN, (uint32_t)&cursor);
+    cursor.col++;
 
     // Save prompt start row/col for input text (cursor after prompt)
     prompt_start_row = cursor.row;
     prompt_start_col = cursor.col;
+
+    update_cursor_row_col();
+    set_hardware_cursor();
+    show_cursor();
 }
 
 // Update cursor row and col based on cursor_position and prompt start
@@ -229,8 +253,6 @@ void insert_char_at_cursor(char c) {
     input_length++;
     cursor_position++;
     input_buffer[input_length] = '\0';
-
-    update_cursor_row_col();
 }
 
 void delete_char_before_cursor() {
