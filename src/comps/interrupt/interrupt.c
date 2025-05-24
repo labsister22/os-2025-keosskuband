@@ -3,6 +3,8 @@
 #include "header/filesys/ext2.h"
 #include "header/text/framebuffer.h"
 #include "header/graphics/graphics.h"
+#include "header/scheduler/scheduler.h"
+#include "header/memory/paging.h"
 
 typedef struct {
     int32_t row;
@@ -52,9 +54,9 @@ void syscall(struct InterruptFrame frame) {
             keyboard_state_activate();
             break;
         case 8:
-            graphics_set_cursor(
-                (uint16_t)frame.cpu.general.ebx, 
-                (uint16_t)frame.cpu.general.ecx
+            framebuffer_set_cursor(
+                (uint8_t)frame.cpu.general.ebx, 
+                (uint8_t)frame.cpu.general.ecx
             );
             break;
         case 9:
@@ -96,6 +98,7 @@ void syscall(struct InterruptFrame frame) {
             break;
     }
 }
+
 struct TSSEntry _interrupt_tss_entry = {
     .ss0  = GDT_KERNEL_DATA_SEGMENT_SELECTOR,
 };
@@ -138,29 +141,42 @@ void pic_remap(void) {
     out(PIC2_DATA, PIC_DISABLE_ALL_MASK);
 }
 
+static volatile bool in_interrupt_handler = false;
+
 void main_interrupt_handler(struct InterruptFrame frame) {
+    // Prevent interrupt nesting issues
+    if (in_interrupt_handler && frame.int_number != (IRQ_KEYBOARD + PIC1_OFFSET)) {
+        // If we're already in an interrupt handler, only allow keyboard interrupts
+        pic_ack(frame.int_number - PIC1_OFFSET);
+        return;
+    }
+    
+    in_interrupt_handler = true;
+    
     switch (frame.int_number) {
-        // Timer interrupt
-        case PIC1_OFFSET + IRQ_TIMER:
-            pic_ack(IRQ_TIMER);
+        case PIC1_OFFSET + IRQ_TIMER:  // 32 - Timer
+            timer_isr(frame);
             break;
             
-        // Keyboard interrupt
-        case PIC1_OFFSET + IRQ_KEYBOARD:
+        case PIC1_OFFSET + IRQ_KEYBOARD:  // 33 - Keyboard  
             keyboard_isr();
             break;
-
-        // Other interrupts
-        case 0x30: // syscall
+            
+        case 0x30:  // 48 - Syscall
             syscall(frame);
             break;
             
         default:
-            if (frame.int_number >= PIC1_OFFSET) {
+            // Handle unknown interrupts
+            if (frame.int_number >= PIC1_OFFSET && frame.int_number < PIC1_OFFSET + 8) {
                 pic_ack(frame.int_number - PIC1_OFFSET);
+            } else if (frame.int_number >= PIC2_OFFSET && frame.int_number < PIC2_OFFSET + 8) {
+                pic_ack(frame.int_number - PIC2_OFFSET);
             }
             break;
     }
+    
+    in_interrupt_handler = false;
 }
 
 void set_tss_kernel_current_stack(void) {

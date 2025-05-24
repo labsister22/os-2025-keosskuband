@@ -160,6 +160,7 @@ void kernel_setup(void) {
 #include "header/text/framebuffer.h"
 #include "header/memory/paging.h"
 #include "header/process/process.h"
+#include "header/scheduler/scheduler.h"
 #include "misc/apple.h"
 
 /*
@@ -431,6 +432,9 @@ void kernel_setup(void) {
     set_tss_kernel_current_stack();
 
     process_create_user_process(request2);
-    paging_use_page_directory(_process_list[0].context.page_directory_virtual_addr);
-    kernel_execute_user_program((void*) 0x0);
+    scheduler_init();
+    scheduler_switch_to_next_process();
+
+    //paging_use_page_directory(_process_list[0].context.page_directory_virtual_addr);
+    //kernel_execute_user_program((void*) 0x0);
 }

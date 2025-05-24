@@ -133,13 +133,6 @@ int32_t process_create_user_process(struct EXT2DriverRequest request);
 bool process_destroy(uint32_t pid);
 
 /**
- * Switch context to another process
- * 
- * @param new_process Process to switch to
- */
-void process_context_switch(struct ProcessControlBlock *new_process);
-
-/**
  * Get process control block from PID
  * 
  * @param pid Process ID

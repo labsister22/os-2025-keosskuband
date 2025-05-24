@@ -177,10 +177,10 @@ int32_t process_create_user_process(struct EXT2DriverRequest request) {
         }
     };
     
-    new_pcb->context.eip = (uint32_t)request.buf; // Entry point
+    new_pcb->context.eip = 0x0; // Entry point at start of user space (0x0)
     new_pcb->context.cs = GDT_USER_CODE_SEGMENT_SELECTOR | 0x3; // User code segment with RPL 3
     new_pcb->context.eflags = CPU_EFLAGS_BASE_FLAG | CPU_EFLAGS_FLAG_INTERRUPT_ENABLE;
-    new_pcb->context.esp = 0xBFFFFFFC;
+    new_pcb->context.esp = 0xBFFFFFFC; // Stack pointer at top of stack
     new_pcb->context.ss = GDT_USER_DATA_SEGMENT_SELECTOR | 0x3; // User stack segment
 
     // Mark process slot as used
@@ -234,28 +234,6 @@ bool process_destroy(uint32_t pid) {
 }
 
 // Additional helper functions
-
-void process_context_switch(struct ProcessControlBlock *new_process) {
-    if (new_process == NULL || new_process->metadata.state == TERMINATED) {
-        return;
-    }
-    
-    // Get current running process
-    struct ProcessControlBlock *current = process_get_current_running_pcb_pointer();
-    
-    // Save current process state if there is one
-    if (current != NULL) {
-        current->metadata.state = READY;
-    }
-    
-    // Switch to new process
-    new_process->metadata.state = RUNNING;
-    
-    // Switch page directory
-    paging_use_page_directory(new_process->context.page_directory_virtual_addr);
-    
-    // Context switch will be completed by interrupt handler
-}
 
 struct ProcessControlBlock* process_get_pcb_from_pid(uint32_t pid) {
     for (uint32_t i = 0; i < PROCESS_COUNT_MAX; i++) {

@@ -51,6 +51,7 @@ kernel:
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/filesys/ext2.c -o $(OUTPUT_FOLDER)/ext2.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/memory/paging.c -o $(OUTPUT_FOLDER)/paging.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/process/process.c -o $(OUTPUT_FOLDER)/process.o
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/scheduler/scheduler.c -o $(OUTPUT_FOLDER)/scheduler.o
 	
 	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/kernel
 	@echo Linking object files and generate elf32...
