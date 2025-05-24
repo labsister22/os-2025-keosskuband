@@ -1,7 +1,7 @@
 #include "header/usermode/commands/mkdir.h"
 
 void mkdir(char* str) {
-    if (len(str) > 12) {
+    if (strlen(str) > 12) {
         syscall(6, (uint32_t)"Directory name too long\n", 24, (uint32_t)&cursor);
         cursor.row++;
         return;
@@ -13,7 +13,7 @@ void mkdir(char* str) {
     }
     if (!memcmp(str, "..", 2) && strlen(str) == 2) {
         syscall(6, (uint32_t)"Cannot create directory with name '..'\n", 38, (uint32_t)&cursor);
-        cursor.row++;
+        cursor.row++;   
         return;
     }
     if (strlen(str) == 0) {
@@ -21,6 +21,23 @@ void mkdir(char* str) {
         cursor.row++;
         return;
     }
+    
+    bool contains_invalid_chars = false;
+    for (int i = 0; i < strlen(str); i++) {
+        if (str[i] == '/' || str[i] == '\\' || str[i] == ':' || str[i] == '*' ||
+            str[i] == '?' || str[i] == '"' || str[i] == '<' || str[i] == '>' ||
+            str[i] == '|' || str[i] < 32) {
+            contains_invalid_chars = true;
+            break;
+        }
+    }
+
+    if (contains_invalid_chars) {
+        syscall(6, (uint32_t)"Directory name contains invalid characters\n", 42, (uint32_t)&cursor);
+        cursor.row++;
+        return;
+    }
+
     if (DIR_INFO.current_dir >= 50) {
         syscall(6, (uint32_t)"Maximum directory limit reached\n", 33, (uint32_t)&cursor);
         cursor.row++;

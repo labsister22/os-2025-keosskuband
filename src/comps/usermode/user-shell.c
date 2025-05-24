@@ -2,7 +2,7 @@
 // #include <string.h>
 #include "header/filesys/ext2.h"
 #include "header/usermode/user-shell.h"
-#include "comps/usermode/commands/apple.h"
+#include "header/usermode/commands/apple.h"
 #include "header/usermode/commands/help.h"
 #include "header/usermode/commands/clear.h"
 #include "header/usermode/commands/echo.h"
@@ -179,6 +179,13 @@ void print_prompt() {
         for (int j = 0; j < DIR_INFO.dir[i].dir_name_len; j++) {
             syscall(5, (uint32_t)&DIR_INFO.dir[i].dir_name[j], COLOR_LIGHT_CYAN, (uint32_t)&cursor);
             cursor.col++;
+            if (cursor.col >= SCREEN_WIDTH) {
+                cursor.col = 0;
+                cursor.row++;
+                if (cursor.row >= SCREEN_HEIGHT) {
+                    scroll_screen();
+                }
+            }
         }
         if (i < DIR_INFO.current_dir) {
             syscall(5, (uint32_t)"/", COLOR_LIGHT_CYAN, (uint32_t)&cursor);
