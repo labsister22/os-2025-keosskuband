@@ -2,7 +2,9 @@
 #define MKDIR_COMMAND
 
 #include "header/usermode/user-shell.h"
+#include "header/stdlib/string.h"
+#include "header/stdlib/strops.h"
 
-void mkdir();
+void mkdir(char* str);
 
 #endif 

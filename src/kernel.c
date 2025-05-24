@@ -423,6 +423,20 @@ void kernel_setup(void) {
     };
     read(request2);
 
+    struct EXT2DriverRequest request_test = {
+        .buf                   = "something1",
+        .name                  = "check1",
+        .parent_inode          = 1,
+        .buffer_size           = 11,
+        .name_len              = 7,
+        .is_directory          = false,
+    };
+    write(&request_test);
+
+    request_test.buf = "something2";
+    request_test.name = "check2";
+    write(&request_test);
+
     // Set TSS $esp pointer and jump into shell 
     set_tss_kernel_current_stack();
     kernel_execute_user_program((uint8_t*) 0);

@@ -20,7 +20,22 @@ void syscall(struct InterruptFrame frame) {
             *((int8_t*) frame.cpu.general.ecx) = read(
                 *(struct EXT2DriverRequest*) frame.cpu.general.ebx
             );
-            break;          
+            break;
+        case 1:
+            *((int8_t*) frame.cpu.general.ecx) = read_directory(
+                (struct EXT2DriverRequest*) frame.cpu.general.ebx
+            );
+            break; 
+        case 2:  
+            *((int8_t*) frame.cpu.general.ecx) = write(
+                (struct EXT2DriverRequest*) frame.cpu.general.ebx
+            );
+            break;
+        case 3:
+            *((int8_t*) frame.cpu.general.ecx) = delete(
+                *(struct EXT2DriverRequest*) frame.cpu.general.ebx
+            );
+            break;
         case 4:
             get_keyboard_buffer((char*) frame.cpu.general.ebx);
             break;
@@ -59,6 +74,13 @@ void syscall(struct InterruptFrame frame) {
                 ((CP*) frame.cpu.general.edx)->col,
                 ((PrintRequest*) frame.cpu.general.ecx)->font_color,
                 ((PrintRequest*) frame.cpu.general.ecx)->bg_color
+            );
+            break;
+        case 20:
+            read_blocks(
+                (void*) frame.cpu.general.ebx, 
+                frame.cpu.general.ecx, 
+                (uint8_t) frame.cpu.general.edx
             );
             break;
     }

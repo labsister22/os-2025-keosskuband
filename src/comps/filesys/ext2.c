@@ -123,7 +123,7 @@ void init_directory_table(struct EXT2Inode *node, uint32_t inode, uint32_t paren
     node->i_mode = EXT2_S_IFDIR;
 
     // EXT2 expects i_blocks to be in units of 512 bytes
-    node->i_blocks = BLOCK_SIZE / 512;
+    node->i_blocks = 1;
 
     // Allocate block and write data
     allocate_node_blocks(dir_table, node, inode_to_bgd(inode));
@@ -702,6 +702,7 @@ int8_t write(struct EXT2DriverRequest *request) {
 
     return 0; // Success
 }
+
 
 void deallocate_blocks(void *loc, uint32_t blocks) {
     uint32_t *locations = (uint32_t*)loc;

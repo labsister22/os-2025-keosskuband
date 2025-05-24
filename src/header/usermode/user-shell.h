@@ -28,6 +28,20 @@ typedef struct {
     int32_t col;
 } CP;
 
+typedef struct {
+    char path[2048];
+    int len;
+} str_path;
+
+typedef struct {
+    uint32_t inode;
+    uint32_t parent_inode;
+    char* dir_name;
+} dir_info; 
+
+extern CP cursor;
+extern str_path path;
+extern dir_info cur_directory;
 
 void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx);
 

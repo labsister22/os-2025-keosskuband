@@ -1,7 +1,5 @@
 #include "header/usermode/commands/clear.h"
 
-extern CP cursor;
-
 void clear() {
     cursor.row = 0;
     cursor.col = 0;

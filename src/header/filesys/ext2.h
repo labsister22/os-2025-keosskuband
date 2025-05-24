@@ -189,33 +189,33 @@ struct EXT2InodeTable
  * - https://www.nongnu.org/ext2-doc/ext2.html#linked-directories
  */
 
-    struct EXT2DirectoryEntry
-    {
-        uint32_t inode; // 32bit value indicating the inode number of the file entry. A value of 0 indicate that the entry is not used.
-        /**
-         * 16bit unsigned displacement to the next directory entry from the start of the current directory entry.
-         * This field must have a value at least equal to the length of the current record.
-         * The directory entries must be aligned on 4 bytes boundaries and there cannot be any directory entry spanning multiple data blocks.
-         * If an entry cannot completely fit in one block, it must be pushed to the next data block and the rec_len of the previous entry properly adjusted.
-         */
-        uint16_t rec_len; 
+struct EXT2DirectoryEntry
+{
+    uint32_t inode; // 32bit value indicating the inode number of the file entry. A value of 0 indicate that the entry is not used.
+    /**
+     * 16bit unsigned displacement to the next directory entry from the start of the current directory entry.
+     * This field must have a value at least equal to the length of the current record.
+     * The directory entries must be aligned on 4 bytes boundaries and there cannot be any directory entry spanning multiple data blocks.
+     * If an entry cannot completely fit in one block, it must be pushed to the next data block and the rec_len of the previous entry properly adjusted.
+     */
+    uint16_t rec_len; 
 
-        /**
-         * 8bit value indicating the length of the file name.
-         */
-        uint8_t name_len;
+    /**
+     * 8bit value indicating the length of the file name.
+     */
+    uint8_t name_len;
 
-        /**
-         * 8bit unsigned value used to indicate file type.
-         */
-        uint8_t file_type;
+    /**
+     * 8bit unsigned value used to indicate file type.
+     */
+    uint8_t file_type;
 
-        /**
-         * 8bit value indicating the file name. The file name is null terminated and can be up to 255 bytes long.
-         */
-        char name[];
+    /**
+     * 8bit value indicating the file name. The file name is null terminated and can be up to 255 bytes long.
+     */
+    char name[];
 
-    }__attribute__((packed));
+}__attribute__((packed));
 
 /**
  *  REGULAR function

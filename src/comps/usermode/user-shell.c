@@ -7,14 +7,23 @@
 #include "header/usermode/commands/help.h"
 #include "header/usermode/commands/clear.h"
 #include "header/usermode/commands/echo.h"
+#include "header/usermode/commands/ls.h"
+#include "header/usermode/commands/cd.h"
+#include "header/usermode/commands/mkdir.h"
 
 #define MAX_INPUT_LENGTH 2048
 #define MAX_ARGS_AMOUNT 10
 #define MAX_ARGS_LENGTH 32
-#define SHELL_PROMPT "Keossku-Band$/ "
+#define SHELL_PROMPT "Keossku-Band:"
 
 
 CP cursor = {0, 0};
+str_path path = {
+    .path = "",
+    .len = 0
+};
+dir_info cur_directory;
+
 char input_buffer[MAX_INPUT_LENGTH];
 int input_length = 0;
 char args[MAX_ARGS_AMOUNT][MAX_ARGS_LENGTH];
@@ -80,6 +89,15 @@ void print_prompt() {
         cursor.col++;
         i++;
     }
+    i = 0;
+    while (i != path.len) {
+        syscall(5, (uint32_t)&path.path[i], COLOR_LIGHT_GRAY, (uint32_t)&cursor);
+        cursor.col++;
+        i++;
+    }
+    syscall(5, (uint32_t)"$ ", COLOR_LIGHT_GRAY, (uint32_t)&cursor);
+    cursor.col++;
+
     set_hardware_cursor();
 }
 
@@ -208,6 +226,15 @@ void process_command() {
         else if (!memcmp("echo", input_buffer, cmd_length)) {
             echo(args[0]);
         }
+        else if (!memcmp("ls", input_buffer, cmd_length)) {
+            ls(args[0]);
+        }
+        else if (!memcmp("cd", input_buffer, cmd_length)) {
+            cd(args[0]);
+        }
+        else if (!memcmp("mkdir", input_buffer, cmd_length)) {
+            mkdir(args[0]);
+        }
         else if (!memcmp("exit", input_buffer, cmd_length)) {
             // gk tau implemennya gmn
             print_string_at_cursor("Goodbye!");
@@ -233,17 +260,18 @@ void process_command() {
 }
 
 int main(void) {
-    struct BlockBuffer      bl[10]   = {0};
-    struct EXT2DriverRequest request = {
-        .buf                   = &bl,
-        .name                  = "shell",
-        .parent_inode          = 1,
-        .buffer_size           = BLOCK_SIZE * 10,
-        .name_len = 5,
-    };
-    int32_t retcode;
-    syscall(0, (uint32_t) &request, (uint32_t) &retcode, 0);
+    // struct BlockBuffer      bl[10]   = {0};
+    // struct EXT2DriverRequest request = {
+    //     .buf                   = &bl,
+    //     .name                  = "shell",
+    //     .parent_inode          = 1,
+    //     .buffer_size           = BLOCK_SIZE * 10,
+    //     .name_len = 5,
+    // };
+    // int32_t retcode;
+    // syscall(0, (uint32_t) &request, (uint32_t) &retcode, 0);
 
+    cd_root();
 
     cursor.row = 0;
     cursor.col = 0;
