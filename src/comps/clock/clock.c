@@ -27,8 +27,8 @@ struct Time {
 };
 
 // Display position (bottom of screen in graphics mode)
-#define CLOCK_ROW 23
-#define CLOCK_COL 50
+#define CLOCK_ROW 24
+#define CLOCK_COL 56
 
 // Simple memset function
 void memset_simple(void *ptr, int value, int size) {
