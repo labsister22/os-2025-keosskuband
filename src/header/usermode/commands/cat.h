@@ -1,8 +1,8 @@
-#ifndef ECHO_COMMAND
-#define ECHO_COMMAND
+#ifndef CAT_COMMAND
+#define CAT_COMMAND
 
 #include "header/usermode/user-shell.h"
 
-void echo(char* str);
+void cat(char* name);
 
 #endif // ECHO_COMMAND

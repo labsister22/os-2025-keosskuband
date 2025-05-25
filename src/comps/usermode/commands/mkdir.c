@@ -2,23 +2,27 @@
 
 void mkdir(char* str) {
     if (strlen(str) > 12) {
-        syscall(6, (uint32_t)"Directory name too long\n", 24, (uint32_t)&cursor);
-        cursor.row++;
+        print_string_colored("Directory name too long\n", COLOR_RED);
+        print_newline();
+
         return;
     }
     if (!memcmp(str, ".", 1) && strlen(str) == 1) {
-        syscall(6, (uint32_t)"Cannot create directory with name '.'\n", 38, (uint32_t)&cursor);
-        cursor.row++;
+        print_string_colored("Cannot create directory with name '.'\n", COLOR_RED);
+        print_newline();
+
         return;
     }
     if (!memcmp(str, "..", 2) && strlen(str) == 2) {
-        syscall(6, (uint32_t)"Cannot create directory with name '..'\n", 38, (uint32_t)&cursor);
-        cursor.row++;   
+        print_string_colored("Cannot create directory with name '..'\n", COLOR_RED);
+        print_newline();
+
         return;
     }
     if (strlen(str) == 0) {
-        syscall(6, (uint32_t)"Directory name cannot be empty\n", 31, (uint32_t)&cursor);
-        cursor.row++;
+        print_string_colored("Directory name cannot be empty\n", COLOR_RED);
+        print_newline();        
+
         return;
     }
     
@@ -26,21 +30,23 @@ void mkdir(char* str) {
     for (int i = 0; i < strlen(str); i++) {
         if (str[i] == '/' || str[i] == '\\' || str[i] == ':' || str[i] == '*' ||
             str[i] == '?' || str[i] == '"' || str[i] == '<' || str[i] == '>' ||
-            str[i] == '|' || str[i] < 32) {
+            str[i] == '|' || str[i] < 32 || str[i] > 126) {
             contains_invalid_chars = true;
             break;
         }
     }
 
     if (contains_invalid_chars) {
-        syscall(6, (uint32_t)"Directory name contains invalid characters\n", 42, (uint32_t)&cursor);
-        cursor.row++;
+        print_string_colored("Directory name contains invalid characters\n", COLOR_RED);
+        print_newline();
+
         return;
     }
 
     if (DIR_INFO.current_dir >= 50) {
-        syscall(6, (uint32_t)"Maximum directory limit reached\n", 33, (uint32_t)&cursor);
-        cursor.row++;
+        print_string_colored("Maximum directory depth reached\n", COLOR_RED);
+        print_newline();
+        
         return;
     }
 
@@ -55,20 +61,24 @@ void mkdir(char* str) {
     syscall(2, (uint32_t)&request, (uint32_t)&retcode, 0);
 
     if (retcode == 1) {
-        syscall(6, (uint32_t)"Directory already exists\n", 24, (uint32_t)&cursor);
-        cursor.row++;
+        print_string_colored("Directory already exists\n", COLOR_RED);
+        print_newline();
+
         return;
     } else if (retcode == 2) {
-        syscall(6, (uint32_t)"Parent directory not found\n", 27, (uint32_t)&cursor);
-        cursor.row++;
+        print_string_colored("Parent directory not found\n", COLOR_RED);
+        print_newline();
+
         return;
     } else if (retcode == 0) {
-        syscall(6, (uint32_t)"Directory created successfully\n", 30, (uint32_t)&cursor);
-        cursor.row++;
+        print_string_colored("Directory created successfully\n", COLOR_GREEN);
+        print_newline();
+
         return;
     } else {
-        syscall(6, (uint32_t)"Unknown error\n", 14, (uint32_t)&cursor);
-        cursor.row++;
+        print_string_colored("Unknown error occurred while creating directory\n", COLOR_RED);
+        print_newline();
+
         return;
     }
 }

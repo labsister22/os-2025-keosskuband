@@ -10,6 +10,7 @@
 #include "header/usermode/commands/cd.h"
 #include "header/usermode/commands/mkdir.h"
 #include "header/usermode/commands/find.h"
+#include "header/usermode/commands/cat.h"
 
 #define MAX_INPUT_LENGTH 2048
 #define MAX_ARGS_AMOUNT 10
@@ -390,6 +391,13 @@ void process_command() {
                 find(args[0]);
             } else {
                 print_string_colored("Usage: find <filename>", COLOR_LIGHT_RED);
+                print_newline();
+            }
+        } else if (!strcmp("cat", command)) {
+            if (args_used_amount > 0) {
+                cat(args[0]);
+            } else {
+                print_string_colored("Usage: cat <filename>", COLOR_LIGHT_RED);
                 print_newline();
             }
         } else if (!strcmp("cls", command)) {

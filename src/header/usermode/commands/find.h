@@ -1,5 +1,5 @@
-#ifndef LS_COMMAND
-#define LS_COMMAND
+#ifndef FIND_COMMAND
+#define FIND_COMMAND
 
 #include "header/usermode/user-shell.h"
 #include "header/filesys/ext2.h"

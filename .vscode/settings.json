@@ -82,6 +82,7 @@
     "ls.h": "c",
     "mkdir.h": "c",
     "strops.h": "c",
-    "cstdint": "c"
+    "cstdint": "c",
+    "echo.h": "c"
   }
 }

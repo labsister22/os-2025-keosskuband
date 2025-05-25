@@ -419,7 +419,7 @@ void kernel_setup(void) {
     struct EXT2DriverRequest request2 = {
         .buf                   = (uint8_t*) 0,
         .name                  = "shell",
-        .parent_inode                 = 1,
+        .parent_inode          = 1,
         .buffer_size           = 0x100000,
         .name_len              = 5,
         .is_directory          = false,
@@ -431,13 +431,55 @@ void kernel_setup(void) {
         .name                  = "check1",
         .parent_inode          = 1,
         .buffer_size           = 11,
-        .name_len              = 7,
+        .name_len              = 6,
         .is_directory          = false,
     };
     write(&request_test);
 
-    request_test.buf = "something2";
-    request_test.name = "check2";
+    request_test.buf = 
+"Saya lagi membayangkan prabowo mendaki semeru\n"
+"Terus pas nyampe di puncak,\n"
+"Dia mengibarkan bendera merah putih lalu dia berteriak\n"
+"Titik!!! kembalilah ke pelukanku!!!\n"
+"Terus habis itu dia meng gelinding ke bawah seperti se ekor landak\n"
+"pas nyampe di bawah, dia langsung membeli jagung bakar\n"
+"Udah dibela-belain jadi mualaf\n"
+"eh malah dicerain istri\n"
+"punya anak homo\n"
+"biji tinggal satu\n"
+"gagal nyapres\n"
+"duit abis\n"
+"aduh!!\n"
+"Akun fufufafa, penuh dengan komedi\n"
+"Habib Rizieq yang bilang penyubur korupsi\n"
+"Sayang seribu sayang, yang tidak ada banding\n"
+"Wong foto orangnya nempel di setiap dinding\n"
+"Kasian sekali Pak prabowo ini\n"
+"Punya wakil umurnya masih dini\n"
+"Baru kemaren debat sama pak anis\n"
+"Tapi sekarang plis, aku mau sprei gratis\n"
+"Baru juga kemaren pak prabowo debut\n"
+"Langsung dikatain mana makan siang gratisnya dut\n"
+"Pak prabowo ayo jangan sampai kerja pelan\n"
+"ini kira kira situasi rimspek atau godvlan\n"
+"Saya lagi membayangkan prabowo mendaki seméru\n"
+"Terus pas nyampe di puncak,\n"
+"Dia mengibarkan bendera merah putih lalu dia berteriak\n"
+"Titik!!! kembalilah ke pelukanku!!!\n"
+"Terus habis itu dia meng gelinding ke bawah seperti se ekor landak\n"
+"pas nyampe di bawah, dia langsung membeli jagung bakar\n"
+"Yasudahlah, sebaiknya kita\n"
+"Ayo, ayo, ganyang Fufufafa!\n"
+"ganyang fufufafa sekarang juga!\n"
+"Ayo, ayo, ganyang Fufufafa!\n"
+"Ganyang FufuFafa sekarang juga\n"
+"Fufufafa musuh demokrasi\n"
+"Fufufafa penyubur korupsi\n"
+"Fufufafa anak haram konstitusi\n"
+"Fufufafa cukuplah sampai disini";
+    request_test.name = "ikanaide";
+    request_test.buffer_size = 1425;
+    request_test.name_len = 8;
     write(&request_test);
 
     // Set TSS $esp pointer and jump into shell 
