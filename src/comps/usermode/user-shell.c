@@ -733,6 +733,8 @@ void process_command() {
             while (1) {}
         } else if (strcmp("apple", shell_state.command) == 0) {
             apple(&cursor);
+        } else if (strcmp("clock", shell_state.command) == 0) {
+            exec("clock", DIR_INFO.dir[DIR_INFO.current_dir].inode);
         } else if (strcmp("ps", shell_state.command) == 0) {
             ps();
         } else if (strcmp("kill", shell_state.command) == 0) {

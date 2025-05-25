@@ -136,19 +136,21 @@ int32_t process_create_user_process(struct EXT2DriverRequest request) {
 
     // 2. READ & ALLOCATE EXECUTABLE FILE
     // Switch to new page directory to copy data
+    char temp[1024] = {0}; // Temporary buffer for file name
+    memcpy(temp, request.name, request.name_len);
     paging_use_page_directory(new_pd);
     
     // Read from filesystem and copy to the allocated memory
     struct EXT2DriverRequest read_req = {
         .buf = (void*)0, // Start of user space
-        .name = request.name,
+        .name = temp,
         .parent_inode = request.parent_inode,
         .buffer_size = request.buffer_size,
         .name_len = request.name_len,
         .is_directory = false
     };
     
-    int8_t read_result = read(read_req);
+            int8_t read_result = read(read_req);
     
     // Switch back to kernel page directory
     paging_use_page_directory(current_pd);

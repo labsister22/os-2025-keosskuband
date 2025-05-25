@@ -5,6 +5,7 @@
 #include "header/graphics/graphics.h"
 #include "header/scheduler/scheduler.h"
 #include "header/memory/paging.h"
+#include "header/driver/cmos.h"
 #include "header/process/process-commands/ps.h"
 #include "header/process/process-commands/exec.h"
 
@@ -18,6 +19,8 @@ typedef struct {
     uint8_t font_color;
     uint8_t bg_color;
 } PrintRequest;
+
+// Add this to the syscall function in interrupt.c after the existing cases
 
 void syscall(struct InterruptFrame frame) {
     switch (frame.cpu.general.eax) {
@@ -161,6 +164,31 @@ void syscall(struct InterruptFrame frame) {
                 (uint32_t) frame.cpu.general.ecx, 
                 (int32_t*) frame.cpu.general.edx
             );
+            break;
+        case 34: // CMOS Read Time syscall
+            {
+                // Define TimeInfo structure matching clock.c
+                struct {
+                    uint8_t second;
+                    uint8_t minute;
+                    uint8_t hour;
+                    uint8_t day;
+                    uint8_t month;
+                    uint16_t year;
+                } *time_info = (void*) frame.cpu.general.ebx;
+                
+                // Read CMOS data
+                struct CMOS cmos_data;
+                read_rtc(&cmos_data);
+                
+                // Copy to user structure
+                time_info->second = cmos_data.second;
+                time_info->minute = cmos_data.minute;
+                time_info->hour = cmos_data.hour;
+                time_info->day = cmos_data.day;
+                time_info->month = cmos_data.month;
+                time_info->year = cmos_data.year;
+            }
             break;
     }
 }

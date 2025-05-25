@@ -31,6 +31,7 @@ clean:
 	rm -rf $(OUTPUT_FOLDER)/*.iso
 	rm -rf $(OUTPUT_FOLDER)/inserter
 	rm -rf $(OUTPUT_FOLDER)/shell
+	rm -rf $(OUTPUT_FOLDER)/clock
 	rm -rf $(OUTPUT_FOLDER)/*.bin
 	rm -rf $(OUTPUT_FOLDER)/*.txt
 
@@ -43,6 +44,7 @@ kernel:
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/kernel.c -o $(OUTPUT_FOLDER)/kernel.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/cpu/gdt.c -o $(OUTPUT_FOLDER)/gdt.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/cpu/portio.c -o $(OUTPUT_FOLDER)/portio.o
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/driver/cmos.c -o $(OUTPUT_FOLDER)/cmos.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/text/framebuffer.c -o $(OUTPUT_FOLDER)/framebuffer.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/interrupt/interrupt.c -o $(OUTPUT_FOLDER)/interrupt.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/interrupt/idt.c -o $(OUTPUT_FOLDER)/idt.o
@@ -107,8 +109,25 @@ user-shell:
 	@size --target=binary $(OUTPUT_FOLDER)/shell
 	@rm -f *.o
 
+user-clock:
+	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/comps/clock/crt0-c.s -o crt0-c.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/clock/clock.c -o clock.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/stdlib/strops.c -o strops-c.o
+	@$(LIN) -T $(SOURCE_FOLDER)/comps/clock/clock-linker.ld -melf_i386 --oformat=binary \
+		crt0-c.o clock.o strops-c.o -o $(OUTPUT_FOLDER)/clock
+	@echo Linking clock object files and generate flat binary...
+	@$(LIN) -T $(SOURCE_FOLDER)/comps/clock/clock-linker.ld -melf_i386 --oformat=elf32-i386 \
+		crt0-c.o clock.o strops-c.o -o $(OUTPUT_FOLDER)/clock_elf
+	@echo Linking clock object files and generate ELF32 for debugging...
+	@size --target=binary $(OUTPUT_FOLDER)/clock
+	@rm -f *.o
+
 insert-shell: inserter user-shell
 	@echo Inserting shell into root directory...
 	@cd $(OUTPUT_FOLDER); ./inserter shell 1 $(DISK_NAME).bin
 
-test: clean disk insert-shell
+insert-clock: inserter user-clock
+	@echo Inserting clock into root directory...
+	@cd $(OUTPUT_FOLDER); ./inserter clock 1 $(DISK_NAME).bin
+
+test: clean disk insert-shell insert-clock
