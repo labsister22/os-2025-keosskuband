@@ -67,6 +67,7 @@
 #define SYSCALL_GET_MAX_PS  31
 #define SYSCALL_KILL_PS     32
 #define SYSCALL_EXEC_PS     33
+#define SYSCALL_SLEEP       35
 
 
 /**
