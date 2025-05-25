@@ -87,9 +87,9 @@ void syscall(struct InterruptFrame frame) {
             keyboard_state_activate();
             break;
         case 8:
-            framebuffer_set_cursor(
-                (uint8_t)frame.cpu.general.ebx, 
-                (uint8_t)frame.cpu.general.ecx
+            graphics_set_cursor(
+                (uint16_t) frame.cpu.general.ebx, 
+                (uint16_t) frame.cpu.general.ecx
             );
             break;
         case 9:
