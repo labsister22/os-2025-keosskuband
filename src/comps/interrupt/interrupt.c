@@ -139,6 +139,7 @@ void syscall(struct InterruptFrame frame) {
                 (uint8_t)frame.cpu.general.ebx, 
                 (uint8_t)frame.cpu.general.ecx
             );
+            break;
     }
 }
 struct TSSEntry _interrupt_tss_entry = {

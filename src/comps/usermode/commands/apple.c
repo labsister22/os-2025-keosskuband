@@ -15,16 +15,16 @@ void apple(CP* cursor){
   syscall(0, (uint32_t) &request, (uint32_t) &res, 0);
 
   char buffer = ' '; 
-  for (int i = 10; i < FRAME_COUNT / 2; i++) {
+  for (int i = 0; i < FRAME_COUNT / 2; i++) {
     // first frame
     cursor->row = 0;
     cursor->col = 0;
-    for (int j = 0; j < 2000; j++) {
+    for (int j = 0; j < 1600; j++) {
       uint8_t bg_color = (apple_frames[i][j / 8]) & (1 << (7 - j % 8)) ? 0xF : 0x00;
       syscall(9, (uint32_t)&buffer, (uint32_t)&(PrintRequest){.size = 1, .font_color = 0xF, .bg_color = bg_color}, (uint32_t)cursor);
 
       cursor->col++;
-      if (cursor->col >= 80) {
+      if (cursor->col >= 64) {
         cursor->col = 0;
         cursor->row++;
         if (cursor->row >= 25) {
@@ -33,7 +33,7 @@ void apple(CP* cursor){
       }
     }
 
-    int time_out = 10000000;
+    int time_out = 30000000;
     while (time_out > 0) {
       time_out--;
     } 
@@ -41,12 +41,12 @@ void apple(CP* cursor){
     // second frame
     cursor->row = 0;
     cursor->col = 0;
-    for (int j = 0; j < 2000; j++) {
+    for (int j = 0; j < 1600; j++) {
       uint8_t bg_color = (apple_frames[i][256 + j / 8]) & (1 << (7 - (256 + j) % 8)) ? 0xF : 0x00;
       syscall(9, (uint32_t)&buffer, (uint32_t)&(PrintRequest){.size = 1, .font_color = 0xF, .bg_color = bg_color}, (uint32_t)cursor);
 
       cursor->col++;
-      if (cursor->col >= 80) {
+      if (cursor->col >= 64) {
         cursor->col = 0;
         cursor->row++;
         if (cursor->row >= 25) {
@@ -55,7 +55,7 @@ void apple(CP* cursor){
       }
     }
 
-    time_out = 10000000;
+    time_out = 30000000;
     while (time_out > 0) {
       time_out--;
     } 

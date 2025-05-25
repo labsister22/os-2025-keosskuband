@@ -8,8 +8,9 @@ void cd(char* str) {
     int j = 0;
     for (int i = 0; i < strlen(str); i++) {
         if (parsed_count == 20) {
-            syscall(6, (uint32_t)"Too many directories in path\n", 29, (uint32_t)&cursor);
-            cursor.row++;
+            print_string_colored("Too many directories specified\n", COLOR_RED);
+            print_newline();
+
             return;
         }
 
@@ -25,8 +26,9 @@ void cd(char* str) {
                 j++;
             }
             else {
-                syscall(6, (uint32_t)"Directory name too long\n", 24, (uint32_t)&cursor);
-                cursor.row++;
+                print_string_colored("Directory name too long\n", COLOR_RED);
+                print_newline();
+
                 return;
             }
         }
@@ -53,8 +55,9 @@ void cd(char* str) {
         }
 
         if (bef.current_dir >= 50) {
-            syscall(6, (uint32_t)"Maximum directory limit reached\n", 33, (uint32_t)&cursor);
-            cursor.row++;
+            print_string_colored("Maximum directory depth reached\n", COLOR_RED);
+            print_newline();
+
             return;
         }
 
@@ -72,9 +75,10 @@ void cd(char* str) {
         syscall(1, (uint32_t)&request, (uint32_t)&retcode, 0);
 
         if (retcode != 0) {
-            // error
-            syscall(6, (uint32_t)"Error accessing directory\n", 26, (uint32_t)&cursor);
-            cursor.row++;
+            print_string_colored("Error accessing directory: ", COLOR_RED);
+            print_string_colored(next_dir, COLOR_RED);
+            print_newline();
+            
             return;
         }
 
@@ -96,14 +100,18 @@ void cd(char* str) {
         }
 
         if (!found) {
-            syscall(6, (uint32_t)"Directory not found\n", 20, (uint32_t)&cursor);
-            cursor.row++;
+            print_string_colored("Directory not found: ", COLOR_RED);
+            print_string_colored(next_dir, COLOR_RED);
+            print_newline();
+
             return;
         }
 
         if (entry->file_type != EXT2_FT_DIR) {
-            syscall(6, (uint32_t)"Not a directory\n", 16, (uint32_t)&cursor);
-            cursor.row++;
+            print_string_colored("Not a directory: ", COLOR_RED);
+            print_string_colored(next_dir, COLOR_RED);
+            print_newline();
+
             return;
         }
 
@@ -115,79 +123,7 @@ void cd(char* str) {
         bef.dir[bef.current_dir].dir_name_len = entry->name_len;
     }
 
-    DIR_INFO = bef; // Update the global directory info
-
-    // if (strlen(str) > 12) {
-    //     syscall(6, (uint32_t)"Directory name too long\n", 24, (uint32_t)&cursor);
-    //     cursor.row++;
-    //     return;
-    // }
-
-    // if (!memcmp(str, ".", 1) && strlen(str) == 1) {
-    //     return;
-    // }
-
-    // uint8_t dir_data[BLOCK_SIZE];
-    // struct EXT2DriverRequest request = {
-    //     .buf = dir_data,
-    //     .name = DIR_INFO.dir[DIR_INFO.current_dir].dir_name,
-    //     .name_len = strlen(DIR_INFO.dir[DIR_INFO.current_dir].dir_name),
-    //     .parent_inode = DIR_INFO.current_dir == 0 ? 1 : DIR_INFO.dir[DIR_INFO.current_dir - 1].inode,
-    //     .buffer_size = BLOCK_SIZE,
-    //     .is_directory = true
-    // };
-    // int32_t retcode = 0;
-    // syscall(1, (uint32_t)&request, (uint32_t)&retcode, 0);
-    // if (retcode != 0) {
-    //     // error
-    //     return;
-    // }
-
-    // struct EXT2DirectoryEntry* entry = (struct EXT2DirectoryEntry*)request.buf;
-
-    // bool found = false;
-    // uint32_t offset = 0;
-    // while (offset < BLOCK_SIZE) {
-    //     // syscall(6, entry->name, entry->name_len, (uint32_t)&cursor);
-    //     // cursor.row++;
-
-    //     if (entry->inode != 0 && entry->name_len == strlen(str) &&
-    //         memcmp(entry->name, str, strlen(str)) == 0) {
-    //         found = true;
-    //         break;
-    //     }
-
-    //     offset += entry->rec_len;
-    //     if (offset < BLOCK_SIZE) {
-    //         entry = (struct EXT2DirectoryEntry*)((uint8_t*)request.buf + offset);
-    //     }
-    // }
-
-    // if (!found) {
-    //     syscall(6, (uint32_t)"Directory not found\n", 20, (uint32_t)&cursor);
-    //     cursor.row++;
-    //     return;
-    // }
-
-    // if (entry->file_type != EXT2_FT_DIR) {
-    //     syscall(6, (uint32_t)"Not a directory\n", 16, (uint32_t)&cursor);
-    //     cursor.row++;
-    //     return;
-    // }
-
-    // // handle "cd .."
-    // if (!memcmp(str, "..", 2)) {
-    //     // update current directory to grandparent
-    //     DIR_INFO.current_dir = DIR_INFO.current_dir == 0 ? 0 : DIR_INFO.current_dir - 1;
-    // }
-    // else {
-    //     // update current directory
-    //     DIR_INFO.current_dir++;
-    //     DIR_INFO.dir[DIR_INFO.current_dir].inode = entry->inode;
-    //     memcpy(DIR_INFO.dir[DIR_INFO.current_dir].dir_name, entry->name, entry->name_len);
-    //     DIR_INFO.dir[DIR_INFO.current_dir].dir_name[entry->name_len] = '\0';
-    //     DIR_INFO.dir[DIR_INFO.current_dir].dir_name_len = entry->name_len;
-    // }
+    DIR_INFO = bef;
 }
 
 void cd_root() {
