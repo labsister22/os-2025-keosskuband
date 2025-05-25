@@ -1,6 +1,7 @@
 #include <stdint.h>
-// #include <string.h>
+#include <stdbool.h>
 #include "header/filesys/ext2.h"
+#include "header/stdlib/strops.h"
 #include "header/usermode/user-shell.h"
 #include "header/usermode/commands/apple.h"
 #include "header/usermode/commands/help.h"
@@ -11,17 +12,20 @@
 #include "header/usermode/commands/mkdir.h"
 #include "header/usermode/commands/find.h"
 
-#define MAX_INPUT_LENGTH 2048
-#define MAX_ARGS_AMOUNT 10
-#define MAX_ARGS_LENGTH 32
-#define SHELL_PROMPT "Keossku-Band"
+static CommandHistory history = {
+    .count = 0,
+    .current_index = -1
+};
 
-#define SCREEN_WIDTH 64
-#define SCREEN_HEIGHT 25
-
-static bool cursor_shown = false;
-static char char_under_cursor = ' '; 
-static uint8_t char_color_under_cursor = COLOR_WHITE; 
+static ShellState shell_state = {
+    .input_length = 0,
+    .cursor_position = 0,
+    .prompt_start_row = 0,
+    .prompt_start_col = 0,
+    .cursor_shown = false,
+    .char_under_cursor = ' ',
+    .char_color_under_cursor = COLOR_WHITE
+};
 
 CP cursor = {0, 0};
 str_path path = {
@@ -33,21 +37,82 @@ absolute_dir_info DIR_INFO = {
     .dir = {{".", 1, 1}}
 };
 
-char input_buffer[MAX_INPUT_LENGTH];
-int input_length = 0;
-char args[MAX_ARGS_AMOUNT][MAX_ARGS_LENGTH];
-char command[MAX_INPUT_LENGTH + 1];
-int cursor_position = 0;
-
-static int prompt_start_row = 0;
-static int prompt_start_col = 0;
-
 void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     __asm__ volatile("mov %0, %%ebx" : /* <Empty> */ : "r"(ebx));
     __asm__ volatile("mov %0, %%ecx" : /* <Empty> */ : "r"(ecx));
     __asm__ volatile("mov %0, %%edx" : /* <Empty> */ : "r"(edx));
     __asm__ volatile("mov %0, %%eax" : /* <Empty> */ : "r"(eax));
     __asm__ volatile("int $0x30");
+}
+
+void add_to_history(const char* command) {
+    if (strlen((char*)command) == 0) {
+        return;
+    }
+
+    if (history.count > 0 && 
+        strcmp(history.commands[(history.count - 1) % MAX_HISTORY_ENTRIES], (char*)command) == 0) {
+        return;
+    }
+
+    int index = history.count % MAX_HISTORY_ENTRIES;
+    strcpy(history.commands[index], (char*)command);
+    
+    if (history.count < MAX_HISTORY_ENTRIES) {
+        history.count++;
+    }
+
+    history.current_index = -1;
+}
+
+void load_history_entry(int index) {
+    if (index < 0 || index >= history.count) {
+        return;
+    }
+
+    int actual_index;
+    if (history.count < MAX_HISTORY_ENTRIES) {
+        actual_index = index;
+    } else {
+        actual_index = (history.count + index) % MAX_HISTORY_ENTRIES;
+    }
+    
+    clear_input_buffer();
+
+    strcpy(shell_state.input_buffer, history.commands[actual_index]);
+    shell_state.input_length = strlen(shell_state.input_buffer);
+    shell_state.cursor_position = shell_state.input_length;
+    
+    redraw_input_line();
+}
+
+void handle_up_arrow() {
+    if (history.count == 0) {
+        return;
+    }
+    
+    if (history.current_index == -1) {
+        history.current_index = history.count - 1;
+    } else if (history.current_index > 0) {
+        history.current_index--;
+    }
+    
+    load_history_entry(history.current_index);
+}
+
+void handle_down_arrow() {
+    if (history.count == 0 || history.current_index == -1) {
+        return;
+    }
+    
+    if (history.current_index < history.count - 1) {
+        history.current_index++;
+        load_history_entry(history.current_index);
+    } else {
+        history.current_index = -1;
+        clear_input_buffer();
+        redraw_input_line();
+    }
 }
 
 void graphics_draw_cursor_syscall() {
@@ -67,35 +132,35 @@ void graphics_set_cursor_colors_syscall(uint8_t fg_color, uint8_t bg_color) {
 }
 
 void show_cursor() {
-    if (!cursor_shown) {
-        if (cursor_position < input_length) {
-            char_under_cursor = input_buffer[cursor_position];
-            char_color_under_cursor = COLOR_WHITE;
+    if (!shell_state.cursor_shown) {
+        if (shell_state.cursor_position < shell_state.input_length) {
+            shell_state.char_under_cursor = shell_state.input_buffer[shell_state.cursor_position];
+            shell_state.char_color_under_cursor = COLOR_WHITE;
         } else {
-            char_under_cursor = ' ';
-            char_color_under_cursor = COLOR_BLACK;
+            shell_state.char_under_cursor = ' ';
+            shell_state.char_color_under_cursor = COLOR_BLACK;
         }
 
         graphics_set_cursor_colors_syscall(COLOR_WHITE, COLOR_GREEN);
-        graphics_store_char_syscall(char_under_cursor, char_color_under_cursor);
+        graphics_store_char_syscall(shell_state.char_under_cursor, shell_state.char_color_under_cursor);
         graphics_draw_cursor_syscall();
-        cursor_shown = true;
+        shell_state.cursor_shown = true;
     }
 }
 
 void hide_cursor() {
-    if (cursor_shown) {
+    if (shell_state.cursor_shown) {
         graphics_erase_cursor_syscall();
-        cursor_shown = false;
+        shell_state.cursor_shown = false;
     }
 }
 
 void clear_input_buffer() {
     for (int i = 0; i < MAX_INPUT_LENGTH; i++) {
-        input_buffer[i] = '\0';
+        shell_state.input_buffer[i] = '\0';
     }
-    input_length = 0;
-    cursor_position = 0;
+    shell_state.input_length = 0;
+    shell_state.cursor_position = 0;
 }
 
 void set_hardware_cursor() {
@@ -114,8 +179,8 @@ void scroll_screen() {
 void check_and_scroll() {
     while (cursor.row >= SCREEN_HEIGHT) {
         scroll_screen();
-        if (prompt_start_row > 0) {
-            prompt_start_row--;
+        if (shell_state.prompt_start_row > 0) {
+            shell_state.prompt_start_row--;
             cursor.row--;
         }
     }
@@ -162,8 +227,8 @@ void print_newline() {
 // Update cursor row and col based on cursor_position and prompt start
 void update_cursor_row_col() {
     hide_cursor();
-    int total_pos = prompt_start_col + cursor_position;
-    cursor.row = prompt_start_row + total_pos / SCREEN_WIDTH;
+    int total_pos = shell_state.prompt_start_col + shell_state.cursor_position;
+    cursor.row = shell_state.prompt_start_row + total_pos / SCREEN_WIDTH;
     cursor.col = total_pos % SCREEN_WIDTH;
 
     // Check if we need to scroll due to cursor position
@@ -210,8 +275,8 @@ void print_prompt() {
     cursor.col++;
 
     // Save prompt start row/col for input text (cursor after prompt)
-    prompt_start_row = cursor.row;
-    prompt_start_col = cursor.col;
+    shell_state.prompt_start_row = cursor.row;
+    shell_state.prompt_start_col = cursor.col;
 
     update_cursor_row_col();
     set_hardware_cursor();
@@ -222,20 +287,20 @@ void redraw_input_line() {
     hide_cursor();
 
     // Calculate how many rows the input will take
-    int total_chars = prompt_start_col + input_length;
+    int total_chars = shell_state.prompt_start_col + shell_state.input_length;
     int total_rows = (total_chars + SCREEN_WIDTH - 1) / SCREEN_WIDTH;
-    int end_row = prompt_start_row + total_rows - 1;
+    int end_row = shell_state.prompt_start_row + total_rows - 1;
 
     // Check if input would extend beyond screen and scroll if needed
     while (end_row >= SCREEN_HEIGHT) {
         scroll_screen();
-        prompt_start_row--;
+        shell_state.prompt_start_row--;
         end_row--;
     }
 
     // Clear only input area, not prompt
-    for (int row = prompt_start_row; row <= end_row && row < SCREEN_HEIGHT; row++) {
-        int start_col = (row == prompt_start_row) ? prompt_start_col : 0;
+    for (int row = shell_state.prompt_start_row; row <= end_row && row < SCREEN_HEIGHT; row++) {
+        int start_col = (row == shell_state.prompt_start_row) ? shell_state.prompt_start_col : 0;
         for (int col = start_col; col < SCREEN_WIDTH; col++) {
             char space = ' ';
             CP pos = {row, col};
@@ -244,11 +309,11 @@ void redraw_input_line() {
     }
 
     // Redraw input text with wrapping
-    int draw_row = prompt_start_row;
-    int draw_col = prompt_start_col;
-    for (int i = 0; i < input_length; i++) {
+    int draw_row = shell_state.prompt_start_row;
+    int draw_col = shell_state.prompt_start_col;
+    for (int i = 0; i < shell_state.input_length; i++) {
         CP pos = {draw_row, draw_col};
-        syscall(5, (uint32_t)&input_buffer[i], COLOR_WHITE, (uint32_t)&pos);
+        syscall(5, (uint32_t)&shell_state.input_buffer[i], COLOR_WHITE, (uint32_t)&pos);
         draw_col++;
         if (draw_col >= SCREEN_WIDTH) {
             draw_col = 0;
@@ -265,69 +330,69 @@ void redraw_input_line() {
 }
 
 void insert_char_at_cursor(char c) {
-    if (input_length >= MAX_INPUT_LENGTH - 1) {
+    if (shell_state.input_length >= MAX_INPUT_LENGTH - 1) {
         return;
     }
 
     hide_cursor();
 
-    for (int i = input_length; i > cursor_position; i--) {
-        input_buffer[i] = input_buffer[i - 1];
+    for (int i = shell_state.input_length; i > shell_state.cursor_position; i--) {
+        shell_state.input_buffer[i] = shell_state.input_buffer[i - 1];
     }
 
-    input_buffer[cursor_position] = c;
-    input_length++;
-    cursor_position++;
-    input_buffer[input_length] = '\0';
+    shell_state.input_buffer[shell_state.cursor_position] = c;
+    shell_state.input_length++;
+    shell_state.cursor_position++;
+    shell_state.input_buffer[shell_state.input_length] = '\0';
 }
 
 void delete_char_before_cursor() {
-    if (cursor_position <= 0 || input_length <= 0) {
+    if (shell_state.cursor_position <= 0 || shell_state.input_length <= 0) {
         return;
     }
 
     hide_cursor();
 
-    for (int i = cursor_position - 1; i < input_length - 1; i++) {
-        input_buffer[i] = input_buffer[i + 1];
+    for (int i = shell_state.cursor_position - 1; i < shell_state.input_length - 1; i++) {
+        shell_state.input_buffer[i] = shell_state.input_buffer[i + 1];
     }
 
-    input_length--;
-    cursor_position--;
-    input_buffer[input_length] = '\0';
+    shell_state.input_length--;
+    shell_state.cursor_position--;
+    shell_state.input_buffer[shell_state.input_length] = '\0';
 
     update_cursor_row_col();
 }
 
 void delete_char_at_cursor() {
-    if (cursor_position >= input_length) {
+    if (shell_state.cursor_position >= shell_state.input_length) {
         return;
     }
 
     hide_cursor();
 
-    for (int i = cursor_position; i < input_length - 1; i++) {
-        input_buffer[i] = input_buffer[i + 1];
+    for (int i = shell_state.cursor_position; i < shell_state.input_length - 1; i++) {
+        shell_state.input_buffer[i] = shell_state.input_buffer[i + 1];
     }
 
-    input_length--;
-    input_buffer[input_length] = '\0';
+    shell_state.input_length--;
+    shell_state.input_buffer[shell_state.input_length] = '\0';
 
     update_cursor_row_col();
 }
 
 void move_cursor_left() {
-    if (cursor_position > 0) {
+    if (shell_state.cursor_position > 0) {
         hide_cursor();
-        cursor_position--;
+        shell_state.cursor_position--;
         update_cursor_row_col();
     }
 }
 
 void move_cursor_right() {
-    if (cursor_position < input_length) {
+    if (shell_state.cursor_position < shell_state.input_length) {
         hide_cursor();
-        cursor_position++;
+        shell_state.cursor_position++;
         update_cursor_row_col();
     }
 }
@@ -336,103 +401,116 @@ void process_command() {
     hide_cursor();
     print_newline();
 
-    if (input_length > 0) {
-        // Clear args array first
+    if (shell_state.input_length > 0) {
+        add_to_history(shell_state.input_buffer);
+        
         for (int j = 0; j < MAX_ARGS_AMOUNT; j++) {
             for (int k = 0; k < MAX_ARGS_LENGTH; k++) {
-                args[j][k] = '\0';
+                shell_state.args[j][k] = '\0';
             }
         }
 
         int i = 0;
         // get command
-        while (i < input_length && input_buffer[i] != ' ' &&
-               input_buffer[i] != '\n' && input_buffer[i] != '\r') {
+        while (i < shell_state.input_length && shell_state.input_buffer[i] != ' ' &&
+               shell_state.input_buffer[i] != '\n' && shell_state.input_buffer[i] != '\r') {
                
-           command[i] = input_buffer[i];   
+           shell_state.command[i] = shell_state.input_buffer[i];   
            i++;
         }
-        command[i] = '\0';
+        shell_state.command[i] = '\0';
             
 
         // skip the whitespaces to get to first args
-        while (i < input_length && input_buffer[i] == ' ')
+        while (i < shell_state.input_length && shell_state.input_buffer[i] == ' ')
             i++;
 
         int args_idx = 0;
         int args_buffer_idx = 0;
         int args_used_amount = 0;
-        while (i < input_length && args_idx < MAX_ARGS_AMOUNT) {
-            while (i < input_length && input_buffer[i] != ' ' &&
-                   input_buffer[i] != '\n' && input_buffer[i] != '\r' &&
+        while (i < shell_state.input_length && args_idx < MAX_ARGS_AMOUNT) {
+            while (i < shell_state.input_length && shell_state.input_buffer[i] != ' ' &&
+                   shell_state.input_buffer[i] != '\n' && shell_state.input_buffer[i] != '\r' &&
                    args_buffer_idx < MAX_ARGS_LENGTH - 1) {
-                args[args_idx][args_buffer_idx] = input_buffer[i];
+                shell_state.args[args_idx][args_buffer_idx] = shell_state.input_buffer[i];
                 args_buffer_idx++;
                 i++;
             }
 
             if (args_buffer_idx > 0) {
-                args[args_idx][args_buffer_idx] = '\0'; // Null terminate
+                shell_state.args[args_idx][args_buffer_idx] = '\0'; // Null terminate
                 args_buffer_idx = 0;
                 args_idx++;
                 args_used_amount++;
             }
 
             // skip whitespace
-            while (i < input_length && input_buffer[i] == ' ')
+            while (i < shell_state.input_length && shell_state.input_buffer[i] == ' ')
                 i++;
         }
 
-        // do commands
-        if (!strcmp("help", command)) {
+        // do commands using strcmp from strops.h
+        if (strcmp("help", shell_state.command) == 0) {
             help();
-        } else if (!strcmp("clear", command)) {
+        } else if (strcmp("clear", shell_state.command) == 0) {
             clear();
-        } else if (!strcmp("echo", command)) {
-            echo(args[0]);
+        } else if (strcmp("echo", shell_state.command) == 0) {
+            echo(shell_state.args[0]);
         }
-        else if (!strcmp("ls", command)) {
-            ls(args[0]);
+        else if (strcmp("ls", shell_state.command) == 0) {
+            ls(shell_state.args[0]);
         }
-        else if (!strcmp("cd", command)) {
-            cd(args[0]);
+        else if (strcmp("cd", shell_state.command) == 0) {
+            cd(shell_state.args[0]);
         }
-        else if (!strcmp("mkdir", command)) {
-            mkdir(args[0]);
+        else if (strcmp("mkdir", shell_state.command) == 0) {
+            mkdir(shell_state.args[0]);
         }
-        else if (!strcmp("find", command)) {
+        else if (strcmp("find", shell_state.command) == 0) {
             if (args_used_amount > 0) {
-                find(args[0]);
+                find(shell_state.args[0]);
             } else {
                 print_string_colored("Usage: find <filename>", COLOR_LIGHT_RED);
                 print_newline();
             }
-        } else if (!strcmp("cls", command)) {
+        } else if (strcmp("history", shell_state.command) == 0) {
+            // New command to show command history
+            print_string_colored("Command History:", COLOR_LIGHT_CYAN);
+            print_newline();
+            
+            int start = (history.count < MAX_HISTORY_ENTRIES) ? 0 : history.count % MAX_HISTORY_ENTRIES;
+            for (int i = 0; i < history.count && i < MAX_HISTORY_ENTRIES; i++) {
+                int index = (start + i) % MAX_HISTORY_ENTRIES;
+                print_string_colored("  ", COLOR_WHITE);
+                print_string_colored(history.commands[index], COLOR_WHITE);
+                print_newline();
+            }
+        } else if (strcmp("cls", shell_state.command) == 0) {
             clear_input_buffer();
             print_prompt();
-        } else if (!strcmp("reboot", command)) {
+        } else if (strcmp("reboot", shell_state.command) == 0) {
             print_string_at_cursor("Rebooting...");
             print_newline();
             syscall(2, 0, 0, 0); // Reboot syscall
-        } else if (!strcmp("shutdown", command)) {
+        } else if (strcmp("shutdown", shell_state.command) == 0) {
             print_string_at_cursor("Shutting down...");
             print_newline();
             syscall(3, 0, 0, 0); // Shutdown syscall
         }
-        else if (!strcmp("exit", command)) {
+        else if (strcmp("exit", shell_state.command) == 0) {
             print_string_at_cursor("Goodbye!");
             print_newline();
             while (1) {
             }
-        } else if (!strcmp("apple", command)) {
+        } else if (strcmp("apple", shell_state.command) == 0) {
             apple(&cursor);
-        } else if (input_buffer[0] == 0x1B) { // ESC key
+        } else if (shell_state.input_buffer[0] == 0x1B) { // ESC key
             print_string_colored("Exiting debug mode...", COLOR_LIGHT_RED);
             print_newline();
         } else {
             print_string_colored("Command not found: ", COLOR_LIGHT_RED);
 
-            print_string_colored(command, COLOR_WHITE);
+            print_string_colored(shell_state.command, COLOR_WHITE);
             print_newline();
             print_string_colored("Type 'help' for available commands.", COLOR_DARK_GRAY);
             print_newline();
@@ -441,17 +519,6 @@ void process_command() {
 }
 
 int main(void) {
-    // struct BlockBuffer      bl[10]   = {0};
-    // struct EXT2DriverRequest request = {
-    //     .buf                   = &bl,
-    //     .name                  = "shell",
-    //     .parent_inode          = 1,
-    //     .buffer_size           = BLOCK_SIZE * 10,
-    //     .name_len = 5,
-    // };
-    // int32_t retcode;
-    // syscall(0, (uint32_t) &request, (uint32_t) &retcode, 0);
-
     cd_root();
 
     cursor.row = 0;
@@ -480,11 +547,11 @@ int main(void) {
                 set_hardware_cursor();
                 show_cursor();
                 continue;
-            } else if (c == 0x10) { // Up arrow
-                // TODO: Command history
+            } else if (c == 0x10) { // Up arrow - Navigate to previous command
+                handle_up_arrow();
                 continue;
-            } else if (c == 0x13) { // Down arrow
-                // TODO: Command history
+            } else if (c == 0x13) { // Down arrow - Navigate to next command
+                handle_down_arrow();
                 continue;
             }
 
