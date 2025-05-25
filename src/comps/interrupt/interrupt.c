@@ -3,6 +3,11 @@
 #include "header/filesys/ext2.h"
 #include "header/text/framebuffer.h"
 #include "header/graphics/graphics.h"
+#include "header/scheduler/scheduler.h"
+#include "header/memory/paging.h"
+#include "header/driver/cmos.h"
+#include "header/process/process-commands/ps.h"
+#include "header/process/process-commands/exec.h"
 
 typedef struct {
     int32_t row;
@@ -14,6 +19,8 @@ typedef struct {
     uint8_t font_color;
     uint8_t bg_color;
 } PrintRequest;
+
+// Add this to the syscall function in interrupt.c after the existing cases
 
 void syscall(struct InterruptFrame frame) {
     switch (frame.cpu.general.eax) {
@@ -80,9 +87,9 @@ void syscall(struct InterruptFrame frame) {
             keyboard_state_activate();
             break;
         case 8:
-            graphics_set_cursor(
-                (uint16_t)frame.cpu.general.ebx, 
-                (uint16_t)frame.cpu.general.ecx
+            framebuffer_set_cursor(
+                (uint8_t)frame.cpu.general.ebx, 
+                (uint8_t)frame.cpu.general.ecx
             );
             break;
         case 9:
@@ -140,8 +147,52 @@ void syscall(struct InterruptFrame frame) {
                 (uint8_t)frame.cpu.general.ecx
             );
             break;
+        case SYSCALL_PS_CMD:
+            ps((ProcessMetadata*) frame.cpu.general.ebx, (uint8_t) frame.cpu.general.ecx);
+            break;
+        case SYSCALL_GET_MAX_PS:
+            uint32_t* max_amount = (uint32_t*) frame.cpu.general.ebx;
+            *max_amount = PROCESS_COUNT_MAX;
+            break;
+        case SYSCALL_KILL_PS:
+            bool* success = (bool*) frame.cpu.general.ecx;
+            *success = process_destroy((uint32_t) frame.cpu.general.ebx);
+            break;
+        case SYSCALL_EXEC_PS:
+            exec(
+                (char *) frame.cpu.general.ebx, 
+                (uint32_t) frame.cpu.general.ecx, 
+                (int32_t*) frame.cpu.general.edx
+            );
+            break;
+        case 34: // CMOS Read Time syscall
+            {
+                // Define TimeInfo structure matching clock.c
+                struct {
+                    uint8_t second;
+                    uint8_t minute;
+                    uint8_t hour;
+                    uint8_t day;
+                    uint8_t month;
+                    uint16_t year;
+                } *time_info = (void*) frame.cpu.general.ebx;
+                
+                // Read CMOS data
+                struct CMOS cmos_data;
+                read_rtc(&cmos_data);
+                
+                // Copy to user structure
+                time_info->second = cmos_data.second;
+                time_info->minute = cmos_data.minute;
+                time_info->hour = cmos_data.hour;
+                time_info->day = cmos_data.day;
+                time_info->month = cmos_data.month;
+                time_info->year = cmos_data.year;
+            }
+            break;
     }
 }
+
 struct TSSEntry _interrupt_tss_entry = {
     .ss0  = GDT_KERNEL_DATA_SEGMENT_SELECTOR,
 };
@@ -184,29 +235,42 @@ void pic_remap(void) {
     out(PIC2_DATA, PIC_DISABLE_ALL_MASK);
 }
 
+// static volatile bool in_interrupt_handler = false;
+
 void main_interrupt_handler(struct InterruptFrame frame) {
+    // // Prevent interrupt nesting issues
+    // if (in_interrupt_handler && frame.int_number != (IRQ_KEYBOARD + PIC1_OFFSET)) {
+    //     // If we're already in an interrupt handler, only allow keyboard interrupts
+    //     pic_ack(frame.int_number - PIC1_OFFSET);
+    //     return;
+    // }
+    
+    // in_interrupt_handler = true;
+    
     switch (frame.int_number) {
-        // Timer interrupt
-        case PIC1_OFFSET + IRQ_TIMER:
-            pic_ack(IRQ_TIMER);
+        case PIC1_OFFSET + IRQ_TIMER:  // 32 - Timer
+            timer_isr(frame);
             break;
             
-        // Keyboard interrupt
-        case PIC1_OFFSET + IRQ_KEYBOARD:
+        case PIC1_OFFSET + IRQ_KEYBOARD:  // 33 - Keyboard  
             keyboard_isr();
             break;
-
-        // Other interrupts
-        case 0x30: // syscall
+            
+        case 0x30:  // 48 - Syscall
             syscall(frame);
             break;
             
         default:
-            if (frame.int_number >= PIC1_OFFSET) {
+            // Handle unknown interrupts
+            if (frame.int_number >= PIC1_OFFSET && frame.int_number < PIC1_OFFSET + 8) {
                 pic_ack(frame.int_number - PIC1_OFFSET);
+            } else if (frame.int_number >= PIC2_OFFSET && frame.int_number < PIC2_OFFSET + 8) {
+                pic_ack(frame.int_number - PIC2_OFFSET);
             }
             break;
     }
+    
+    // in_interrupt_handler = false;
 }
 
 void set_tss_kernel_current_stack(void) {

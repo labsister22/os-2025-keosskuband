@@ -62,6 +62,12 @@
 #define IRQ_PRIMARY_ATA  14
 #define IRQ_SECOND_ATA   15
 
+// SYSCALLS BRUHHHHH
+#define SYSCALL_PS_CMD      30
+#define SYSCALL_GET_MAX_PS  31
+#define SYSCALL_KILL_PS     32
+#define SYSCALL_EXEC_PS     33
+
 
 /**
  * CPURegister, store CPU registers values.

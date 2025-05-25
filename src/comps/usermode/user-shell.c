@@ -12,6 +12,9 @@
 #include "header/usermode/commands/mkdir.h"
 #include "header/usermode/commands/find.h"
 #include "header/usermode/commands/cat.h"
+#include "header/usermode/commands/ps.h"
+#include "header/usermode/commands/kill.h"
+#include "header/usermode/commands/exec.h"
 
 static CommandHistory history = {
     .count = 0,
@@ -747,6 +750,14 @@ void process_command() {
             while (1) {}
         } else if (strcmp("apple", shell_state.command) == 0) {
             apple(&cursor);
+        } else if (strcmp("clock", shell_state.command) == 0) {
+            exec("clock", DIR_INFO.dir[DIR_INFO.current_dir].inode);
+        } else if (strcmp("ps", shell_state.command) == 0) {
+            ps();
+        } else if (strcmp("kill", shell_state.command) == 0) {
+            kill(shell_state.args[0]);
+        } else if (strcmp("exec", shell_state.command) == 0) {
+            exec(shell_state.args[0], DIR_INFO.dir[DIR_INFO.current_dir].inode);
         } else if (shell_state.input_buffer[0] == 0x1B) { // ESC key
             print_string_colored("Exiting debug mode...", COLOR_LIGHT_RED);
             print_newline();
