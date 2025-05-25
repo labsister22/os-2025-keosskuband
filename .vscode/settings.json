@@ -76,6 +76,13 @@
     "string": "c",
     "unordered_map": "c",
     "vector": "c",
-    "system_error": "c"
+    "system_error": "c",
+    "cd.h": "c",
+    "clear.h": "c",
+    "ls.h": "c",
+    "mkdir.h": "c",
+    "strops.h": "c",
+    "cstdint": "c",
+    "echo.h": "c"
   }
 }

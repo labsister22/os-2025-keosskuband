@@ -85,16 +85,29 @@ uint32_t get_dir_first_child_offset(void *ptr) {
     return first->rec_len + second->rec_len;
 }
 
-// Main Filesystem Functions
+struct EXT2Inode load_inode(uint32_t inode_num) {
+    struct EXT2InodeTable inode_table;
+    struct EXT2Inode result;
 
+    uint32_t bgd_index = inode_to_bgd(inode_num);
+    uint32_t offset = (inode_num - 1) / (BLOCK_SIZE / INODE_SIZE);
+    uint32_t local_index = (inode_num - 1) % (BLOCK_SIZE / INODE_SIZE);
+
+    read_blocks(&inode_table, bgdt.table[bgd_index].bg_inode_table + offset, 1);
+    result = inode_table.table[local_index];
+
+    return result;
+}
+
+// Main Filesystem Functions
 uint32_t inode_to_bgd(uint32_t inode) {
     // Convert inode number to block group descriptor index
     // Inodes start at 1, so we subtract 1 to make it 0-based
     return (inode - 1) / INODES_PER_GROUP;
 }
 
+// Get local index of inode within its block group
 uint32_t inode_to_local(uint32_t inode) {
-    // Get local index of inode within its block group
     return (inode - 1) % INODES_PER_GROUP;
 }
 
@@ -123,7 +136,7 @@ void init_directory_table(struct EXT2Inode *node, uint32_t inode, uint32_t paren
     node->i_mode = EXT2_S_IFDIR;
 
     // EXT2 expects i_blocks to be in units of 512 bytes
-    node->i_blocks = BLOCK_SIZE / 512;
+    node->i_blocks = 1;
 
     // Allocate block and write data
     allocate_node_blocks(dir_table, node, inode_to_bgd(inode));
@@ -238,14 +251,7 @@ void initialize_filesystem_ext2(void) {
 }
 
 bool is_directory_empty(uint32_t inode) {
-    struct EXT2Inode node;
-    uint32_t bgd_index = inode_to_bgd(inode);
-    uint32_t local_index = inode_to_local(inode);
-
-    // Load inode
-    struct EXT2InodeTable inode_table;
-    read_blocks(&inode_table, bgdt.table[bgd_index].bg_inode_table, 1);
-    node = inode_table.table[local_index];
+    struct EXT2Inode node = load_inode(inode);
 
     // Check if it's a directory
     if ((node.i_mode & EXT2_S_IFDIR) == 0) {
@@ -279,13 +285,7 @@ bool is_directory_empty(uint32_t inode) {
 // CRUD Operations
 
 int8_t read_directory(struct EXT2DriverRequest *request) {
-    // Resolve parent inode
-    uint32_t bgd_index = inode_to_bgd(request->parent_inode);
-    uint32_t local_index = inode_to_local(request->parent_inode);
-
-    struct EXT2InodeTable inode_table;
-    read_blocks(&inode_table, bgdt.table[bgd_index].bg_inode_table, 1);
-    struct EXT2Inode parent_node = inode_table.table[local_index];
+    struct EXT2Inode parent_node = load_inode(request->parent_inode);
 
     if ((parent_node.i_mode & EXT2_S_IFDIR) == 0) {
         return 3; // Parent folder invalid
@@ -315,12 +315,8 @@ int8_t read_directory(struct EXT2DriverRequest *request) {
 
     if (!found) return 2; // Not found
 
-    // Load target inode
-    bgd_index = inode_to_bgd(entry->inode);
-    local_index = inode_to_local(entry->inode);
-    read_blocks(&inode_table, bgdt.table[bgd_index].bg_inode_table, 1);
-    struct EXT2Inode target_node = inode_table.table[local_index];
 
+    struct EXT2Inode target_node = load_inode(entry->inode);
     if ((target_node.i_mode & EXT2_S_IFDIR) == 0) {
         return 1; // Not a folder
     }
@@ -333,12 +329,7 @@ int8_t read_directory(struct EXT2DriverRequest *request) {
 }
 
 int8_t read(struct EXT2DriverRequest request) {
-    uint32_t bgd_index = inode_to_bgd(request.parent_inode);
-    uint32_t local_index = inode_to_local(request.parent_inode);
-
-    struct EXT2InodeTable inode_table;
-    read_blocks(&inode_table, bgdt.table[bgd_index].bg_inode_table, 1);
-    struct EXT2Inode parent_node = inode_table.table[local_index];
+    struct EXT2Inode parent_node = load_inode(request.parent_inode);
 
     if ((parent_node.i_mode & EXT2_S_IFDIR) == 0) return 4;
 
@@ -398,10 +389,7 @@ int8_t read(struct EXT2DriverRequest request) {
     if (!found) return 3;
 
     // Load file inode
-    bgd_index = inode_to_bgd(entry->inode);
-    local_index = inode_to_local(entry->inode);
-    read_blocks(&inode_table, bgdt.table[bgd_index].bg_inode_table, 1);
-    struct EXT2Inode target_node = inode_table.table[local_index];
+    struct EXT2Inode target_node = load_inode(entry->inode);
 
     if ((target_node.i_mode & EXT2_S_IFREG) == 0) return 1;
 
@@ -601,27 +589,22 @@ void allocate_node_blocks(void *ptr, struct EXT2Inode *node, uint32_t prefered_b
 
 void sync_node(struct EXT2Inode *node, uint32_t inode) {
     uint32_t bgd_index = inode_to_bgd(inode);
-    uint32_t local_index = inode_to_local(inode);
+    uint32_t offset = (inode - 1) / (BLOCK_SIZE / INODE_SIZE);
+    uint32_t local_index = (inode - 1) % (BLOCK_SIZE / INODE_SIZE);
     
     // Read inode table
     struct EXT2InodeTable inode_table;
-    read_blocks(&inode_table, bgdt.table[bgd_index].bg_inode_table, 1);
+    read_blocks(&inode_table, bgdt.table[bgd_index].bg_inode_table + offset, 1);
     
     // Update inode
     inode_table.table[local_index] = *node;
     
     // Write back
-    write_blocks(&inode_table, bgdt.table[bgd_index].bg_inode_table, 1);
+    write_blocks(&inode_table, bgdt.table[bgd_index].bg_inode_table + offset, 1);
 }
 
 int8_t write(struct EXT2DriverRequest *request) {
-    // 1. Locate parent inode
-    uint32_t bgd_index = inode_to_bgd(request->parent_inode);
-    uint32_t local_index = inode_to_local(request->parent_inode);
-
-    struct EXT2InodeTable inode_table;
-    read_blocks(&inode_table, bgdt.table[bgd_index].bg_inode_table, 1);
-    struct EXT2Inode parent_node = inode_table.table[local_index];
+    struct EXT2Inode parent_node = load_inode(request->parent_inode);
 
     if ((parent_node.i_mode & EXT2_S_IFDIR) == 0) return 2; // Parent not a directory
 
@@ -683,7 +666,7 @@ int8_t write(struct EXT2DriverRequest *request) {
 
     if (request->is_directory) {
         init_directory_table(&new_node, new_inode, request->parent_inode);
-        bgd_index = inode_to_bgd(new_inode);
+        int bgd_index = inode_to_bgd(new_inode);
         bgdt.table[bgd_index].bg_used_dirs_count++;
         write_blocks(&bgdt, 2, 1);
     } else {
@@ -702,6 +685,7 @@ int8_t write(struct EXT2DriverRequest *request) {
 
     return 0; // Success
 }
+
 
 void deallocate_blocks(void *loc, uint32_t blocks) {
     uint32_t *locations = (uint32_t*)loc;
@@ -733,11 +717,12 @@ void deallocate_blocks(void *loc, uint32_t blocks) {
 
 void deallocate_node(uint32_t inode) {
     uint32_t bgd_index = inode_to_bgd(inode);
-    uint32_t local_index = inode_to_local(inode);
+    uint32_t offset = (inode - 1) / (BLOCK_SIZE / INODE_SIZE);
+    uint32_t local_index = (inode - 1) % (BLOCK_SIZE / INODE_SIZE);
     
     // Read inode
     struct EXT2InodeTable inode_table;
-    read_blocks(&inode_table, bgdt.table[bgd_index].bg_inode_table, 1);
+    read_blocks(&inode_table, bgdt.table[bgd_index].bg_inode_table + offset, 1);
     struct EXT2Inode *node = &inode_table.table[local_index];
     
     // Free blocks
@@ -776,14 +761,8 @@ int8_t delete(struct EXT2DriverRequest request) {
     if (request.name_len == 1 && memcmp(request.name, ".", 1) == 0) return -1;
     if (request.name_len == 2 && memcmp(request.name, "..", 2) == 0) return -1;
 
-    // Baca inode parent
-    struct EXT2Inode parent_node;
-    uint32_t bgd_index = inode_to_bgd(request.parent_inode);
-    uint32_t local_index = inode_to_local(request.parent_inode);
+    struct EXT2Inode parent_node = load_inode(request.parent_inode);
     
-    struct EXT2InodeTable inode_table;
-    read_blocks(&inode_table, bgdt.table[bgd_index].bg_inode_table, 1);
-    parent_node = inode_table.table[local_index];
 
     // Validasi parent adalah directory
     if ((parent_node.i_mode & EXT2_S_IFDIR) == 0) return -1;
@@ -813,13 +792,9 @@ int8_t delete(struct EXT2DriverRequest request) {
 
     if (!found) return 1;  // Entry tidak ditemukan
 
-    // Validasi folder kosong jika target adalah direktori
-    struct EXT2Inode target_inode;
+    // Validasi folder kosong jika target adalah direktori   
     uint32_t target_inode_num = entry->inode;
-    bgd_index = inode_to_bgd(target_inode_num);
-    local_index = inode_to_local(target_inode_num);
-    read_blocks(&inode_table, bgdt.table[bgd_index].bg_inode_table, 1);
-    target_inode = inode_table.table[local_index];
+    struct EXT2Inode target_inode = load_inode(target_inode_num);
 
     if ((target_inode.i_mode & EXT2_S_IFDIR) != 0) {
         if (!is_directory_empty(target_inode_num)) return 2;  // Folder tidak kosong

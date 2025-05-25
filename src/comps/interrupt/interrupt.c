@@ -23,7 +23,22 @@ void syscall(struct InterruptFrame frame) {
             *((int8_t*) frame.cpu.general.ecx) = read(
                 *(struct EXT2DriverRequest*) frame.cpu.general.ebx
             );
-            break;          
+            break;
+        case 1:
+            *((int8_t*) frame.cpu.general.ecx) = read_directory(
+                (struct EXT2DriverRequest*) frame.cpu.general.ebx
+            );
+            break; 
+        case 2:  
+            *((int8_t*) frame.cpu.general.ecx) = write(
+                (struct EXT2DriverRequest*) frame.cpu.general.ebx
+            );
+            break;
+        case 3:
+            *((int8_t*) frame.cpu.general.ecx) = delete(
+                *(struct EXT2DriverRequest*) frame.cpu.general.ebx
+            );
+            break;
         case 4:
             get_keyboard_buffer((char*) frame.cpu.general.ebx);
             break;
@@ -34,7 +49,7 @@ void syscall(struct InterruptFrame frame) {
             CP* cursor_pos = (CP*) frame.cpu.general.edx;
             
             graphics_char(
-                cursor_pos->col * 8,  // Convert column to X pixel
+                cursor_pos->col * 5,  // Convert column to X pixel
                 cursor_pos->row * 8,  // Convert row to Y pixel
                 ch,
                 color,
@@ -42,13 +57,26 @@ void syscall(struct InterruptFrame frame) {
             );
             break;
         case 6:
-            // please use write_buffer for this
-            puts(
-                (char*) frame.cpu.general.ebx, 
-                frame.cpu.general.ecx, 
-                ((CP*) frame.cpu.general.edx)->row, 
-                ((CP*) frame.cpu.general.edx)->col
-            );
+            char* str = (char*) frame.cpu.general.ebx;
+            int size = frame.cpu.general.ecx;
+            int row = ((CP*) frame.cpu.general.edx)->row;
+            int col = ((CP*) frame.cpu.general.edx)->col;
+            
+            for (int i = 0; i < size; i++) {
+                graphics_char(
+                    col * 5, 
+                    row * 8, 
+                    str[i], 
+                    COLOR_WHITE, 
+                    COLOR_BLACK
+                );
+                col++;
+                if (col >= 80) {
+                    col = 0;
+                    row++;
+                }
+            }
+
             break;
         case 7: 
             keyboard_state_activate();
@@ -61,7 +89,7 @@ void syscall(struct InterruptFrame frame) {
             break;
         case 9:
             graphics_char(
-                ((CP*) frame.cpu.general.edx)->col * 8, 
+                ((CP*) frame.cpu.general.edx)->col * 5, 
                 ((CP*) frame.cpu.general.edx)->row * 8, 
                 *((char*) frame.cpu.general.ebx), 
                 ((PrintRequest*) frame.cpu.general.ecx)->font_color, 
@@ -96,6 +124,23 @@ void syscall(struct InterruptFrame frame) {
                 (uint8_t)frame.cpu.general.ecx   
             );
             break;
+        case 16:
+            graphics_pixel(
+                (uint16_t)frame.cpu.general.ebx, 
+                (uint16_t)frame.cpu.general.ecx, 
+                (uint8_t)frame.cpu.general.edx
+            );
+        break;
+        case 17:
+            graphics_clear(
+                (uint8_t)frame.cpu.general.ebx
+            );
+            break;
+        case 18:
+            graphics_scroll(
+                (uint8_t)frame.cpu.general.ebx, 
+                (uint8_t)frame.cpu.general.ecx
+            );
     }
 }
 

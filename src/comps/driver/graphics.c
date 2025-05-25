@@ -42,7 +42,7 @@ int abs(int x) {
 // For cursor blinking
 static uint32_t blink_counter = 0;
 static bool cursor_visible = true;
-#define CURSOR_BLINK_RATE 50000  
+#define CURSOR_BLINK_RATE 500000  
 
 // Store the character at cursor position for blinking
 static char cursor_char = 0;
@@ -191,29 +191,29 @@ void graphics_clear(uint8_t color) {
 }
 
 void graphics_char(uint16_t x, uint16_t y, unsigned char c, uint8_t color, uint8_t bgcolor) {
-    if (x >= VGA_WIDTH - 8 || y >= VGA_HEIGHT - 8 || c >= 128)
-        return;
+    if (c >= 128) return;
 
     const uint8_t* char_data = lookup[(uint8_t)c];
     uint8_t size = char_data[0];
 
-    for (uint16_t row = 0; row < 8; row++) {
-        for (uint16_t col = 0; col < 8; col++) {
+    for (uint8_t row = 0; row <= 8; row++) {
+        for (uint8_t col = 0; col <= 5; col++) {
             graphics_pixel(x + col, y + row, bgcolor);
         }
     }
 
-    for (uint8_t i = 1; i <= size; i++) {
+    for (uint8_t i = 1; i < size; i++) {
+        
         uint8_t data = char_data[i];
-        uint8_t row = (data >> 4) & 0x0F;  
-        uint8_t col = data & 0x0F;         
+        uint8_t col = (data >> 4) & 0x0F;  
+        uint8_t row = data & 0x0F;      
 
-        if (row < 8 && col < 8) {
-          
-            graphics_pixel(x + row, y + (7 - col), color);
+        if (col < 5 && row < 8 ) {
+            graphics_pixel(x + col, y + row, color);
         }
     }
 }
+
 
 
 
@@ -374,5 +374,27 @@ void graphics_blink_cursor(void) {
         } else {
             graphics_erase_cursor();
         }
+    }
+}
+
+void graphics_scroll(uint16_t lines, uint8_t fill_color) {
+    if (lines == 0 || lines >= VGA_HEIGHT) {
+        graphics_clear(fill_color);
+        return;
+    }
+    
+    uint32_t pixels_per_line = VGA_WIDTH;
+    uint32_t total_pixels_to_move = pixels_per_line * (VGA_HEIGHT - lines);
+    uint32_t source_offset = pixels_per_line * lines;
+    
+    for (uint32_t i = 0; i < total_pixels_to_move; i++) {
+        VGA_MEMORY[i] = VGA_MEMORY[i + source_offset];
+    }
+    
+    uint32_t start_clear = total_pixels_to_move;
+    uint32_t pixels_to_clear = pixels_per_line * lines;
+    
+    for (uint32_t i = 0; i < pixels_to_clear; i++) {
+        VGA_MEMORY[start_clear + i] = fill_color;
     }
 }

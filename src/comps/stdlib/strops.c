@@ -15,7 +15,7 @@ void int_toString(int x, char str[]){
     if(x < 0){
         x = x*(-1);
         negative = 1;
-    }
+    }   
 
     do{
         str[i] = x % 10 + '0';
@@ -44,22 +44,14 @@ void int_toString(int x, char str[]){
 int strcmp(char str1[], char str2[]){
     int i = 0;
 
-    do{
-        if(str1[i] > str2[i]){
-            return 1;
-        }
-        else if(str1[i] < str2[i]){
-            return -1;
-        }
+    while (str1[i] != '\0' && str2[i] != '\0') {
+        if (str1[i] > str2[i]) return 1;
+        if (str1[i] < str2[i]) return -1;
         i++;
-    } while (str1[i] != 0 && str2[i] != 0);
-    
-    if(str1[i] > str2[i]){
-        return 1;
     }
-    else if(str1[i] < str2[i]){
-        return -1;
-    }
+
+    if (str1[i] != '\0') return 1;
+    if (str2[i] != '\0') return -1;
 
     return 0;
 }

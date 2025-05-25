@@ -37,20 +37,20 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    // Read storage into memory, requiring 4 MB memory
-    image_storage = malloc(4*1024*1024);
-    file_buffer   = malloc(4*1024*1024);
+    // Read storage into memory, requiring 32 MB memory
+    image_storage = malloc(32*1024*1024);
+    file_buffer   = malloc(32*1024*1024);
     FILE *fptr    = fopen(argv[3], "r");
-    fread(image_storage, 4*1024*1024, 1, fptr);
+    fread(image_storage, 32*1024*1024, 1, fptr);
     fclose(fptr);
 
-    // Read target file, assuming file is less than 4 MiB
+    // Read target file, assuming file is less than 32 MiB
     FILE *fptr_target = fopen(argv[1], "r");
     size_t filesize   = 0;
     if (fptr_target == NULL)
         filesize = 0;
     else {
-        fread(file_buffer, 4*1024*1024, 1, fptr_target);
+        fread(file_buffer, 32*1024*1024, 1, fptr_target);
         fseek(fptr_target, 0, SEEK_END);
         filesize = ftell(fptr_target);
         fclose(fptr_target);
@@ -65,8 +65,7 @@ int main(int argc, char *argv[]) {
     struct EXT2DriverRequest request;
     struct EXT2DriverRequest reqread;
     printf("Filename       : %s\n", name);
-    uint8_t *read_buffer = malloc(4*1024*1024);
-    //printf("Filename length: %d\n", filename_length);
+    uint8_t *read_buffer = malloc(32*1024*1024);
 
     request.buf = file_buffer;
     request.buffer_size = filesize;
@@ -115,7 +114,7 @@ int main(int argc, char *argv[]) {
 
     // Write image in memory into original, overwrite them
     fptr = fopen(argv[3], "w");
-    fwrite(image_storage, 4 * 1024 * 1024, 1, fptr);
+    fwrite(image_storage, 32 * 1024 * 1024, 1, fptr);
     fclose(fptr);
 
     return 0;
