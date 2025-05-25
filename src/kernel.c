@@ -210,7 +210,6 @@ void kernel_setup(void) {
         .name_len              = 5,
         .is_directory          = false,
     };
-    read(request2);
 
     struct EXT2DriverRequest request_test = {
         .buf                   = "something1",

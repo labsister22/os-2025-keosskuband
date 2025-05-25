@@ -83,6 +83,11 @@
     "mkdir.h": "c",
     "strops.h": "c",
     "cstdint": "c",
-    "echo.h": "c"
+    "echo.h": "c",
+    "ps.h": "c",
+    "process.h": "c",
+    "exec.h": "c",
+    "typeinfo": "c",
+    "text_encoding": "c"
   }
 }

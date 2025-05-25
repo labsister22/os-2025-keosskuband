@@ -5,6 +5,8 @@
 #include "header/graphics/graphics.h"
 #include "header/scheduler/scheduler.h"
 #include "header/memory/paging.h"
+#include "header/process/process-commands/ps.h"
+#include "header/process/process-commands/exec.h"
 
 typedef struct {
     int32_t row;
@@ -141,6 +143,25 @@ void syscall(struct InterruptFrame frame) {
                 (uint8_t)frame.cpu.general.ebx, 
                 (uint8_t)frame.cpu.general.ecx
             );
+            break;
+        case SYSCALL_PS_CMD:
+            ps((ProcessMetadata*) frame.cpu.general.ebx, (uint8_t) frame.cpu.general.ecx);
+            break;
+        case SYSCALL_GET_MAX_PS:
+            uint32_t* max_amount = (uint32_t*) frame.cpu.general.ebx;
+            *max_amount = PROCESS_COUNT_MAX;
+            break;
+        case SYSCALL_KILL_PS:
+            bool* success = (bool*) frame.cpu.general.ecx;
+            *success = process_destroy((uint32_t) frame.cpu.general.ebx);
+            break;
+        case SYSCALL_EXEC_PS:
+            exec(
+                (char *) frame.cpu.general.ebx, 
+                (uint32_t) frame.cpu.general.ecx, 
+                (int32_t*) frame.cpu.general.edx
+            );
+            break;
     }
 }
 

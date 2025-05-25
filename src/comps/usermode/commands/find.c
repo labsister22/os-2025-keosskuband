@@ -8,23 +8,6 @@ int find_cur_inode = 0;
 char find_cur_directory[12];
 char find_cur_directory_len = 0;
 
-void find(char* str) {
-  absolute_dir_info bef = DIR_INFO;
-
-  cd_root();
-
-  find_path[0] = '.';
-  find_path_len = 1;
-  find_parent_inode = (DIR_INFO.current_dir == 0) ? 1 : DIR_INFO.dir[DIR_INFO.current_dir - 1].inode;
-  find_cur_inode = DIR_INFO.dir[DIR_INFO.current_dir].inode;
-  memcpy(find_cur_directory, DIR_INFO.dir[DIR_INFO.current_dir].dir_name, DIR_INFO.dir[DIR_INFO.current_dir].dir_name_len);
-  find_cur_directory_len = DIR_INFO.dir[DIR_INFO.current_dir].dir_name_len;
-
-  find_recursive(str);
-
-  DIR_INFO = bef; // Restore the original directory info
-}
-
 void find_recursive(char* str) {
     if (find_path_len >= 2048) {
         return; // Path too long
@@ -110,3 +93,22 @@ void find_recursive(char* str) {
         }
     }
 }
+
+
+void find(char* str) {
+  absolute_dir_info bef = DIR_INFO;
+
+  cd_root();
+
+  find_path[0] = '.';
+  find_path_len = 1;
+  find_parent_inode = (DIR_INFO.current_dir == 0) ? 1 : DIR_INFO.dir[DIR_INFO.current_dir - 1].inode;
+  find_cur_inode = DIR_INFO.dir[DIR_INFO.current_dir].inode;
+  memcpy(find_cur_directory, DIR_INFO.dir[DIR_INFO.current_dir].dir_name, DIR_INFO.dir[DIR_INFO.current_dir].dir_name_len);
+  find_cur_directory_len = DIR_INFO.dir[DIR_INFO.current_dir].dir_name_len;
+
+  find_recursive(str);
+
+  DIR_INFO = bef; // Restore the original directory info
+}
+
