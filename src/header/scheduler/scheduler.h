@@ -4,7 +4,7 @@
 #include "header/process/process.h"
 
 #define PIT_MAX_FREQUENCY   1193182
-#define PIT_TIMER_FREQUENCY 100
+#define PIT_TIMER_FREQUENCY 1000
 #define PIT_TIMER_COUNTER   (PIT_MAX_FREQUENCY / PIT_TIMER_FREQUENCY)
 
 #define PIT_COMMAND_REGISTER_PIO          0x43

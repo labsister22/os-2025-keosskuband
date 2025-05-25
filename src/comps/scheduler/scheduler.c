@@ -7,7 +7,6 @@
 
 // Static variables for Round Robin scheduling
 static uint32_t current_process_idx = 0;
-static bool scheduler_running = false;
 
 void activate_timer_interrupt(void) {
     __asm__ volatile("cli");
@@ -21,71 +20,26 @@ void activate_timer_interrupt(void) {
     out(PIC1_DATA, in(PIC1_DATA) & ~(1 << IRQ_TIMER));
 }
 
-void timer_isr(struct InterruptFrame frame) {
-    // Don't do context switching if we only have one process
-    // or if we're in the middle of handling other interrupts
+void timer_isr(struct InterruptFrame frame) { 
+    // Create context from interrupt frame
+    struct Context ctx;
+    ctx.cpu = frame.cpu;
+    ctx.eip = frame.int_stack.eip;
+    ctx.eflags = frame.int_stack.eflags;
+    ctx.page_directory_virtual_addr = paging_get_current_page_directory_addr();
     
-    static uint32_t timer_ticks = 0;
-    timer_ticks++;
-    
-    // Only do context switching every N timer ticks to reduce interference
-    if (timer_ticks % 10 != 0) {
-        pic_ack(IRQ_TIMER);
-        return;
-    }
-    
-    // Check if we actually have multiple processes to switch between
-    uint32_t ready_process_count = 0;
-    for (uint32_t i = 0; i < PROCESS_COUNT_MAX; i++) {
-        if (process_manager_state._process_used[i] && 
-            (_process_list[i].metadata.state == READY || 
-             _process_list[i].metadata.state == RUNNING)) {
-            ready_process_count++;
-        }
-    }
-    
-    // If we only have one process, don't do context switching
-    if (ready_process_count <= 1) {
-        pic_ack(IRQ_TIMER);
-        return;
-    }
-    
-    // Prevent recursive scheduling during interrupt handling
-    if (!scheduler_running) {
-        scheduler_running = true;
-        
-        // Create context from interrupt frame
-        struct Context ctx;
-        ctx.cpu = frame.cpu;
-        ctx.eip = frame.int_stack.eip;
-        ctx.cs = frame.int_stack.cs;
-        ctx.eflags = frame.int_stack.eflags;
-        ctx.page_directory_virtual_addr = paging_get_current_page_directory_addr();
-        
-        // Handle ESP and SS based on privilege level
-        if ((frame.int_stack.cs & 0x3) == 0x3) {
-            // User mode - ESP and SS are pushed by CPU after EFLAGS
-            uint32_t *stack_ptr = (uint32_t*)(&frame + 1);
-            ctx.esp = stack_ptr[0]; // ESP
-            ctx.ss = stack_ptr[1];  // SS
-        } else {
-            // Kernel mode - use current ESP
-            ctx.esp = frame.cpu.stack.esp;
-            ctx.ss = GDT_KERNEL_DATA_SEGMENT_SELECTOR;
-        }
-        
-        // Save context and switch
-        scheduler_save_context_to_current_running_pcb(ctx);
-        scheduler_switch_to_next_process();
-    } else {
-        // Just acknowledge the interrupt if scheduler is already running
-        pic_ack(IRQ_TIMER);
-    }
+    // Save context and switch
+    scheduler_save_context_to_current_running_pcb(ctx);
+
+    // Acknowledge timer interrupt  
+    pic_ack(IRQ_TIMER);
+
+    // switch process
+    scheduler_switch_to_next_process();
 }
 
 void scheduler_init(void) {
     current_process_idx = 0;
-    scheduler_running = false;
     
     // Find the first ready process and set it to RUNNING
     bool found_process = false;
@@ -105,8 +59,8 @@ void scheduler_init(void) {
         while(1) {}
     }
     
-    // Set TSS for proper kernel stack switching
-    set_tss_kernel_current_stack();
+    // // Set TSS for proper kernel stack switching
+    // set_tss_kernel_current_stack();
     
     // Activate timer interrupt
     activate_timer_interrupt();
@@ -172,13 +126,7 @@ __attribute__((noreturn)) void scheduler_switch_to_next_process(void) {
     paging_use_page_directory(_process_list[current_process_idx].context.page_directory_virtual_addr);
     
     // Update TSS for proper stack switching
-    set_tss_kernel_current_stack();
-    
-    // Reset scheduler running flag
-    scheduler_running = false;
-    
-    // Acknowledge timer interrupt
-    pic_ack(IRQ_TIMER);
+    // set_tss_kernel_current_stack();
     
     // Context switch to selected process
     process_context_switch(_process_list[current_process_idx].context);

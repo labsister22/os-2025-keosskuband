@@ -51,19 +51,13 @@
  *
  * @param cpu                         All CPU register state
  * @param eip                         CPU instruction counter to resume execution
- * @param cs                          Code segment for far jump
  * @param eflags                      Flag register to load before resuming the execution
- * @param esp                         Stack pointer for user mode
- * @param ss                          Stack segment for user mode
  * @param page_directory_virtual_addr CPU register CR3, containing pointer to active page directory
  */
 struct Context {
     struct CPURegister cpu;
     uint32_t eip;
-    uint32_t cs;
     uint32_t eflags;
-    uint32_t esp;
-    uint32_t ss;
     struct PageDirectory *page_directory_virtual_addr;
 };
 

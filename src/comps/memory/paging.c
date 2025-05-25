@@ -218,7 +218,8 @@ bool paging_free_page_directory(struct PageDirectory *page_dir) {
         if (&page_directory_list[i] == page_dir) {
             // Free all user pages first
             for (uint32_t j = 0; j < PAGE_ENTRY_COUNT; j++) {
-                // Skip kernel pages (0x300 is kernel at 0xC0000000)
+                // not sure if this make sense or needed but for now im gonna comment it
+                // // Skip kernel pages (0x300 is kernel at 0xC0000000)
                 if (j == 0x300 || j == 0) continue;
                 
                 if (page_directory_list[i].table[j].flag.present_bit && 

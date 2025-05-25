@@ -141,17 +141,17 @@ void pic_remap(void) {
     out(PIC2_DATA, PIC_DISABLE_ALL_MASK);
 }
 
-static volatile bool in_interrupt_handler = false;
+// static volatile bool in_interrupt_handler = false;
 
 void main_interrupt_handler(struct InterruptFrame frame) {
-    // Prevent interrupt nesting issues
-    if (in_interrupt_handler && frame.int_number != (IRQ_KEYBOARD + PIC1_OFFSET)) {
-        // If we're already in an interrupt handler, only allow keyboard interrupts
-        pic_ack(frame.int_number - PIC1_OFFSET);
-        return;
-    }
+    // // Prevent interrupt nesting issues
+    // if (in_interrupt_handler && frame.int_number != (IRQ_KEYBOARD + PIC1_OFFSET)) {
+    //     // If we're already in an interrupt handler, only allow keyboard interrupts
+    //     pic_ack(frame.int_number - PIC1_OFFSET);
+    //     return;
+    // }
     
-    in_interrupt_handler = true;
+    // in_interrupt_handler = true;
     
     switch (frame.int_number) {
         case PIC1_OFFSET + IRQ_TIMER:  // 32 - Timer
@@ -176,7 +176,7 @@ void main_interrupt_handler(struct InterruptFrame frame) {
             break;
     }
     
-    in_interrupt_handler = false;
+    // in_interrupt_handler = false;
 }
 
 void set_tss_kernel_current_stack(void) {

@@ -43,6 +43,7 @@ struct ProcessControlBlock* process_get_current_running_pcb_pointer(void) {
 int32_t process_create_user_process(struct EXT2DriverRequest request) {
     int32_t retcode = PROCESS_CREATE_SUCCESS;
     
+    // 0. VALIDATE AND CHECK FOR ERROR
     // Check if we've reached max process count
     if (process_manager_state.active_process_count >= PROCESS_COUNT_MAX) {
         retcode = PROCESS_CREATE_FAIL_MAX_PROCESS_EXCEEDED;
@@ -62,6 +63,7 @@ int32_t process_create_user_process(struct EXT2DriverRequest request) {
         goto exit_cleanup;
     }
 
+    // 0.5 GET UNUSED PCB 
     // Get free PCB slot
     int32_t p_index = process_list_get_inactive_index();
     if (p_index == -1) {
@@ -70,15 +72,10 @@ int32_t process_create_user_process(struct EXT2DriverRequest request) {
     }
     
     struct ProcessControlBlock *new_pcb = &(_process_list[p_index]);
-    
-    // Clear the PCB
-    memset(new_pcb, 0, sizeof(struct ProcessControlBlock));
 
-    // Set metadata
-    new_pcb->metadata.pid = process_generate_new_pid();
-    new_pcb->metadata.state = READY;
-    memcpy(new_pcb->metadata.name, request.name, request.name_len < 8 ? request.name_len : 8);
 
+    // 1.  ASSIGN VIRTUAL MEMORY 
+    // 1.1. CREATE PAGE DIRECTORY
     // Save current page directory
     struct PageDirectory* current_pd = paging_get_current_page_directory_addr();
     
@@ -92,6 +89,7 @@ int32_t process_create_user_process(struct EXT2DriverRequest request) {
     // Store page directory in context
     new_pcb->context.page_directory_virtual_addr = new_pd;
 
+    // 1.2. ASSIGN PAGE FRAMES AS NEEDED
     // Allocate memory for the process
     uint32_t current_address = 0;
     uint32_t remaining_size = request.buffer_size;
@@ -136,6 +134,7 @@ int32_t process_create_user_process(struct EXT2DriverRequest request) {
     new_pcb->memory.virtual_addr_used[new_pcb->memory.page_frame_used_count] = stack_virtual_addr;
     new_pcb->memory.page_frame_used_count++;
 
+    // 2. READ & ALLOCATE EXECUTABLE FILE
     // Switch to new page directory to copy data
     paging_use_page_directory(new_pd);
     
@@ -164,6 +163,8 @@ int32_t process_create_user_process(struct EXT2DriverRequest request) {
         goto exit_cleanup;
     }
 
+
+    // 3. ADD CONTEXT TO PROCESS
     // Initialize process context
     new_pcb->context.cpu = (struct CPURegister) {
         .index = {.edi = 0, .esi = 0},
@@ -176,12 +177,15 @@ int32_t process_create_user_process(struct EXT2DriverRequest request) {
             .ds = GDT_USER_DATA_SEGMENT_SELECTOR | 0x3
         }
     };
-    
-    new_pcb->context.eip = 0x0; // Entry point at start of user space (0x0)
-    new_pcb->context.cs = GDT_USER_CODE_SEGMENT_SELECTOR | 0x3; // User code segment with RPL 3
+    new_pcb->context.eip = (uint32_t) request.buf; // Entry point at start of user space (0x0) 
     new_pcb->context.eflags = CPU_EFLAGS_BASE_FLAG | CPU_EFLAGS_FLAG_INTERRUPT_ENABLE;
-    new_pcb->context.esp = 0xBFFFFFFC; // Stack pointer at top of stack
-    new_pcb->context.ss = GDT_USER_DATA_SEGMENT_SELECTOR | 0x3; // User stack segment
+    
+
+    // 4. SET METADATA
+    // Set metadata
+    new_pcb->metadata.pid = process_generate_new_pid();
+    memcpy(new_pcb->metadata.name, request.name, request.name_len < 8 ? request.name_len : 8);
+    new_pcb->metadata.state = READY;
 
     // Mark process slot as used
     process_manager_state._process_used[p_index] = true;
