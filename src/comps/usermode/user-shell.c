@@ -481,19 +481,10 @@ void process_command() {
                 print_string_colored("Usage: cat <filename>", COLOR_LIGHT_RED);
                 print_newline();
             }
-        } else if (!strcmp("cls", shell_state.command)) {
+        } else if (strcmp("cls", shell_state.command) == 0) {
             clear_input_buffer();
             print_prompt();
-        } else if (strcmp("reboot", shell_state.command) == 0) {
-            print_string_at_cursor("Rebooting...");
-            print_newline();
-            syscall(2, 0, 0, 0); // Reboot syscall
-        } else if (strcmp("shutdown", shell_state.command) == 0) {
-            print_string_at_cursor("Shutting down...");
-            print_newline();
-            syscall(3, 0, 0, 0); // Shutdown syscall
-        }
-        else if (strcmp("exit", shell_state.command) == 0) {
+        } else if (strcmp("exit", shell_state.command) == 0) {
             print_string_at_cursor("Goodbye!");
             print_newline();
             while (1) {
