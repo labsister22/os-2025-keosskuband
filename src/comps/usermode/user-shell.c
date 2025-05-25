@@ -31,6 +31,24 @@ static ShellState shell_state = {
     .char_color_under_cursor = COLOR_WHITE
 };
 
+// Tab completion state
+static CompletionState completion_state = {
+    .count = 0,
+    .current_selection = 0,
+    .is_showing = false
+};
+
+// Command list for completion
+static const char* command_list[] = {
+    "help", "clear", "echo", "ls", "cd", "mkdir", "find", "cat", 
+    "cls", "exit", "apple", NULL
+};
+
+// Store the original prefix for cycling
+static char original_prefix[MAX_COMPLETION_LENGTH] = "";
+static int original_prefix_len = 0;
+static int word_start_pos = 0;
+
 CP cursor = {0, 0};
 str_path path = {
     .path = "",
@@ -47,6 +65,232 @@ void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     __asm__ volatile("mov %0, %%edx" : /* <Empty> */ : "r"(edx));
     __asm__ volatile("mov %0, %%eax" : /* <Empty> */ : "r"(eax));
     __asm__ volatile("int $0x30");
+}
+
+// Helper function to check if string starts with prefix
+bool starts_with(const char* str, const char* prefix) {
+    if (!str || !prefix) return false;
+    
+    int prefix_len = strlen((char*)prefix);
+    int str_len = strlen((char*)str);
+    
+    if (prefix_len > str_len) return false;
+    
+    for (int i = 0; i < prefix_len; i++) {
+        if (str[i] != prefix[i]) return false;
+    }
+    return true;
+}
+
+// Find command completions
+void find_command_completions(const char* prefix) {
+    completion_state.count = 0;
+    
+    for (int i = 0; command_list[i] != NULL && completion_state.count < MAX_COMPLETIONS; i++) {
+        if (starts_with(command_list[i], prefix)) {
+            strcpy(completion_state.completions[completion_state.count], (char*)command_list[i]);
+            completion_state.count++;
+        }
+    }
+}
+
+// Find file/directory completions
+void find_file_completions(const char* command, const char* prefix) {
+    completion_state.count = 0;
+    
+    // Read current directory contents
+    uint8_t dir_buffer[BLOCK_SIZE];
+    struct EXT2DriverRequest request = {
+        .buf = dir_buffer,
+        .name = ".",
+        .parent_inode = DIR_INFO.dir[DIR_INFO.current_dir].inode,
+        .buffer_size = BLOCK_SIZE,
+        .name_len = 1,
+        .is_directory = false
+    };
+    
+    int8_t result;
+    syscall(1, (uint32_t)&request, (uint32_t)&result, 0); // read_directory syscall
+    
+    if (result != 0) return;
+    
+    // Parse directory entries
+    uint32_t offset = 0;
+    while (offset < BLOCK_SIZE && completion_state.count < MAX_COMPLETIONS) {
+        struct EXT2DirectoryEntry *entry = (struct EXT2DirectoryEntry*)(dir_buffer + offset);
+        
+        if (entry->rec_len == 0) break;
+        if (entry->inode == 0) {
+            offset += entry->rec_len;
+            continue;
+        }
+        
+        // Create null-terminated name
+        char entry_name[256];
+        for (int i = 0; i < entry->name_len && i < 255; i++) {
+            entry_name[i] = entry->name[i];
+        }
+        entry_name[entry->name_len] = '\0';
+        
+        // Skip . and .. for most commands
+        if (strcmp(entry_name, ".") == 0 || strcmp(entry_name, "..") == 0) {
+            if (strcmp((char*)command, "cd") != 0) {
+                offset += entry->rec_len;
+                continue;
+            }
+        }
+        
+        // Filter based on command type
+        bool include = false;
+        if (strcmp((char*)command, "cd") == 0) {
+            // Only directories for cd
+            include = (entry->file_type == EXT2_FT_DIR);
+        } else if (strcmp((char*)command, "cat") == 0) {
+            // Only regular files for cat
+            include = (entry->file_type == EXT2_FT_REG_FILE);
+        } else {
+            // All entries for other commands
+            include = true;
+        }
+        
+        if (include && starts_with(entry_name, prefix)) {
+            strcpy(completion_state.completions[completion_state.count], entry_name);
+            completion_state.count++;
+        }
+        
+        offset += entry->rec_len;
+    }
+}
+
+// Apply current completion from the queue
+void apply_current_completion() {
+    if (completion_state.count == 0) return;
+    
+    hide_cursor();
+    
+    // Get current completion
+    const char* completion = completion_state.completions[completion_state.current_selection];
+    int completion_len = strlen((char*)completion);
+    
+    // Remove current word (from word_start_pos to cursor)
+    int current_word_len = shell_state.cursor_position - word_start_pos;
+    for (int i = word_start_pos; i < shell_state.input_length - current_word_len; i++) {
+        shell_state.input_buffer[i] = shell_state.input_buffer[i + current_word_len];
+    }
+    shell_state.input_length -= current_word_len;
+    shell_state.cursor_position = word_start_pos;
+    
+    // Insert the completion
+    if (shell_state.input_length + completion_len < MAX_INPUT_LENGTH - 1) {
+        // Make room for the completion
+        for (int i = shell_state.input_length + completion_len - 1; i >= word_start_pos + completion_len; i--) {
+            shell_state.input_buffer[i] = shell_state.input_buffer[i - completion_len];
+        }
+        
+        // Insert the completion
+        for (int i = 0; i < completion_len; i++) {
+            shell_state.input_buffer[word_start_pos + i] = completion[i];
+        }
+        
+        shell_state.input_length += completion_len;
+        shell_state.cursor_position += completion_len;
+        shell_state.input_buffer[shell_state.input_length] = '\0';
+        
+        // Add space after completion if we're at the end
+        if (shell_state.cursor_position == shell_state.input_length && 
+            shell_state.input_length < MAX_INPUT_LENGTH - 1) {
+            shell_state.input_buffer[shell_state.input_length] = ' ';
+            shell_state.input_length++;
+            shell_state.cursor_position++;
+            shell_state.input_buffer[shell_state.input_length] = '\0';
+        }
+    }
+    
+    redraw_input_line();
+}
+
+// Reset completion state
+void reset_completion_state() {
+    completion_state.count = 0;
+    completion_state.current_selection = 0;
+    completion_state.is_showing = false;
+    original_prefix[0] = '\0';
+    original_prefix_len = 0;
+}
+
+// Handle tab completion with cycling
+void handle_tab_completion() {
+    // If we're already in completion mode, cycle to next completion
+    if (completion_state.is_showing && completion_state.count > 0) {
+        completion_state.current_selection = (completion_state.current_selection + 1) % completion_state.count;
+        apply_current_completion();
+        return;
+    }
+    
+    // Start new completion
+    reset_completion_state();
+    
+    if (shell_state.input_length == 0) {
+        // No input - complete with first command
+        find_command_completions("");
+        if (completion_state.count > 0) {
+            word_start_pos = 0;
+            strcpy(original_prefix, "");
+            original_prefix_len = 0;
+            completion_state.is_showing = true;
+            apply_current_completion();
+        }
+        return;
+    }
+    
+    // Parse current input to determine context
+    char temp_input[MAX_INPUT_LENGTH];
+    strcpy(temp_input, shell_state.input_buffer);
+    
+    // Find command end
+    int command_end = 0;
+    while (command_end < shell_state.input_length && temp_input[command_end] != ' ') {
+        command_end++;
+    }
+    
+    if (shell_state.cursor_position <= command_end) {
+        // Cursor is in command part - complete commands
+        word_start_pos = 0;
+        temp_input[command_end] = '\0';
+        strcpy(original_prefix, temp_input);
+        original_prefix_len = strlen(original_prefix);
+        find_command_completions(temp_input);
+    } else {
+        // Cursor is in arguments part - complete files/directories
+        temp_input[command_end] = '\0';
+        char* command = temp_input;
+        
+        // Find current word start
+        word_start_pos = shell_state.cursor_position;
+        while (word_start_pos > 0 && shell_state.input_buffer[word_start_pos - 1] != ' ') {
+            word_start_pos--;
+        }
+        
+        // Get current argument prefix
+        char arg_prefix[MAX_INPUT_LENGTH];
+        int prefix_len = shell_state.cursor_position - word_start_pos;
+        if (prefix_len > 0) {
+            for (int j = 0; j < prefix_len; j++) {
+                arg_prefix[j] = shell_state.input_buffer[word_start_pos + j];
+            }
+        }
+        arg_prefix[prefix_len] = '\0';
+        
+        strcpy(original_prefix, arg_prefix);
+        original_prefix_len = strlen(original_prefix);
+        find_file_completions(command, arg_prefix);
+    }
+    
+    // Apply first completion if any found
+    if (completion_state.count > 0) {
+        completion_state.is_showing = true;
+        apply_current_completion();
+    }
 }
 
 void add_to_history(const char* command) {
@@ -185,8 +429,8 @@ void check_and_scroll() {
         scroll_screen();
         if (shell_state.prompt_start_row > 0) {
             shell_state.prompt_start_row--;
-            cursor.row--;
         }
+        cursor.row--;
     }
 }
 
@@ -269,8 +513,7 @@ void print_prompt() {
         }
     }
 
-    cursor.col = 0;
-    cursor.row++;
+    print_newline();
     check_and_scroll();
     
     syscall(5, (uint32_t)":", COLOR_LIGHT_CYAN, (uint32_t)&cursor);
@@ -484,14 +727,10 @@ void process_command() {
                 print_string_colored("Usage: cat <filename>", COLOR_LIGHT_RED);
                 print_newline();
             }
-        } else if (strcmp("cls", shell_state.command) == 0) {
-            clear_input_buffer();
-            print_prompt();
         } else if (strcmp("exit", shell_state.command) == 0) {
             print_string_at_cursor("Goodbye!");
             print_newline();
-            while (1) {
-            }
+            while (1) {}
         } else if (strcmp("apple", shell_state.command) == 0) {
             apple(&cursor);
         } else if (strcmp("ps", shell_state.command) == 0) {
@@ -533,6 +772,11 @@ int main(void) {
         syscall(4, (uint32_t)&c, 0, 0);
 
         if (c != 0) {
+            // Reset completion state on any key except tab
+            if (c != '\t') {
+                reset_completion_state();
+            }
+            
             if (c == 0x11) { // Left arrow
                 move_cursor_left();
                 set_hardware_cursor();
@@ -548,6 +792,9 @@ int main(void) {
                 continue;
             } else if (c == 0x13) { // Down arrow - Navigate to next command
                 handle_down_arrow();
+                continue;
+            } else if (c == '\t') { // Tab key - Cycle through completions
+                handle_tab_completion();
                 continue;
             }
 

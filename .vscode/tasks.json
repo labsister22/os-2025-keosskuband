@@ -19,7 +19,7 @@
         {
             "type": "shell",
             "label": "Launch QEMU",
-            "command": "./run-qemu.sh",
+            "command": "echo Starting QEMU&qemu-system-i386 -s -S -drive file=storage.bin,format=raw,if=ide,index=0,media=disk -cdrom KeosskuBand.iso",
             "isBackground": true,
             "dependsOn": "Build OS",
             "options": {
@@ -36,8 +36,8 @@
                 ],
                 "background": {
                     "activeOnStart": true,
-                    "beginsPattern": "QEMU_READY",
-                    "endsPattern": "QEMU_READY",
+                    "beginsPattern": ".",
+                    "endsPattern": ".",
                 }
             }
         },

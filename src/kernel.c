@@ -263,7 +263,7 @@ void kernel_setup(void) {
 "Fufufafa anak haram konstitusi\n"
 "Fufufafa cukuplah sampai disini";
     request_test.name = "ikanaide";
-    request_test.buffer_size = 1425;
+    request_test.buffer_size = 1430;
     request_test.name_len = 8;
     write(&request_test);
 
