@@ -12,9 +12,6 @@
 #define PAGE_FRAME_MAX_COUNT ((SYSTEM_MEMORY_MB << 20) / PAGE_FRAME_SIZE)
 #define PAGING_DIRECTORY_TABLE_MAX_COUNT 32
 
-// Used for higher half kernel mapping
-#define KERNEL_VIRTUAL_BASE 0xC0000000
-
 extern struct PageDirectory _paging_kernel_page_directory;
 
 /**

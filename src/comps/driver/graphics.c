@@ -361,7 +361,7 @@ void graphics_store_char_at_cursor(char c) {
 void graphics_set_cursor_colors(uint8_t fg_color, uint8_t bg_color) {
     cursor_fg_color = fg_color;
     cursor_bg_color = bg_color;
-}
+}   
 
 void graphics_blink_cursor(void) {
     blink_counter++;

@@ -65,3 +65,81 @@ void strcpy(char dest[], char src[]){
     dest[counter] = 0;
     return;
 }
+
+int str_to_int(const char *str, int *result) {
+    // Input validation
+    if (str == 0 || result == 0 || *str == '\0') {
+        return 0; // Invalid pointers or empty string
+    }
+    
+    const char *ptr = str;
+    int sign = 1;
+    int value = 0;
+    
+    // Handle optional sign
+    if (*ptr == '-') {
+        sign = -1;
+        ptr++;
+    } else if (*ptr == '+') {
+        ptr++;
+    }
+    
+    // Must have at least one digit after sign
+    if (*ptr < '0' || *ptr > '9') {
+        return 0; // No digits found
+    }
+    
+    // Skip leading zeros and validate digits
+    while (*ptr == '0') {
+        ptr++;
+    }
+    
+    // Count digits and validate format
+    int digit_count = 0;
+    const char *digit_start = ptr;
+    while (*ptr >= '0' && *ptr <= '9') {
+        digit_count++;
+        ptr++;
+    }
+    
+    // Check if we reached end of string (all characters were valid)
+    if (*ptr != '\0') {
+        return 0; // Invalid character found
+    }
+    
+    // Handle case where number is just "0"
+    if (digit_count == 0) {
+        *result = 0;
+        return 1;
+    }
+    
+    // Check for overflow - INT_MAX = 2147483647, INT_MIN = -2147483648
+    if (digit_count > 10) {
+        return 0; // Definitely overflow
+    }
+    
+    if (digit_count == 10) {
+        // Exactly 10 digits - need to compare with limits
+        const char *limit = (sign == -1) ? "2147483648" : "2147483647";
+        for (int i = 0; i < 10; i++) {
+            if (digit_start[i] > limit[i]) {
+                return 0; // Overflow
+            } else if (digit_start[i] < limit[i]) {
+                break; // No overflow, safe to continue
+            }
+        }
+    }
+    
+    // Perform conversion
+    ptr = digit_start;
+    while (*ptr >= '0' && *ptr <= '9') {
+        value = value * 10 + (*ptr - '0');
+        ptr++;
+    }
+    
+    *result = sign * value;
+    return 1; // Success
+}
+
+
+

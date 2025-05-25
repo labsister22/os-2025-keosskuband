@@ -34,9 +34,11 @@ void apple(CP* cursor){
     }
 
     int time_out = 30000000;
+    /*
     while (time_out > 0) {
       time_out--;
     } 
+    */
 
     // second frame
     cursor->row = 0;
@@ -56,8 +58,8 @@ void apple(CP* cursor){
     }
 
     time_out = 30000000;
-    while (time_out > 0) {
-      time_out--;
-    } 
+    //while (time_out > 0) {
+      //time_out--;
+    //} 
   }
 }
