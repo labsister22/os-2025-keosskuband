@@ -72,6 +72,10 @@ void load_history_entry(int index);
 void handle_up_arrow();
 void handle_down_arrow();
 
+// misc
+void update_cursor_row_col();
+void print_prompt();
+
 
 // Command history structure
 typedef struct {

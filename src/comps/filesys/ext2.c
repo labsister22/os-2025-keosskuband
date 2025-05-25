@@ -340,42 +340,7 @@ int8_t read(struct EXT2DriverRequest request) {
     struct EXT2DirectoryEntry *entry = get_directory_entry(dir_data, offset);
     bool found = false;
 
-    char buffer[20];
-    memset(buffer, 0, sizeof(buffer));
-    memcpy(buffer, "reading folder/file : ", 15);
-    //write_buffer(buffer, 15, local_row, local_col);
-    memset(buffer, 0, sizeof(buffer));
-    memcpy(buffer, request.name, request.name_len);
-    buffer[request.name_len] = '\0'; // Null-terminate the string
-    //write_buffer(buffer, request.name_len, local_row, local_col + 15);
-    local_row++;
-
     while (offset < BLOCK_SIZE) {
-        char buffer[20];
-        memset(buffer, 0, sizeof(buffer));
-        memcpy(buffer, entry->name, entry->name_len);
-        buffer[entry->name_len] = '\0'; // Null-terminate the string
-
-        //write_buffer(buffer, 15, local_row, local_col);
-
-        memset(buffer, 0, sizeof(buffer));
-        // itoa(entry->inode, buffer);
-        //write_buffer(buffer, 10, local_row, local_col + 20);
-
-        memset(buffer, 0, sizeof(buffer));
-        if (entry->file_type == EXT2_FT_DIR) {
-            memcpy(buffer, "DIRECTORY", 10);
-            //write_buffer(buffer, 10, local_row, local_col + 30);
-            local_row++;
-        } else if (entry->file_type == EXT2_FT_REG_FILE) {
-            memcpy(buffer, "FILE", 5);
-            //write_buffer(buffer, 10, local_row, local_col + 30);
-            local_row++;
-        } else {
-            buffer[0] = 'U';
-            //write_buffer(buffer, 10, local_row, local_col + 30);
-            local_row++;
-        }
         if (entry->inode != 0 &&
             entry->name_len == request.name_len &&
             memcmp(entry->name, request.name, request.name_len) == 0) {
@@ -430,8 +395,8 @@ int8_t read(struct EXT2DriverRequest request) {
             }
 
             uint32_t relative_index = i - 140;
-            uint32_t level1_index = relative_index / 128;
-            uint32_t level2_index = relative_index % 128;
+            uint32_t level1_index = relative_index / 127;
+            uint32_t level2_index = relative_index % 127;
 
             if (level1_block[level1_index] == 0) break;
 
@@ -439,8 +404,7 @@ int8_t read(struct EXT2DriverRequest request) {
 
             if (level2_block[level2_index] == 0) break;
 
-            read_blocks(buf + (i * BLOCK_SIZE), level2_block[level2_index], 1);
-
+            read_blocks(buf + (i * BLOCK_SIZE), level2_block[level2_index + 1], 1);
         }
     }
 

@@ -182,8 +182,8 @@ void check_and_scroll() {
         scroll_screen();
         if (shell_state.prompt_start_row > 0) {
             shell_state.prompt_start_row--;
-            cursor.row--;
         }
+        cursor.row--;
     }
 }
 
@@ -266,8 +266,7 @@ void print_prompt() {
         }
     }
 
-    cursor.col = 0;
-    cursor.row++;
+    print_newline();
     check_and_scroll();
     
     syscall(5, (uint32_t)":", COLOR_LIGHT_CYAN, (uint32_t)&cursor);

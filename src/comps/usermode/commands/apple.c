@@ -15,7 +15,7 @@ void apple(CP* cursor){
   syscall(0, (uint32_t) &request, (uint32_t) &res, 0);
 
   char buffer = ' '; 
-  for (int i = 10; i < FRAME_COUNT / 2; i++) {
+  for (int i = 0; i < FRAME_COUNT / 2; i++) {
     // first frame
     cursor->row = 0;
     cursor->col = 0;
@@ -33,7 +33,7 @@ void apple(CP* cursor){
       }
     }
 
-    int time_out = 10000000;
+    int time_out = 30000000;
     while (time_out > 0) {
       time_out--;
     } 
@@ -55,7 +55,7 @@ void apple(CP* cursor){
       }
     }
 
-    time_out = 10000000;
+    time_out = 30000000;
     while (time_out > 0) {
       time_out--;
     } 
