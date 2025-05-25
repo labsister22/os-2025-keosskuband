@@ -473,31 +473,10 @@ void process_command() {
                 print_string_colored("Usage: find <filename>", COLOR_LIGHT_RED);
                 print_newline();
             }
-        } else if (strcmp("history", shell_state.command) == 0) {
-            // New command to show command history
-            print_string_colored("Command History:", COLOR_LIGHT_CYAN);
-            print_newline();
-            
-            int start = (history.count < MAX_HISTORY_ENTRIES) ? 0 : history.count % MAX_HISTORY_ENTRIES;
-            for (int i = 0; i < history.count && i < MAX_HISTORY_ENTRIES; i++) {
-                int index = (start + i) % MAX_HISTORY_ENTRIES;
-                print_string_colored("  ", COLOR_WHITE);
-                print_string_colored(history.commands[index], COLOR_WHITE);
-                print_newline();
-            }
         } else if (strcmp("cls", shell_state.command) == 0) {
             clear_input_buffer();
             print_prompt();
-        } else if (strcmp("reboot", shell_state.command) == 0) {
-            print_string_at_cursor("Rebooting...");
-            print_newline();
-            syscall(2, 0, 0, 0); // Reboot syscall
-        } else if (strcmp("shutdown", shell_state.command) == 0) {
-            print_string_at_cursor("Shutting down...");
-            print_newline();
-            syscall(3, 0, 0, 0); // Shutdown syscall
-        }
-        else if (strcmp("exit", shell_state.command) == 0) {
+        } else if (strcmp("exit", shell_state.command) == 0) {
             print_string_at_cursor("Goodbye!");
             print_newline();
             while (1) {
