@@ -376,8 +376,13 @@ void graphics_set_cursor_colors_syscall(uint8_t fg_color, uint8_t bg_color) {
     syscall(15, (uint32_t)fg_color, (uint32_t)bg_color, 0);
 }
 
+
 void show_cursor() {
     if (!shell_state.cursor_shown) {
+        // Make sure cursor screen position is up to date
+        update_cursor_row_col();
+        
+        // Store the character that's currently at the cursor position
         if (shell_state.cursor_position < shell_state.input_length) {
             shell_state.char_under_cursor = shell_state.input_buffer[shell_state.cursor_position];
             shell_state.char_color_under_cursor = COLOR_WHITE;
@@ -386,6 +391,7 @@ void show_cursor() {
             shell_state.char_color_under_cursor = COLOR_BLACK;
         }
 
+        // Set cursor colors and draw
         graphics_set_cursor_colors_syscall(COLOR_WHITE, COLOR_GREEN);
         graphics_store_char_syscall(shell_state.char_under_cursor, shell_state.char_color_under_cursor);
         graphics_draw_cursor_syscall();
@@ -396,6 +402,27 @@ void show_cursor() {
 void hide_cursor() {
     if (shell_state.cursor_shown) {
         graphics_erase_cursor_syscall();
+        
+        // Calculate the correct screen position for this logical cursor position
+        int total_pos = shell_state.prompt_start_col + shell_state.cursor_position;
+        int screen_row = shell_state.prompt_start_row + total_pos / SCREEN_WIDTH;
+        int screen_col = total_pos % SCREEN_WIDTH;
+        
+        // Restore the correct character at the calculated position
+        char char_to_restore;
+        uint8_t color_to_restore;
+        
+        if (shell_state.cursor_position < shell_state.input_length) {
+            char_to_restore = shell_state.input_buffer[shell_state.cursor_position];
+            color_to_restore = COLOR_WHITE;
+        } else {
+            char_to_restore = ' ';
+            color_to_restore = COLOR_BLACK;
+        }
+        
+        CP pos = {screen_row, screen_col};
+        syscall(5, (uint32_t)&char_to_restore, color_to_restore, (uint32_t)&pos);
+        
         shell_state.cursor_shown = false;
     }
 }
@@ -469,20 +496,17 @@ void print_newline() {
     set_hardware_cursor();
 }
 
-// Update cursor row and col based on cursor_position and prompt start
 void update_cursor_row_col() {
     hide_cursor();
     int total_pos = shell_state.prompt_start_col + shell_state.cursor_position;
     cursor.row = shell_state.prompt_start_row + total_pos / SCREEN_WIDTH;
     cursor.col = total_pos % SCREEN_WIDTH;
 
-    // Check if we need to scroll due to cursor position
     check_and_scroll();
     set_hardware_cursor();
 }
 
 void print_prompt() {
-    // Check if we need to scroll before printing prompt
     check_and_scroll();
     
     print_string_colored(SHELL_PROMPT, COLOR_LIGHT_CYAN);
@@ -530,19 +554,16 @@ void print_prompt() {
 void redraw_input_line() {
     hide_cursor();
 
-    // Calculate how many rows the input will take
     int total_chars = shell_state.prompt_start_col + shell_state.input_length;
     int total_rows = (total_chars + SCREEN_WIDTH - 1) / SCREEN_WIDTH;
     int end_row = shell_state.prompt_start_row + total_rows - 1;
 
-    // Check if input would extend beyond screen and scroll if needed
     while (end_row >= SCREEN_HEIGHT) {
         scroll_screen();
         shell_state.prompt_start_row--;
         end_row--;
     }
 
-    // Clear only input area, not prompt
     for (int row = shell_state.prompt_start_row; row <= end_row && row < SCREEN_HEIGHT; row++) {
         int start_col = (row == shell_state.prompt_start_row) ? shell_state.prompt_start_col : 0;
         for (int col = start_col; col < SCREEN_WIDTH; col++) {
@@ -552,7 +573,6 @@ void redraw_input_line() {
         }
     }
 
-    // Redraw input text with wrapping
     int draw_row = shell_state.prompt_start_row;
     int draw_col = shell_state.prompt_start_col;
     for (int i = 0; i < shell_state.input_length; i++) {
@@ -624,20 +644,17 @@ void delete_char_at_cursor() {
 
     update_cursor_row_col();
 }
-
 void move_cursor_left() {
     if (shell_state.cursor_position > 0) {
-        hide_cursor();
         shell_state.cursor_position--;
-        update_cursor_row_col();
+        redraw_input_line();
     }
 }
 
 void move_cursor_right() {
     if (shell_state.cursor_position < shell_state.input_length) {
-        hide_cursor();
         shell_state.cursor_position++;
-        update_cursor_row_col();
+        redraw_input_line();
     }
 }
 
@@ -805,7 +822,7 @@ int main(void) {
         
         // Additional scroll check in main loop
         check_and_scroll();
-        syscall(14, 0, 0, 0);
+        // syscall(14, 0, 0, 0);
     }
 
     return 0;
