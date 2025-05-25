@@ -1,7 +1,8 @@
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include "header/stdlib/string.h"
 
-// Syscall function (same as your example)
 void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     __asm__ volatile("mov %0, %%ebx" : : "r"(ebx));
     __asm__ volatile("mov %0, %%ecx" : : "r"(ecx));
@@ -10,13 +11,11 @@ void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     __asm__ volatile("int $0x30");
 }
 
-// Cursor position structure
 typedef struct {
     int32_t row;
     int32_t col;
 } CP;
 
-// Time structure
 struct Time {
     uint8_t second;
     uint8_t minute;
@@ -26,25 +25,14 @@ struct Time {
     uint16_t year;
 };
 
-// Display position (bottom of screen in graphics mode)
 #define CLOCK_ROW 24
 #define CLOCK_COL 56
 
-// Simple memset function
-void memset_simple(void *ptr, int value, int size) {
-    char *p = (char*)ptr;
-    for (int i = 0; i < size; i++) {
-        p[i] = value;
-    }
-}
-
-// Convert number to ASCII with leading zero
 void format_two_digits(uint8_t num, char* str) {
     str[0] = '0' + (num / 10);
     str[1] = '0' + (num % 10);
 }
 
-// Print string at specific position using graphics syscalls
 void print_at_position(const char* str, int row, int col, uint8_t color) {
     CP pos = {row, col};
     int i = 0;
@@ -55,35 +43,63 @@ void print_at_position(const char* str, int row, int col, uint8_t color) {
     }
 }
 
-// Clear clock area
 void clear_clock_area() {
-    char spaces[] = "                    "; // 20 spaces
+    char spaces[] = "                    ";
     print_at_position(spaces, CLOCK_ROW, CLOCK_COL, 0x00);
+}
+
+bool is_leap_year(uint16_t year) {
+    return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+}
+
+uint8_t days_in_month(uint8_t month, uint16_t year) {
+    uint8_t days[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if (month == 2 && is_leap_year(year)) {
+        return 29;
+    }
+    return days[month - 1];
+}
+
+void convert_to_utc_plus_7(struct Time* time) {
+    time->hour += 7;
+    
+    if (time->hour >= 24) {
+        time->hour -= 24;
+        time->day += 1;
+        
+        uint8_t max_days = days_in_month(time->month, time->year);
+        if (time->day > max_days) {
+            time->day = 1;
+            time->month += 1;
+            
+            if (time->month > 12) {
+                time->month = 1;
+                time->year += 1;
+            }
+        }
+    }
 }
 
 int main(void) {
     struct Time current_time;
     struct Time last_time;
     
-    // Initialize last_time with invalid values
-    memset_simple(&last_time, 0xFF, sizeof(struct Time));
-    
-    // Activate keyboard for exit detection
+    memset(&last_time, 0xFF, sizeof(struct Time));
+
     syscall(7, 0, 0, 0);
     
     while (true) {
-        // Reset current time
-        memset_simple(&current_time, 0x0, sizeof(struct Time));
+        memset(&current_time, 0x0, sizeof(struct Time));
         
-        // Get current time via syscall 34
         syscall(34, (uint32_t)&current_time, 0, 0);
+
+        convert_to_utc_plus_7(&current_time);
         
-        // Only update display if time changed
         if (current_time.second != last_time.second ||
             current_time.minute != last_time.minute ||
             current_time.hour != last_time.hour) {
             
-            // Build time string: "HH:MM:SS"
+            // Format: "HH:MM:SS"
             char time_str[9];
             format_two_digits(current_time.hour, &time_str[0]);
             time_str[2] = ':';
@@ -92,22 +108,19 @@ int main(void) {
             format_two_digits(current_time.second, &time_str[6]);
             time_str[8] = '\0';
             
-            // Clear and display
             clear_clock_area();
-            print_at_position(time_str, CLOCK_ROW, CLOCK_COL, 0x0E); // Yellow color
+            print_at_position(time_str, CLOCK_ROW, CLOCK_COL, 0x0E);
             
             last_time = current_time;
         }
-        
-        // Check for exit (q, Q, or ESC)
+
         char c;
         syscall(4, (uint32_t)&c, 0, 0);
         if (c == 'q' || c == 'Q' || c == '\x1B') {
-            clear_clock_area(); // Clean up
+            clear_clock_area();
             break;
         }
         
-        // Small delay
         for (volatile int i = 0; i < 1000000; i++);
     }
     

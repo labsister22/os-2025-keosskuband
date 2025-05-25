@@ -113,11 +113,12 @@ user-clock:
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/comps/clock/crt0-c.s -o crt0-c.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/clock/clock.c -o clock.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/stdlib/strops.c -o strops-c.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/stdlib/string.c -o string-c.o
 	@$(LIN) -T $(SOURCE_FOLDER)/comps/clock/clock-linker.ld -melf_i386 --oformat=binary \
-		crt0-c.o clock.o strops-c.o -o $(OUTPUT_FOLDER)/clock
+		crt0-c.o clock.o strops-c.o string-c.o -o $(OUTPUT_FOLDER)/clock
 	@echo Linking clock object files and generate flat binary...
 	@$(LIN) -T $(SOURCE_FOLDER)/comps/clock/clock-linker.ld -melf_i386 --oformat=elf32-i386 \
-		crt0-c.o clock.o strops-c.o -o $(OUTPUT_FOLDER)/clock_elf
+		crt0-c.o clock.o strops-c.o string-c.o -o $(OUTPUT_FOLDER)/clock_elf
 	@echo Linking clock object files and generate ELF32 for debugging...
 	@size --target=binary $(OUTPUT_FOLDER)/clock
 	@rm -f *.o
