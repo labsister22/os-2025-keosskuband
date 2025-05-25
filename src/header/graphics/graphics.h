@@ -151,4 +151,12 @@ void graphics_set_cursor_colors(uint8_t fg_color, uint8_t bg_color);
 void graphics_blink_cursor(void);
 
 
+
+/**
+ * Scroll the screen up by a specified number of lines
+ * @param lines Number of lines to scroll (1-200)
+ * @param color Color to fill the newly exposed lines (0-255)
+ */
+void graphics_scroll(uint16_t lines, uint8_t color);
+
 #endif

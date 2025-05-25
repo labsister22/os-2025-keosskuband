@@ -19,12 +19,12 @@ void apple(CP* cursor){
     // first frame
     cursor->row = 0;
     cursor->col = 0;
-    for (int j = 0; j < 2000; j++) {
+    for (int j = 0; j < 1600; j++) {
       uint8_t bg_color = (apple_frames[i][j / 8]) & (1 << (7 - j % 8)) ? 0xF : 0x00;
       syscall(9, (uint32_t)&buffer, (uint32_t)&(PrintRequest){.size = 1, .font_color = 0xF, .bg_color = bg_color}, (uint32_t)cursor);
 
       cursor->col++;
-      if (cursor->col >= 80) {
+      if (cursor->col >= 64) {
         cursor->col = 0;
         cursor->row++;
         if (cursor->row >= 25) {
@@ -41,12 +41,12 @@ void apple(CP* cursor){
     // second frame
     cursor->row = 0;
     cursor->col = 0;
-    for (int j = 0; j < 2000; j++) {
+    for (int j = 0; j < 1600; j++) {
       uint8_t bg_color = (apple_frames[i][256 + j / 8]) & (1 << (7 - (256 + j) % 8)) ? 0xF : 0x00;
       syscall(9, (uint32_t)&buffer, (uint32_t)&(PrintRequest){.size = 1, .font_color = 0xF, .bg_color = bg_color}, (uint32_t)cursor);
 
       cursor->col++;
-      if (cursor->col >= 80) {
+      if (cursor->col >= 64) {
         cursor->col = 0;
         cursor->row++;
         if (cursor->row >= 25) {

@@ -1,7 +1,8 @@
-#ifndef USER_SHELL
-#define USER_SHELL
+#ifndef _USER_SHELL
+#define _USER_SHELL
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "header/filesys/ext2.h"
 
 #define BLOCK_COUNT 16
@@ -22,6 +23,15 @@
 #define COLOR_PINK        0x0D
 #define COLOR_YELLOW      0x0E
 #define COLOR_WHITE       0x0F
+
+// Additional constants and structures
+#define MAX_INPUT_LENGTH 2048
+#define MAX_ARGS_AMOUNT 10
+#define MAX_ARGS_LENGTH 32
+#define SHELL_PROMPT "Keossku-Band"
+#define SCREEN_WIDTH 64
+#define SCREEN_HEIGHT 25
+#define MAX_HISTORY_ENTRIES 20
 
 typedef struct {
     int32_t row;
@@ -55,5 +65,39 @@ void print_string_at_cursor(const char* str);
 void print_string_colored(const char* str, uint8_t color);
 void print_newline();
 void set_hardware_cursor();
+
+// history
+void add_to_history(const char* command);
+void load_history_entry(int index);
+void handle_up_arrow();
+void handle_down_arrow();
+
+
+// Command history structure
+typedef struct {
+    char commands[MAX_HISTORY_ENTRIES][MAX_INPUT_LENGTH];
+    int count;
+    int current_index;
+} CommandHistory;
+
+// Shell state structure
+typedef struct {
+    char input_buffer[MAX_INPUT_LENGTH];
+    int input_length;
+    char args[MAX_ARGS_AMOUNT][MAX_ARGS_LENGTH];
+    char command[MAX_INPUT_LENGTH + 1];
+    int cursor_position;
+    int prompt_start_row;
+    int prompt_start_col;
+    bool cursor_shown;
+    char char_under_cursor;
+    uint8_t char_color_under_cursor;
+} ShellState;
+
+// Additional function declarations
+void clear_input_buffer();
+void redraw_input_line();
+void show_cursor();
+void hide_cursor();
 
 #endif
