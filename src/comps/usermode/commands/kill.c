@@ -18,4 +18,5 @@ void kill(char* pid) {
     else {
         print_string_at_cursor("Not a valid PID");
     }
+    print_newline();
 }
