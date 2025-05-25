@@ -107,12 +107,6 @@ void syscall(struct InterruptFrame frame) {
                 COLOR_BLACK                       
             );
             break;
-        case 13: 
-            graphics_set_cursor(
-                (uint16_t)frame.cpu.general.ebx,  
-                (uint16_t)frame.cpu.general.ecx  
-            );
-            break;
         case 14: 
             graphics_blink_cursor();
             break;

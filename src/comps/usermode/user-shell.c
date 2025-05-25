@@ -436,11 +436,9 @@ void clear_input_buffer() {
 }
 
 void set_hardware_cursor() {
-    syscall(8, cursor.row, cursor.col, 0);
-
     uint16_t pixel_x = cursor.col * 5;
     uint16_t pixel_y = cursor.row * 8;
-    syscall(13, pixel_x, pixel_y, 0);
+    syscall(8, pixel_x, pixel_y, 0);
 }
 
 void scroll_screen() {
@@ -778,6 +776,7 @@ int main(void) {
 
     while (1) {
         syscall(4, (uint32_t)&c, 0, 0);
+        // syscall(14, 0, 0, 0);
 
         if (c != 0) {
             // Reset completion state on any key except tab
@@ -820,9 +819,7 @@ int main(void) {
             }
         }
         
-        // Additional scroll check in main loop
         check_and_scroll();
-        // syscall(14, 0, 0, 0);
     }
 
     return 0;
