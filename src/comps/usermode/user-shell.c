@@ -301,16 +301,28 @@ void add_to_history(const char* command) {
         return;
     }
 
-    if (history.count > 0 && 
-        strcmp(history.commands[(history.count - 1) % MAX_HISTORY_ENTRIES], (char*)command) == 0) {
-        return;
+    if (history.count > 0) {
+        int most_recent_index;
+        if (history.count < MAX_HISTORY_ENTRIES) {
+            most_recent_index = history.count - 1;
+        } else {
+            most_recent_index = (history.count - 1) % MAX_HISTORY_ENTRIES;
+        }
+        
+        if (strcmp(history.commands[most_recent_index], (char*)command) == 0) {
+            return;
+        }
     }
 
-    int index = history.count % MAX_HISTORY_ENTRIES;
-    strcpy(history.commands[index], (char*)command);
-    
     if (history.count < MAX_HISTORY_ENTRIES) {
+        strcpy(history.commands[history.count], (char*)command);
         history.count++;
+    } else {
+        for (int i = 0; i < MAX_HISTORY_ENTRIES - 1; i++) {
+            strcpy(history.commands[i], history.commands[i + 1]);
+        }
+
+        strcpy(history.commands[MAX_HISTORY_ENTRIES - 1], (char*)command);
     }
 
     history.current_index = -1;
@@ -321,16 +333,9 @@ void load_history_entry(int index) {
         return;
     }
 
-    int actual_index;
-    if (history.count < MAX_HISTORY_ENTRIES) {
-        actual_index = index;
-    } else {
-        actual_index = (history.count + index) % MAX_HISTORY_ENTRIES;
-    }
-    
     clear_input_buffer();
 
-    strcpy(shell_state.input_buffer, history.commands[actual_index]);
+    strcpy(shell_state.input_buffer, history.commands[index]);
     shell_state.input_length = strlen(shell_state.input_buffer);
     shell_state.cursor_position = shell_state.input_length;
     
@@ -346,6 +351,8 @@ void handle_up_arrow() {
         history.current_index = history.count - 1;
     } else if (history.current_index > 0) {
         history.current_index--;
+    } else {
+        return;
     }
     
     load_history_entry(history.current_index);
@@ -365,7 +372,6 @@ void handle_down_arrow() {
         redraw_input_line();
     }
 }
-
 void graphics_draw_cursor_syscall() {
     syscall(10, 0, 0, 0);
 }
