@@ -13,6 +13,9 @@
 #include "header/usermode/commands/find.h"
 #include "header/usermode/commands/cat.h"
 #include "header/usermode/commands/touch.h"
+#include "header/usermode/commands/ps.h"
+#include "header/usermode/commands/kill.h"
+#include "header/usermode/commands/exec.h"
 
 static CommandHistory history = {
     .count = 0,
@@ -437,11 +440,9 @@ void clear_input_buffer() {
 }
 
 void set_hardware_cursor() {
-    syscall(8, cursor.row, cursor.col, 0);
-
     uint16_t pixel_x = cursor.col * 5;
     uint16_t pixel_y = cursor.row * 8;
-    syscall(13, pixel_x, pixel_y, 0);
+    syscall(8, pixel_x, pixel_y, 0);
 }
 
 void scroll_screen() {
@@ -806,6 +807,14 @@ void process_command() {
             while (1) {}
         } else if (strcmp("apple", shell_state.command) == 0) {
             apple(&cursor);
+        } else if (strcmp("clock", shell_state.command) == 0) {
+            exec("clock", DIR_INFO.dir[DIR_INFO.current_dir].inode);
+        } else if (strcmp("ps", shell_state.command) == 0) {
+            ps();
+        } else if (strcmp("kill", shell_state.command) == 0) {
+            kill(shell_state.args[0]);
+        } else if (strcmp("exec", shell_state.command) == 0) {
+            exec(shell_state.args[0], DIR_INFO.dir[DIR_INFO.current_dir].inode);
         } else if (shell_state.input_buffer[0] == 0x1B) { // ESC key
             print_string_colored("Exiting debug mode...", COLOR_LIGHT_RED);
             print_newline();
@@ -837,6 +846,7 @@ int main(void) {
 
     while (1) {
         syscall(4, (uint32_t)&c, 0, 0);
+        // syscall(14, 0, 0, 0);
 
         if (c != 0) {
             // Reset completion state on any key except tab
@@ -879,9 +889,7 @@ int main(void) {
             }
         }
         
-        // Additional scroll check in main loop
         check_and_scroll();
-        // syscall(14, 0, 0, 0);
     }
 
     return 0;

@@ -31,6 +31,7 @@ clean:
 	rm -rf $(OUTPUT_FOLDER)/*.iso
 	rm -rf $(OUTPUT_FOLDER)/inserter
 	rm -rf $(OUTPUT_FOLDER)/shell
+	rm -rf $(OUTPUT_FOLDER)/clock
 	rm -rf $(OUTPUT_FOLDER)/*.bin
 	rm -rf $(OUTPUT_FOLDER)/*.txt
 
@@ -39,9 +40,11 @@ kernel:
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/header/interrupt/intsetup.s -o $(OUTPUT_FOLDER)/intsetup.o
 # TODO: Compile C file with CFLAGSc
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/stdlib/string.c -o $(OUTPUT_FOLDER)/string.o
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/stdlib/strops.c -o $(OUTPUT_FOLDER)/strops.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/kernel.c -o $(OUTPUT_FOLDER)/kernel.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/cpu/gdt.c -o $(OUTPUT_FOLDER)/gdt.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/cpu/portio.c -o $(OUTPUT_FOLDER)/portio.o
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/driver/cmos.c -o $(OUTPUT_FOLDER)/cmos.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/text/framebuffer.c -o $(OUTPUT_FOLDER)/framebuffer.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/interrupt/interrupt.c -o $(OUTPUT_FOLDER)/interrupt.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/interrupt/idt.c -o $(OUTPUT_FOLDER)/idt.o
@@ -50,6 +53,10 @@ kernel:
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/driver/graphics.c -o $(OUTPUT_FOLDER)/graphics.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/filesys/ext2.c -o $(OUTPUT_FOLDER)/ext2.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/memory/paging.c -o $(OUTPUT_FOLDER)/paging.o
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/process/process.c -o $(OUTPUT_FOLDER)/process.o
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/process/process-commands/ps.c -o $(OUTPUT_FOLDER)/ps.o
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/process/process-commands/exec.c -o $(OUTPUT_FOLDER)/exec.o
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/scheduler/scheduler.c -o $(OUTPUT_FOLDER)/scheduler.o
 	
 	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/kernel
 	@echo Linking object files and generate elf32...
@@ -89,17 +96,40 @@ user-shell:
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/stdlib/string.c -o string.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/stdlib/strops.c -o strops.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/usermode/commands/apple.c -o apple.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/usermode/commands/ps.c -o ps.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/usermode/commands/kill.c -o kill.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/usermode/commands/exec.c -o exec.o
 	@$(LIN) -T $(SOURCE_FOLDER)/comps/usermode/user-linker.ld -melf_i386 --oformat=binary \
-		crt0.o user-shell.o string.o help.o clear.o echo.o apple.o cd.o ls.o mkdir.o find.o cat.o touch.o strops.o -o $(OUTPUT_FOLDER)/shell
+		crt0.o user-shell.o string.o help.o clear.o echo.o apple.o cd.o ls.o mkdir.o find.o \
+		cat.o strops.o ps.o kill.o exec.o touch.o -o $(OUTPUT_FOLDER)/shell
 	@echo Linking object shell object files and generate flat binary...
 	@$(LIN) -T $(SOURCE_FOLDER)/comps/usermode/user-linker.ld -melf_i386 --oformat=elf32-i386 \
-		crt0.o user-shell.o string.o help.o clear.o echo.o apple.o cd.o ls.o mkdir.o find.o cat.o touch.o strops.o -o $(OUTPUT_FOLDER)/shell_elf
+		crt0.o user-shell.o string.o help.o clear.o echo.o apple.o cd.o ls.o mkdir.o find.o \
+		cat.o strops.o ps.o kill.o exec.o touch.o -o $(OUTPUT_FOLDER)/shell_elf
 	@echo Linking object shell object files and generate ELF32 for debugging...
 	@size --target=binary $(OUTPUT_FOLDER)/shell
+	@rm -f *.o
+
+user-clock:
+	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/comps/clock/crt0-c.s -o crt0-c.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/clock/clock.c -o clock.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/stdlib/strops.c -o strops-c.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/stdlib/string.c -o string-c.o
+	@$(LIN) -T $(SOURCE_FOLDER)/comps/clock/clock-linker.ld -melf_i386 --oformat=binary \
+		crt0-c.o clock.o strops-c.o string-c.o -o $(OUTPUT_FOLDER)/clock
+	@echo Linking clock object files and generate flat binary...
+	@$(LIN) -T $(SOURCE_FOLDER)/comps/clock/clock-linker.ld -melf_i386 --oformat=elf32-i386 \
+		crt0-c.o clock.o strops-c.o string-c.o -o $(OUTPUT_FOLDER)/clock_elf
+	@echo Linking clock object files and generate ELF32 for debugging...
+	@size --target=binary $(OUTPUT_FOLDER)/clock
 	@rm -f *.o
 
 insert-shell: inserter user-shell
 	@echo Inserting shell into root directory...
 	@cd $(OUTPUT_FOLDER); ./inserter shell 1 $(DISK_NAME).bin
 
-test: clean disk insert-shell
+insert-clock: inserter user-clock
+	@echo Inserting clock into root directory...
+	@cd $(OUTPUT_FOLDER); ./inserter clock 1 $(DISK_NAME).bin
+
+test: clean disk insert-shell insert-clock
