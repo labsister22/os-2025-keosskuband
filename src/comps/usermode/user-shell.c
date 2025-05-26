@@ -16,6 +16,7 @@
 #include "header/usermode/commands/ps.h"
 #include "header/usermode/commands/kill.h"
 #include "header/usermode/commands/exec.h"
+#include "header/usermode/commands/ikuyokita.h"
 
 static CommandHistory history = {
     .count = 0,
@@ -801,12 +802,16 @@ void process_command() {
                 print_string_colored("Usage: touch <filename>", COLOR_LIGHT_RED);
                 print_newline();
             }
+        } else if (strcmp("show_color", shell_state.command) == 0) {
+            syscall(19, 0, 0, 0);
         } else if (strcmp("exit", shell_state.command) == 0) {
             print_string_at_cursor("Goodbye!");
             print_newline();
             while (1) {}
         } else if (strcmp("apple", shell_state.command) == 0) {
             apple(&cursor);
+        } else if (strcmp("ikuyokita", shell_state.command) == 0) {
+            ikuyokita();
         } else if (strcmp("clock", shell_state.command) == 0) {
             exec("clock", DIR_INFO.dir[DIR_INFO.current_dir].inode);
         } else if (strcmp("ps", shell_state.command) == 0) {

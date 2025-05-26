@@ -88,6 +88,7 @@
     "process.h": "c",
     "exec.h": "c",
     "typeinfo": "c",
-    "text_encoding": "c"
+    "text_encoding": "c",
+    "ikuyokita.h": "c"
   }
 }

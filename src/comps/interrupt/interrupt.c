@@ -141,6 +141,20 @@ void syscall(struct InterruptFrame frame) {
                 (uint8_t)frame.cpu.general.ecx
             );
             break;
+        case 19:
+            graphics_fill_screen_with_color();
+            break;
+        case 20:
+            char* frame_buffer = (char*) frame.cpu.general.ebx;
+            int buffer_width = (int) frame.cpu.general.edx;
+            int offset = 0;
+            for (int i = 0; i < 200; i++) {
+                for (int j = 0; j < 320; j++) {
+                   VGA_MEMORY[offset] = frame_buffer[i * buffer_width + j];
+                   offset++;
+                }
+            }
+            break;
         case SYSCALL_PS_CMD:
             ps((ProcessMetadata*) frame.cpu.general.ebx, (uint8_t) frame.cpu.general.ecx);
             break;

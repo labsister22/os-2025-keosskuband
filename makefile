@@ -99,13 +99,14 @@ user-shell:
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/usermode/commands/ps.c -o ps.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/usermode/commands/kill.c -o kill.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/usermode/commands/exec.c -o exec.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/usermode/commands/ikuyokita.c -o ikuyokita.o
 	@$(LIN) -T $(SOURCE_FOLDER)/comps/usermode/user-linker.ld -melf_i386 --oformat=binary \
 		crt0.o user-shell.o string.o help.o clear.o echo.o apple.o cd.o ls.o mkdir.o find.o \
-		cat.o strops.o ps.o kill.o exec.o touch.o -o $(OUTPUT_FOLDER)/shell
+		cat.o strops.o ps.o kill.o exec.o touch.o ikuyokita.o -o $(OUTPUT_FOLDER)/shell
 	@echo Linking object shell object files and generate flat binary...
 	@$(LIN) -T $(SOURCE_FOLDER)/comps/usermode/user-linker.ld -melf_i386 --oformat=elf32-i386 \
 		crt0.o user-shell.o string.o help.o clear.o echo.o apple.o cd.o ls.o mkdir.o find.o \
-		cat.o strops.o ps.o kill.o exec.o touch.o -o $(OUTPUT_FOLDER)/shell_elf
+		cat.o strops.o ps.o kill.o exec.o touch.o ikuyokita.o -o $(OUTPUT_FOLDER)/shell_elf
 	@echo Linking object shell object files and generate ELF32 for debugging...
 	@size --target=binary $(OUTPUT_FOLDER)/shell
 	@rm -f *.o
@@ -132,4 +133,12 @@ insert-clock: inserter user-clock
 	@echo Inserting clock into root directory...
 	@cd $(OUTPUT_FOLDER); ./inserter clock 1 $(DISK_NAME).bin
 
-test: clean disk insert-shell insert-clock
+insert-apple: inserter
+	@echo Inserting apple into root directory...
+	@cd $(OUTPUT_FOLDER); ./inserter apple 1 $(DISK_NAME).bin
+
+insert-ikuyokita: inserter 
+	@echo Inserting ikuyokita into root directory...
+	@cd $(OUTPUT_FOLDER); ./inserter ikuyokita 1 $(DISK_NAME).bin
+
+test: clean disk insert-shell insert-clock insert-apple insert-ikuyokita

@@ -372,6 +372,10 @@ int8_t read(struct EXT2DriverRequest request) {
 
 
     for (uint32_t i = 0; i < blocks_to_read; i++) {
+        if (i == 775) {
+            int a = 10; // Debug breakpoint
+        }
+
         if (i < 12) {
             if (target_node.i_block[i] == 0) break;
             read_blocks(buf + (i * BLOCK_SIZE), target_node.i_block[i], 1);
@@ -408,8 +412,6 @@ int8_t read(struct EXT2DriverRequest request) {
         }
     }
 
-    // write_buffer(request.buf, target_node.i_size, local_row, local_col);
-    local_row++;
 
     return 0;
 }
@@ -479,6 +481,10 @@ void allocate_node_blocks(void *ptr, struct EXT2Inode *node, uint32_t prefered_b
             uint32_t byte_idx = i / 8;
             uint32_t bit_idx = i % 8;
 
+            if (blocks_allocated == 790) {
+                int a = 10;
+            }
+
             if ((bitmap[byte_idx] & (1 << bit_idx)) == 0) {
                 uint32_t block_id = g * BLOCKS_PER_GROUP + i;
 
@@ -520,7 +526,7 @@ void allocate_node_blocks(void *ptr, struct EXT2Inode *node, uint32_t prefered_b
                         double_indirect_level2[double_level2_count++] = block_id;
                     }
 
-                    if (double_level2_count == BLOCK_SIZE / 4) {
+                    if (double_level2_count == BLOCK_SIZE / 4 || blocks_allocated + 1 == blocks_needed) {
                         uint32_t level2_block_id = double_indirect_level2[0];
                         write_blocks(&double_indirect_level2, level2_block_id, 1);
                         double_indirect_level1[double_level1_count++] = level2_block_id;
@@ -542,7 +548,7 @@ void allocate_node_blocks(void *ptr, struct EXT2Inode *node, uint32_t prefered_b
         write_blocks(indirect_block_entries, node->i_block[12], 1);
     }
 
-     if (double_indirect_block_allocated && double_level1_count > 0) {
+    if (double_indirect_block_allocated && double_level1_count > 0) {
         write_blocks(double_indirect_level1, node->i_block[13], 1);
     }
 

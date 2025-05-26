@@ -161,11 +161,10 @@ void kernel_setup(void) {
 #include "header/memory/paging.h"
 #include "header/process/process.h"
 #include "header/scheduler/scheduler.h"
-#include "misc/apple.h"
+//#include "misc/apple.h"
+//#include "misc/ikuyokita.h"
 
-/*
 // Helper functions for printing to the framebuffer
-*/
 void print_string(const char* message, int row, int col, uint8_t color) {
     int i = 0;
     while (message[i] != '\0') {
@@ -189,16 +188,6 @@ void kernel_setup(void) {
 
     // Allocate first 4 MiB virtual memory
     paging_allocate_user_page_frame(&_paging_kernel_page_directory, (uint8_t*) 0);
-
-    struct EXT2DriverRequest request1 = {
-        .buf                   = apple_frames,
-        .name                  = "apple.txt",
-        .parent_inode          = 1,
-        .buffer_size           = 1095*512,
-        .name_len              = 9,
-        .is_directory          = false,
-    };
-    write(&request1);
 
 
     // Write shell into memory
