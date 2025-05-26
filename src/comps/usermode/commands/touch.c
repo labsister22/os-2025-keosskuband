@@ -21,6 +21,12 @@ void touch(char* name, char* content, int len) {
         print_newline();
         return;
     }
+    if (name[0] == '.' || name[0] == '/') {
+        print_string_colored("File name cannot start with '.' or '/'\n", COLOR_RED);
+        print_newline();
+        return;
+    }
+    
     bool contains_invalid_chars = false;
     for (int i = 0; i < strlen(name); i++) {
         if (name[i] == '/' || name[i] == '\\' || name[i] == ':' || name[i] == '*' ||

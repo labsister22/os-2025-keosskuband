@@ -72,6 +72,7 @@ void rm(char *args1, char* args2, char* args3) {
       print_string_colored("deleted : ", COLOR_LIGHT_BLUE);
       print_string_colored(args1, COLOR_GREEN);
       print_string_colored("File deleted successfully\n", COLOR_GREEN);
+      print_newline();
     } else if (retcode == 1) {
       print_string_colored("File not found\n", COLOR_RED);
     } else if (retcode == 2) {
@@ -84,6 +85,27 @@ void rm(char *args1, char* args2, char* args3) {
     print_newline();
   }
   else {
+    struct EXT2DriverRequest request = {
+      .name = args1,
+      .name_len = strlen(args1),
+      .parent_inode = DIR_INFO.dir[DIR_INFO.current_dir].inode,
+      .buf = NULL,
+      .buffer_size = 0, 
+      .is_directory = false
+    };
+
+    int retcode = 0;
+    syscall(3, (uint32_t)&request, (uint32_t)&retcode, 0);
+
+
+    if (retcode == 0) {
+      print_string_colored("deleted : ", COLOR_LIGHT_BLUE);
+      print_string_colored(args1, COLOR_GREEN);
+      print_string_colored("File deleted successfully\n", COLOR_GREEN);
+      print_newline();
+      return;
+    }
+
     absolute_dir_info bef = DIR_INFO;
 
     //enter to the desired directory

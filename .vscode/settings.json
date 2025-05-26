@@ -91,6 +91,12 @@
     "text_encoding": "c",
     "ikuyokita.h": "c",
     "rm.h": "c",
-    "find.h": "c"
+    "find.h": "c",
+    "concepts": "c",
+    "type_traits": "c",
+    "new": "c",
+    "cat.h": "c",
+    "mv.h": "c",
+    "cp.h": "c"
   }
 }

@@ -4,8 +4,6 @@
 #include "header/driver/disk.h"
 #include <stdint.h>
 #include <stdbool.h>
-#include <stddef.h>
-#include "header/stdlib/string.h"
 
 
 /* -- IF2130 File System constants -- */
@@ -362,6 +360,16 @@ int8_t write(struct EXT2DriverRequest *request);
  * @return Error code: 0 success - 1 not found - 2 folder is not empty - 3 parent folder invalid -1 unknown
  */
 int8_t delete(struct EXT2DriverRequest request);
+
+
+
+/**
+ * @brief EXT2 copy, duplicates a file to a new file destination
+ * @param dest_request destination file (name, parent_inode)
+ * @param src_request source file (name, parent_inode)
+ * @return Error code:  0 success - 1 file/folder already exist - 2 invalid parent folder - -1 unknown
+ */
+int8_t copy(struct EXT2DriverRequest *dest_request, struct EXT2DriverRequest *src_request);
 
 /* =============================== MEMORY ==========================================*/
 

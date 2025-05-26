@@ -1,4 +1,5 @@
 #include "header/stdlib/strops.h"
+#include "header/stdlib/string.h"
 #include "header/usermode/commands/cat.h"
 
 // cat only be able to open 10 * 512 characters

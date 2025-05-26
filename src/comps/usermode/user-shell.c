@@ -18,6 +18,8 @@
 #include "header/usermode/commands/exec.h"
 #include "header/usermode/commands/ikuyokita.h"
 #include "header/usermode/commands/rm.h"
+#include "header/usermode/commands/cp.h"
+#include "header/usermode/commands/mv.h"
 
 static CommandHistory history = {
     .count = 0,
@@ -807,7 +809,14 @@ void process_command() {
             syscall(19, 0, 0, 0);
         } else if (strcmp("rm", shell_state.command) == 0) {
             rm(shell_state.args[0], shell_state.args[1], shell_state.args[2]);
-        } else if (strcmp("exit", shell_state.command) == 0) {
+        } else if (strcmp("cp", shell_state.command) == 0) {
+            cp(shell_state.args[0], shell_state.args[1], shell_state.args[2], shell_state.args[3]);
+        } else if (strcmp("mv", shell_state.command) == 0) {
+            mv(shell_state.args[0], shell_state.args[1], shell_state.args[2]);
+        } else if (strcmp("cls", shell_state.command) == 0) {
+            clear();
+        }
+        else if (strcmp("exit", shell_state.command) == 0) {
             print_string_at_cursor("Goodbye!");
             print_newline();
             while (1) {}
