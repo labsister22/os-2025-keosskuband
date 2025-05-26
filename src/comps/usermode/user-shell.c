@@ -12,6 +12,7 @@
 #include "header/usermode/commands/mkdir.h"
 #include "header/usermode/commands/find.h"
 #include "header/usermode/commands/cat.h"
+#include "header/usermode/commands/touch.h"
 
 static CommandHistory history = {
     .count = 0,
@@ -680,6 +681,60 @@ void process_command() {
            i++;
         }
         shell_state.command[i] = '\0';
+
+        if (strcmp(shell_state.command, "echo") == 0) {
+            while (i < shell_state.input_length && shell_state.input_buffer[i] == ' ')
+                i++;
+
+            int text_start = i;
+            int text_length = 0;
+            //find the args to be "echo-ed"
+            while (i < shell_state.input_length && shell_state.input_buffer[i] != '|' &&
+                shell_state.input_buffer[i] != '\n' && shell_state.input_buffer[i] != '\r') {
+                text_length++;
+                i++;
+            }
+
+            int args_idx = 0;
+            int args_buffer_idx = 0;
+            int args_used_amount = 0;
+
+            while (i < shell_state.input_length && args_idx < MAX_ARGS_AMOUNT) {
+                while (i < shell_state.input_length && shell_state.input_buffer[i] != ' ' &&
+                    shell_state.input_buffer[i] != '\n' && shell_state.input_buffer[i] != '\r' &&
+                    args_buffer_idx < MAX_ARGS_LENGTH - 1) {
+                    shell_state.args[args_idx][args_buffer_idx] = shell_state.input_buffer[i];
+                    args_buffer_idx++;
+                    i++;
+                }
+
+                if (args_buffer_idx > 0) {
+                    shell_state.args[args_idx][args_buffer_idx] = '\0'; // Null terminate
+                    args_buffer_idx = 0;
+                    args_idx++;
+                    args_used_amount++;
+                }
+
+                // skip whitespace
+                while (i < shell_state.input_length && shell_state.input_buffer[i] == ' ')
+                    i++;
+            }
+
+            if (args_used_amount == 0) {
+                echo(shell_state.input_buffer + text_start, text_length);
+            } else if (args_used_amount == 3 && 
+                       strcmp(shell_state.args[0], "|") == 0 &&
+                       strcmp(shell_state.args[1], "touch") == 0 ) {
+                // Special case for echo to file
+                shell_state.input_buffer[text_start + text_length] = '\0'; // Null terminate the echo text
+                touch(shell_state.args[2], shell_state.input_buffer + text_start, text_length);
+            } else {
+                print_string_colored("Usage: [echo <text>] or [echo <text> | touch <filename>]", COLOR_LIGHT_RED);
+                print_newline();
+            }
+
+            return;
+        }
             
 
         // skip the whitespaces to get to first args
@@ -715,10 +770,7 @@ void process_command() {
             help();
         } else if (strcmp("clear", shell_state.command) == 0) {
             clear();
-        } else if (strcmp("echo", shell_state.command) == 0) {
-            echo(shell_state.args[0]);
-        }
-        else if (strcmp("ls", shell_state.command) == 0) {
+        } else if (strcmp("ls", shell_state.command) == 0) {
             ls(shell_state.args[0]);
         }
         else if (strcmp("cd", shell_state.command) == 0) {
@@ -739,6 +791,13 @@ void process_command() {
                 cat(shell_state.args[0]);
             } else {
                 print_string_colored("Usage: cat <filename>", COLOR_LIGHT_RED);
+                print_newline();
+            }
+        } else if (!strcmp("touch", shell_state.command)) {
+            if (args_used_amount > 0) {
+                touch(shell_state.args[0], NULL, 0);
+            } else {
+                print_string_colored("Usage: touch <filename>", COLOR_LIGHT_RED);
                 print_newline();
             }
         } else if (strcmp("exit", shell_state.command) == 0) {
