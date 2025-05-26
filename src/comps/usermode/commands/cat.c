@@ -76,7 +76,7 @@ void cat(char* name) {
         return;
     }
     else if (retcode == 3) {
-        print_string_colored("File is corrupted: ", COLOR_RED);
+        print_string_colored("File is corrupted or not found: ", COLOR_RED);
         print_string_colored(name, COLOR_RED);
         print_newline();
         return;
