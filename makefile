@@ -142,5 +142,5 @@ insert-ikuyokita: inserter
 	@echo Inserting ikuyokita into root directory...
 	@cd $(OUTPUT_FOLDER); ./inserter ikuyokita 1 $(DISK_NAME).bin
 
-# test: clean disk insert-shell insert-clock insert-apple insert-ikuyokita
-test: clean disk insert-shell insert-clock
+test: clean disk insert-shell insert-clock insert-apple insert-ikuyokita
+# test: clean disk insert-shell insert-clock
