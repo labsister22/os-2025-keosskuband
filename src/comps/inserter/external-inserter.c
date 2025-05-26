@@ -14,13 +14,11 @@ uint8_t *image_storage;
 uint8_t *file_buffer;
 
 void read_blocks(void *ptr, uint32_t logical_block_address, uint8_t block_count) {
-    for (int i = 0; i < block_count; i++) {
-        memcpy(
-            (uint8_t*) ptr + BLOCK_SIZE*i, 
-            image_storage + BLOCK_SIZE*(logical_block_address+i), 
-            BLOCK_SIZE
-        );
-    }
+    memcpy(
+        (uint8_t*) ptr, 
+        image_storage + BLOCK_SIZE*(logical_block_address), 
+        block_count*BLOCK_SIZE
+    );
 }
 
 void write_blocks(const void *ptr, uint32_t logical_block_address, uint8_t block_count) {

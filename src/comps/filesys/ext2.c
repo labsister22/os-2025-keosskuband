@@ -372,17 +372,12 @@ int8_t read(struct EXT2DriverRequest request) {
 
 
     for (uint32_t i = 0; i < blocks_to_read; i++) {
-        if (i == 775) {
-            int a = 10; // Debug breakpoint
-        }
-
         if (i < 12) {
             if (target_node.i_block[i] == 0) break;
             read_blocks(buf + (i * BLOCK_SIZE), target_node.i_block[i], 1);
         } else if (i < 140) {
             if (target_node.i_block[12] == 0) return 3; // no indirect block
 
-            
             if (!is_indirect_block_already_readed) {
                 is_indirect_block_already_readed = true;
                 read_blocks(indirect_block, target_node.i_block[12], 1);
@@ -391,24 +386,43 @@ int8_t read(struct EXT2DriverRequest request) {
             if (indirect_block[i - 12] == 0) break;
             read_blocks(buf + (i * BLOCK_SIZE), indirect_block[i - 12], 1);
         } else {
-            if (target_node.i_block[13] == 0) return 3; 
-
+             if (target_node.i_block[13] == 0) return 3; 
             if (!is_double_indirect_loaded) {
                 is_double_indirect_loaded = true;
                 read_blocks(level1_block, target_node.i_block[13], 1);
             }
-
             uint32_t relative_index = i - 140;
             uint32_t level1_index = relative_index / 127;
             uint32_t level2_index = relative_index % 127;
-
             if (level1_block[level1_index] == 0) break;
 
-            read_blocks(level2_block, level1_block[level1_index], 1);
-
+            read_blocks(level2_block, level1_block[level1_index], 1);   
+            if (relative_index % 127 == 0) {
+                read_blocks(level2_block, level1_block[level1_index], 1);
+            }
             if (level2_block[level2_index] == 0) break;
 
-            read_blocks(buf + (i * BLOCK_SIZE), level2_block[level2_index + 1], 1);
+            int j = i + 1;
+            int j_relative = j - 140;
+            uint32_t j_level1_index = j_relative / 127;
+            uint32_t j_level2_index = j_relative % 127;
+            int bef_level2_index =  level2_block[level2_index + 1];
+
+            while (j_level1_index == level1_index && level2_block[j_level2_index + 1] == bef_level2_index + 1 && j < blocks_to_read) {
+                bef_level2_index = level2_block[j_level2_index + 1];
+
+                j++;
+                j_relative = j - 140;
+                j_level1_index = j_relative / 127;
+                j_level2_index = j_relative % 127;
+                if (j_level1_index == 0) break;
+                if (level2_block[j_level2_index] == 0) {
+                    break;
+                }
+            }
+
+            read_blocks(buf + (i * BLOCK_SIZE), level2_block[level2_index + 1], j-i);
+            i = j - 1;
         }
     }
 
