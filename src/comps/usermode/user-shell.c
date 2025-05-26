@@ -17,6 +17,7 @@
 #include "header/usermode/commands/kill.h"
 #include "header/usermode/commands/exec.h"
 #include "header/usermode/commands/ikuyokita.h"
+#include "header/usermode/commands/rm.h"
 
 static CommandHistory history = {
     .count = 0,
@@ -804,6 +805,8 @@ void process_command() {
             }
         } else if (strcmp("show_color", shell_state.command) == 0) {
             syscall(19, 0, 0, 0);
+        } else if (strcmp("rm", shell_state.command) == 0) {
+            rm(shell_state.args[0], shell_state.args[1], shell_state.args[2]);
         } else if (strcmp("exit", shell_state.command) == 0) {
             print_string_at_cursor("Goodbye!");
             print_newline();

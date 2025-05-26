@@ -89,6 +89,8 @@
     "exec.h": "c",
     "typeinfo": "c",
     "text_encoding": "c",
-    "ikuyokita.h": "c"
+    "ikuyokita.h": "c",
+    "rm.h": "c",
+    "find.h": "c"
   }
 }

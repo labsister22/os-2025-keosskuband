@@ -6,6 +6,13 @@
 #include "header/stdlib/string.h"
 #include "header/stdlib/strops.h"
 
+extern char find_path[2048];
+extern int find_path_len;
+extern int find_parent_inode;
+extern int find_cur_inode;
+extern char find_cur_directory[12];
+extern char find_cur_directory_len;
+
 void find(char* str);
 
 #endif 

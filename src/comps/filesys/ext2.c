@@ -495,10 +495,6 @@ void allocate_node_blocks(void *ptr, struct EXT2Inode *node, uint32_t prefered_b
             uint32_t byte_idx = i / 8;
             uint32_t bit_idx = i % 8;
 
-            if (blocks_allocated == 790) {
-                int a = 10;
-            }
-
             if ((bitmap[byte_idx] & (1 << bit_idx)) == 0) {
                 uint32_t block_id = g * BLOCKS_PER_GROUP + i;
 
@@ -599,7 +595,6 @@ int8_t write(struct EXT2DriverRequest *request) {
     // 3. Search for name & track last entry
     uint32_t offset = 0;
     struct EXT2DirectoryEntry *entry = get_directory_entry(dir_data, offset);
-    uint32_t last_entry_offset = 0;
     struct EXT2DirectoryEntry *last_entry = entry;
 
     while (offset < BLOCK_SIZE) {
@@ -609,7 +604,6 @@ int8_t write(struct EXT2DriverRequest *request) {
             return 1; // Already exists
         }
 
-        last_entry_offset = offset;
         last_entry = entry;
         offset += entry->rec_len;
         if (offset < BLOCK_SIZE) entry = get_directory_entry(dir_data, offset);
@@ -640,13 +634,6 @@ int8_t write(struct EXT2DriverRequest *request) {
     // 6. Initialize new inode
     struct EXT2Inode new_node;
     memset(&new_node, 0, sizeof(struct EXT2Inode));
-
-    char buffer[] = "new inode : ";
-    // write_buffer(buffer, 15, local_row, local_col);
-    memset(buffer, 0, sizeof(buffer));
-    // itoa(new_inode, buffer);
-    // write_buffer(buffer, 15, local_row, local_col + 20);
-    local_row++;
 
     if (request->is_directory) {
         init_directory_table(&new_node, new_inode, request->parent_inode);
@@ -696,7 +683,83 @@ void deallocate_blocks(void *loc, uint32_t blocks) {
         }
     }
     
-    // Indirect blocks would be handled similarly
+    // single indirect blocks
+    if (blocks > 12 && locations[12] != 0) {
+        uint32_t indirect_block_id = locations[12];
+        uint32_t block_ids[BLOCK_SIZE / 4];
+        read_blocks(block_ids, indirect_block_id, 1);
+
+        for (uint32_t i = 0; i < (BLOCK_SIZE / 4); ++i) {
+            if (block_ids[i] != 0) {
+                uint32_t bid = block_ids[i];
+                uint32_t bgd_index = bid / BLOCKS_PER_GROUP;
+                uint32_t local_block = bid % BLOCKS_PER_GROUP;
+
+                uint8_t bitmap[BLOCK_SIZE];
+                read_blocks(bitmap, bgdt.table[bgd_index].bg_block_bitmap, 1);
+                bitmap[local_block / 8] &= ~(1 << (local_block % 8));
+                write_blocks(bitmap, bgdt.table[bgd_index].bg_block_bitmap, 1);
+                bgdt.table[bgd_index].bg_free_blocks_count++;
+            }
+        }
+
+        // Free the indirect block itself
+        uint32_t bgd_index = indirect_block_id / BLOCKS_PER_GROUP;
+        uint32_t local_block = indirect_block_id % BLOCKS_PER_GROUP;
+        uint8_t bitmap[BLOCK_SIZE];
+        read_blocks(bitmap, bgdt.table[bgd_index].bg_block_bitmap, 1);
+        bitmap[local_block / 8] &= ~(1 << (local_block % 8));
+        write_blocks(bitmap, bgdt.table[bgd_index].bg_block_bitmap, 1);
+        bgdt.table[bgd_index].bg_free_blocks_count++;
+    }
+
+    // double indirect blocks
+    if (blocks > 140 && locations[13] != 0) {
+        uint32_t dbl_indirect_block_id = locations[13];
+        uint32_t indirect_block_ids[BLOCK_SIZE / 4];
+        read_blocks(indirect_block_ids, dbl_indirect_block_id, 1);
+
+        for (uint32_t i = 0; i < (BLOCK_SIZE / 4); ++i) {
+            if (indirect_block_ids[i] != 0) {
+                uint32_t block_ids[BLOCK_SIZE / 4];
+                read_blocks(block_ids, indirect_block_ids[i], 1);
+
+                for (uint32_t j = 0; j < (BLOCK_SIZE / 4); ++j) {
+                    if (block_ids[j] != 0) {
+                        uint32_t bid = block_ids[j];
+                        uint32_t bgd_index = bid / BLOCKS_PER_GROUP;
+                        uint32_t local_block = bid % BLOCKS_PER_GROUP;
+
+                        uint8_t bitmap[BLOCK_SIZE];
+                        read_blocks(bitmap, bgdt.table[bgd_index].bg_block_bitmap, 1);
+                        bitmap[local_block / 8] &= ~(1 << (local_block % 8));
+                        write_blocks(bitmap, bgdt.table[bgd_index].bg_block_bitmap, 1);
+                        bgdt.table[bgd_index].bg_free_blocks_count++;
+                    }
+                }
+
+                // Free the indirect block itself
+                uint32_t ind_bid = indirect_block_ids[i];
+                uint32_t bgd_index = ind_bid / BLOCKS_PER_GROUP;
+                uint32_t local_block = ind_bid % BLOCKS_PER_GROUP;
+
+                uint8_t bitmap[BLOCK_SIZE];
+                read_blocks(bitmap, bgdt.table[bgd_index].bg_block_bitmap, 1);
+                bitmap[local_block / 8] &= ~(1 << (local_block % 8));
+                write_blocks(bitmap, bgdt.table[bgd_index].bg_block_bitmap, 1);
+                bgdt.table[bgd_index].bg_free_blocks_count++;
+            }
+        }
+
+        // Free the double-indirect block itself
+        uint32_t bgd_index = dbl_indirect_block_id / BLOCKS_PER_GROUP;
+        uint32_t local_block = dbl_indirect_block_id % BLOCKS_PER_GROUP;
+        uint8_t bitmap[BLOCK_SIZE];
+        read_blocks(bitmap, bgdt.table[bgd_index].bg_block_bitmap, 1);
+        bitmap[local_block / 8] &= ~(1 << (local_block % 8));
+        write_blocks(bitmap, bgdt.table[bgd_index].bg_block_bitmap, 1);
+        bgdt.table[bgd_index].bg_free_blocks_count++;
+    }
 }
 
 void deallocate_node(uint32_t inode) {
@@ -731,7 +794,7 @@ void deallocate_node(uint32_t inode) {
     
     // Clear inode
     memset(node, 0, sizeof(struct EXT2Inode));
-    write_blocks(&inode_table, bgdt.table[bgd_index].bg_inode_table, 1);
+    write_blocks(&inode_table, bgdt.table[bgd_index].bg_inode_table + offset, 1);
 }
 
 uint32_t deallocate_block(uint32_t *locations, uint32_t blocks, struct BlockBuffer *bitmap, uint32_t depth, uint32_t *last_bgd, bool bgd_loaded) {
@@ -746,7 +809,6 @@ int8_t delete(struct EXT2DriverRequest request) {
     if (request.name_len == 2 && memcmp(request.name, "..", 2) == 0) return -1;
 
     struct EXT2Inode parent_node = load_inode(request.parent_inode);
-    
 
     // Validasi parent adalah directory
     if ((parent_node.i_mode & EXT2_S_IFDIR) == 0) return -1;
@@ -757,8 +819,11 @@ int8_t delete(struct EXT2DriverRequest request) {
 
     // Cari entry target
     uint32_t offset = 0;
+    uint32_t prev_offset = 0;
     struct EXT2DirectoryEntry *entry = get_directory_entry(dir_data, offset);
     bool found = false;
+
+    int deleted_entry_size = 0;
 
     while (offset < BLOCK_SIZE) {
         if (entry->inode != 0) {
@@ -766,11 +831,13 @@ int8_t delete(struct EXT2DriverRequest request) {
             if (entry->name_len == request.name_len &&
                 memcmp(name, request.name, request.name_len) == 0) {
                 found = true;
+                deleted_entry_size = entry->rec_len;
                 break;
             }
         }
+        if (offset + entry->rec_len >= BLOCK_SIZE) break;
+        prev_offset = offset;
         offset += entry->rec_len;
-        if (offset >= BLOCK_SIZE) break;
         entry = get_next_directory_entry(entry);
     }
 
@@ -783,12 +850,34 @@ int8_t delete(struct EXT2DriverRequest request) {
     if ((target_inode.i_mode & EXT2_S_IFDIR) != 0) {
         if (!is_directory_empty(target_inode_num)) return 2;  // Folder tidak kosong
     }
+    
 
     // Deallocasi inode dan blok
     deallocate_node(target_inode_num);
 
-    // Hapus entry di parent directory
-    entry->inode = 0;
+    bool is_last_entry = true;
+
+    // update last entry dulu, update rec_len nya
+    int temp_offset = offset + entry->rec_len;
+    while (temp_offset < BLOCK_SIZE) {
+        struct EXT2DirectoryEntry *temp_entry = get_directory_entry(dir_data, temp_offset);
+        is_last_entry = false;
+
+        if (temp_offset + temp_entry->rec_len >= BLOCK_SIZE) {
+            temp_entry->rec_len += deleted_entry_size;
+            break;
+        }
+    }
+
+    // kalau misal entry yang dihapus adalah entry terakhir, update rec_len dari entry sebelumnya
+    if (is_last_entry) {
+        struct EXT2DirectoryEntry *temp_entry = get_directory_entry(dir_data, prev_offset);
+        temp_entry->rec_len += deleted_entry_size;
+    } else {
+        // kalau engga, yaudah geser entry
+        memcpy(entry, get_next_directory_entry(entry), BLOCK_SIZE - offset - deleted_entry_size);
+    }
+
     write_blocks(dir_data, parent_node.i_block[0], 1);
 
     return 0;  // Operasi berhasil
