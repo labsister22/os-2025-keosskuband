@@ -34,6 +34,10 @@ clean:
 	rm -rf $(OUTPUT_FOLDER)/clock
 	rm -rf $(OUTPUT_FOLDER)/*.bin
 	rm -rf $(OUTPUT_FOLDER)/*.txt
+	rm -rf $(OUTPUT_FOLDER)/experiment
+	rm -rf $(OUTPUT_FOLDER)/shell_elf
+	rm -rf $(OUTPUT_FOLDER)/clock_elf
+	rm -rf $(OUTPUT_FOLDER)/experiment_elf
 
 kernel:
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/kernel-entrypoint.s -o $(OUTPUT_FOLDER)/kernel-entrypoint.o
@@ -162,5 +166,5 @@ insert-ikuyokita: inserter
 	@echo Inserting ikuyokita into root directory...
 	@cd $(OUTPUT_FOLDER); ./inserter ikuyokita 1 $(DISK_NAME).bin
 
-test: clean disk insert-shell insert-clock insert-experiment insert-apple insert-ikuyokita 
+init: clean disk insert-shell insert-clock insert-experiment insert-apple insert-ikuyokita 
 # test: clean disk insert-shell insert-clock
