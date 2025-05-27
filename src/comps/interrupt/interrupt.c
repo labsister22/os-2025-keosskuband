@@ -157,7 +157,7 @@ void syscall(struct InterruptFrame frame) {
                 }
             }
             break;
-case SYSCALL_GET_BUFFER_SIZE:
+        case SYSCALL_GET_BUFFER_SIZE:
              *((int32_t*) frame.cpu.general.ecx) = get_buffer_size(
                 (struct EXT2DriverRequest*) frame.cpu.general.ebx
             );
@@ -256,7 +256,19 @@ case SYSCALL_GET_BUFFER_SIZE:
             free(ptr);
         }
             break;
-
+        case SYSCALL_DOOM:
+        {
+            //read doom from disk
+            struct EXT2DriverRequest request = {
+                .buf = (uint8_t*) frame.cpu.general.ebx,
+                .name = "doomgeneric",
+                .name_len = 11, // 
+                .parent_inode = 1, // Root inode
+                .buffer_size = (uint32_t) frame.cpu.general.ecx,
+                .is_directory = false
+            };
+        }
+            break;
     }
 }
 

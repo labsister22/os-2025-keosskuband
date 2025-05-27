@@ -95,6 +95,7 @@
 #define SYSCALL_FREE            52
 #define SYSCALL_REALLOC         53
 #define SYSCALL_CALLOC          54
+#define SYSCALL_DOOM            69
 
 
 /**

@@ -1482,6 +1482,12 @@ void test_malloc_free() {
     print_string_at_cursor("malloc/free test done\n");
 }
 
+void run_doom(){
+    print_string_at_cursor("Running Doom...\n");
+    syscall(50, 0, 0, 0); // Assuming syscall 50 runs Doom
+    print_string_at_cursor("Doom exited.\n");
+}
+
 int main(void) {
     extern void cd_root();
     cd_root();

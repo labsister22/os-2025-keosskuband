@@ -20,14 +20,14 @@ CFLAGS        = $(DEBUG_CFLAG) $(WARNING_CFLAG) $(STRIP_CFLAG) -m32 -c -I$(SOURC
 AFLAGS        = -f elf32 -g -F dwarf
 LFLAGS        = -T $(SOURCE_FOLDER)/linker.ld -melf_i386
 
-# DOOM File
-DOOM_SRC := $(wildcard src/misc/doom/*.c)
-DOOM_OBJ := $(patsubst src/misc/doom/%.c, $(OUTPUT_FOLDER)/doom/%.o, $(DOOM_SRC))
+# DOOM Flags and Files  
+DOOM_CFLAGS   = -m32 -c -I$(SOURCE_FOLDER) -g -Wall -Wextra -fno-stack-protector
+DOOM_LFLAGS   = -m32 -nostartfiles -nodefaultlibs
+DOOM_SRC     := $(wildcard src/misc/doom/*.c)
+DOOM_OBJ     := $(patsubst src/misc/doom/%.c, $(OUTPUT_FOLDER)/doom/%.o, $(DOOM_SRC))
 
-$(OUTPUT_FOLDER)/doom/%.o: src/misc/doom/%.c
-	@mkdir -p $(OUTPUT_FOLDER)/doom
-	$(CC) $(CFLAGS) -c $< -o $@
-
+# Kernel objects (excluding doom objects)
+KERNEL_OBJS  := $(filter-out $(OUTPUT_FOLDER)/doom/%.o, $(wildcard $(OUTPUT_FOLDER)/*.o))
 
 run: all
 	@qemu-system-i386 -s -m 1024M -drive file=bin/storage.bin,format=raw,if=ide,index=0,media=disk -cdrom $(OUTPUT_FOLDER)/$(ISO_NAME).iso
@@ -35,6 +35,7 @@ all: build
 build: iso
 clean:
 	rm -rf $(OUTPUT_FOLDER)/*.o
+	rm -rf $(OUTPUT_FOLDER)/doom/*.o
 	rm -rf *.o *.iso $(OUTPUT_FOLDER)/kernel
 	rm -rf $(OUTPUT_FOLDER)/*.iso
 	rm -rf $(OUTPUT_FOLDER)/inserter
@@ -46,11 +47,23 @@ clean:
 	rm -rf $(OUTPUT_FOLDER)/shell_elf
 	rm -rf $(OUTPUT_FOLDER)/clock_elf
 	rm -rf $(OUTPUT_FOLDER)/experiment_elf
+	rm -rf $(OUTPUT_FOLDER)/doomgeneric
+
+# Create doom directory if it doesn't exist
+$(OUTPUT_FOLDER)/doom:
+	@mkdir -p $(OUTPUT_FOLDER)/doom
+
+# Compile doom source files
+$(OUTPUT_FOLDER)/doom/%.o: src/misc/doom/%.c | $(OUTPUT_FOLDER)/doom
+	@echo "Compiling Doom: $<"
+	@$(CC) $(DOOM_CFLAGS) $< -o $@
 
 kernel:
+	@echo "Assembling kernel entrypoint and interrupt setup..."
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/kernel-entrypoint.s -o $(OUTPUT_FOLDER)/kernel-entrypoint.o
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/header/interrupt/intsetup.s -o $(OUTPUT_FOLDER)/intsetup.o
-# TODO: Compile C file with CFLAGSc
+	
+	@echo "Compiling kernel C source files..."
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/stdlib/string.c -o $(OUTPUT_FOLDER)/string.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/stdlib/strops.c -o $(OUTPUT_FOLDER)/strops.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/kernel.c -o $(OUTPUT_FOLDER)/kernel.o
@@ -72,10 +85,17 @@ kernel:
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/process/process-commands/sleep.c -o $(OUTPUT_FOLDER)/sleep.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/scheduler/scheduler.c -o $(OUTPUT_FOLDER)/scheduler.o
 
-	
-	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/kernel
-	@echo Linking object files and generate elf32...
+	@echo "Linking kernel objects into ELF32 kernel binary..."
+	@$(LIN) $(LFLAGS) $(OUTPUT_FOLDER)/*.o -o $(OUTPUT_FOLDER)/kernel
+	@echo "Kernel linked successfully."
+
 	@rm -f *.o
+
+# Separate doom target that depends on kernel objects
+doom: kernel $(DOOM_OBJ)
+	@echo "Compiling and linking Doom executable..."
+	@$(CC) $(DOOM_LFLAGS) -fno-pie $(DOOM_OBJ) $(KERNEL_OBJS) -o $(OUTPUT_FOLDER)/doomgeneric -lm -lgcc -lc
+	@echo "Doom executable linked successfully."
 
 iso: kernel
 	@mkdir -p $(OUTPUT_FOLDER)/iso/boot/grub
@@ -178,12 +198,13 @@ insert-ikuyokita: inserter
 	@echo Inserting ikuyokita into root directory...
 	@cd $(OUTPUT_FOLDER); ./inserter ikuyokita 1 $(DISK_NAME).bin
 
-init: clean disk insert-shell insert-clock insert-experiment insert-apple insert-ikuyokita 
-# test: clean disk insert-shell insert-clock
-
-doom: $(DOOM_OBJ)
-	$(CC) $(CFLAGS) $(DOOM_OBJ) -o $(OUTPUT_FOLDER)/doomgeneric $(LIBS)
-
-insert-doom: doom
+insert-doom: inserter doom
 	@echo Inserting Doom executable into root directory...
 	@cd $(OUTPUT_FOLDER); ./inserter doomgeneric 1 $(DISK_NAME).bin
+
+insert-doomwad: inserter doom.wad
+	@echo Inserting Doom WAD files into root directory...
+	@cd $(OUTPUT_FOLDER); ./inserter doomwad 1 $(DISK_NAME).bin
+
+init: clean disk kernel doom insert-doom insert-shell insert-clock insert-experiment insert-apple insert-ikuyokita 
+# test: clean disk insert-shell insert-clock

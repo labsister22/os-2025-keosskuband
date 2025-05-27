@@ -84,6 +84,11 @@ uint32_t DG_GetTicksMs() {
     return time_since_running;
 }
 
+void DG_SetWindowTitle(const char * title)
+{
+  return;
+}
+
 int DG_GetKey(int *pressed, unsigned char *doomKey) {
     if (s_KeyQueueReadIndex == s_KeyQueueWriteIndex) {
         //key queue is empty
