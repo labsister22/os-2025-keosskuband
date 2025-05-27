@@ -20,6 +20,7 @@
 #include "header/usermode/commands/rm.h"
 #include "header/usermode/commands/cp.h"
 #include "header/usermode/commands/mv.h"
+#include "header/usermode/commands/torus.h"
 
 static int previous_input_length = 0;
 
@@ -1391,6 +1392,8 @@ void process_command() {
             apple(&cursor);
         } else if (strcmp("ikuyokita", shell_state.command) == 0) {
             ikuyokita();
+        } else if (strcmp("balls", shell_state.command) == 0) {
+            torus();
         } else if (strcmp("ps", shell_state.command) == 0) {
             ps();
         } else if (strcmp("kill", shell_state.command) == 0) {
@@ -1400,7 +1403,7 @@ void process_command() {
         } else if (shell_state.input_buffer[0] == 0x1B) { // ESC key
             print_string_colored("Exiting debug mode...", COLOR_LIGHT_RED);
             print_newline();
-        }else if (strcmp("sleep", shell_state.command) == 0) {
+        } else if (strcmp("sleep", shell_state.command) == 0) {
             if (args_used_amount > 0) {
                 int sleep_time;
                 str_to_int(shell_state.args[0], &sleep_time);

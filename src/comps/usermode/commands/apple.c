@@ -52,7 +52,7 @@ void apple(CP* cursor){
     }
 
     // sleep(1);
-    int sleep_time = 1;
+    int sleep_time = 75;
     syscall(35, (uint32_t) &sleep_time, 0, 0);
 
 

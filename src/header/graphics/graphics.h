@@ -165,4 +165,8 @@ void graphics_blink_cursor(void);
  */
 void graphics_scroll(uint16_t lines, uint8_t color);
 
+void graphics_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t color);
+
+void graphics_circle_filled(uint16_t center_x, uint16_t center_y, uint16_t radius, uint8_t color);
+
 #endif
