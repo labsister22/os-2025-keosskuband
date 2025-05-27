@@ -21,6 +21,8 @@
 #include "header/usermode/commands/cp.h"
 #include "header/usermode/commands/mv.h"
 
+static int previous_input_length = 0;
+
 static CommandHistory history = {
     .count = 0,
     .current_index = -1
@@ -43,13 +45,17 @@ static CompletionState completion_state = {
     .is_showing = false
 };
 
-// Command list for completion
 static const char* command_list[] = {
     "help", "clear", "echo", "ls", "cd", "mkdir", "find", "cat", 
-    "cls", "exit", "apple", NULL
+    "exit", "apple", "touch", "rm", "cp", "mv", "ps", 
+    "kill", "exec", "ikuyokita", "show_color", "sleep", NULL
 };
 
-// Store the original prefix for cycling
+static const char* rm_flags[] = {"--rf", NULL};
+static const char* cp_flags[] = {"--rf", NULL};
+static const char* pipeline_operators[] = {"|", NULL};
+
+// cycling
 static char original_prefix[MAX_COMPLETION_LENGTH] = "";
 static int original_prefix_len = 0;
 static int word_start_pos = 0;
@@ -72,7 +78,6 @@ void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     __asm__ volatile("int $0x30");
 }
 
-// Helper function to check if string starts with prefix
 bool starts_with(const char* str, const char* prefix) {
     if (!str || !prefix) return false;
     
@@ -87,7 +92,394 @@ bool starts_with(const char* str, const char* prefix) {
     return true;
 }
 
-// Find command completions
+char* strchr_local(const char* str, int c) {
+    if (!str) return NULL;
+    while (*str) {
+        if (*str == c) return (char*)str;
+        str++;
+    }
+    return (*str == c) ? (char*)str : NULL;
+}
+
+void strcat_local(char* dest, const char* src) {
+    if (!dest || !src) return;
+    while (*dest) dest++;
+    while (*src) {
+        *dest = *src;
+        dest++;
+        src++;
+    }
+    *dest = '\0';
+}
+
+bool is_absolute_path(const char* path) {
+    return path && path[0] == '/';
+}
+
+bool is_relative_path(const char* path) {
+    return path && (starts_with(path, "./") || starts_with(path, "../") || 
+                   strcmp((char*)path, ".") == 0 || strcmp((char*)path, "..") == 0);
+}
+
+void split_path(const char* path, char* directory, char* filename) {
+    directory[0] = '\0';
+    filename[0] = '\0';
+    
+    if (!path || strlen((char*)path) == 0) return;
+    
+    int last_slash = -1;
+    int path_len = strlen((char*)path);
+    
+    for (int i = path_len - 1; i >= 0; i--) {
+        if (path[i] == '/') {
+            last_slash = i;
+            break;
+        }
+    }
+    
+    if (last_slash == -1) {
+        strcpy(filename, (char*)path);
+    } else {
+        for (int i = 0; i < last_slash; i++) {
+            directory[i] = path[i];
+        }
+        directory[last_slash] = '\0';
+        
+        strcpy(filename, (char*)(path + last_slash + 1));
+    }
+}
+
+uint32_t resolve_path_inode(const char* path) {
+    if (!path || strlen((char*)path) == 0) {
+        return DIR_INFO.dir[DIR_INFO.current_dir].inode;
+    }
+
+    if (strcmp((char*)path, ".") == 0) {
+        return DIR_INFO.dir[DIR_INFO.current_dir].inode;
+    }
+    
+    if (strcmp((char*)path, "..") == 0) {
+        return DIR_INFO.current_dir > 0 ? 
+               DIR_INFO.dir[DIR_INFO.current_dir - 1].inode : 1;
+    }
+
+    absolute_dir_info temp_dir = DIR_INFO;
+    
+    char path_copy[MAX_PATH_LENGTH];
+    strcpy(path_copy, (char*)path);
+    
+    char *token = path_copy;
+    char *next_token;
+    
+    while (token != NULL) {
+        next_token = strchr_local(token, '/');
+        if (next_token != NULL) {
+            *next_token = '\0';
+            next_token++;
+        }
+
+        if (strlen(token) == 0) {
+            token = next_token;
+            continue;
+        }
+        
+        if (strcmp(token, ".") == 0) {
+        }
+
+        else if (strcmp(token, "..") == 0) {
+            if (temp_dir.current_dir > 0) {
+                temp_dir.current_dir--;
+            }
+        }
+
+        else {
+            uint8_t dir_data[BLOCK_SIZE];
+            struct EXT2DriverRequest request = {
+                .buf = dir_data,
+                .name = temp_dir.dir[temp_dir.current_dir].dir_name,
+                .name_len = strlen(temp_dir.dir[temp_dir.current_dir].dir_name),
+                .parent_inode = temp_dir.current_dir == 0 ? 1 : temp_dir.dir[temp_dir.current_dir - 1].inode,
+                .buffer_size = BLOCK_SIZE,
+                .is_directory = true
+            };
+            
+            int32_t retcode = 0;
+            syscall(1, (uint32_t)&request, (uint32_t)&retcode, 0);
+            
+            if (retcode != 0) {
+                return DIR_INFO.dir[DIR_INFO.current_dir].inode;
+            }
+            
+            struct EXT2DirectoryEntry* entry = (struct EXT2DirectoryEntry*)request.buf;
+            bool found = false;
+            uint32_t offset = 0;
+            
+            while (offset < BLOCK_SIZE) {
+                if (entry->inode != 0 && 
+                    entry->name_len == strlen(token) &&
+                    memcmp(entry->name, token, strlen(token)) == 0 &&
+                    entry->file_type == EXT2_FT_DIR) {
+                    found = true;
+                    
+                    if (temp_dir.current_dir < 49) {
+                        temp_dir.current_dir++;
+                        temp_dir.dir[temp_dir.current_dir].inode = entry->inode;
+                        strcpy(temp_dir.dir[temp_dir.current_dir].dir_name, token);
+                        temp_dir.dir[temp_dir.current_dir].dir_name_len = strlen(token);
+                    }
+                    break;
+                }
+                
+                offset += entry->rec_len;
+                if (offset < BLOCK_SIZE) {
+                    entry = (struct EXT2DirectoryEntry*)((uint8_t*)request.buf + offset);
+                }
+            }
+            
+            if (!found) {
+                return DIR_INFO.dir[DIR_INFO.current_dir].inode;
+            }
+        }
+        
+        token = next_token;
+    }
+    
+    return temp_dir.dir[temp_dir.current_dir].inode;
+}
+
+bool flag_already_exists(const char* flag) {
+    if (!flag) return false;
+    
+    int flag_len = strlen((char*)flag);
+    if (flag_len == 0) return false;
+    
+    for (int i = 0; i <= shell_state.input_length - flag_len; i++) {
+        if (i == 0 || shell_state.input_buffer[i - 1] == ' ') {
+            bool matches = true;
+            for (int j = 0; j < flag_len; j++) {
+                if (shell_state.input_buffer[i + j] != flag[j]) {
+                    matches = false;
+                    break;
+                }
+            }
+            
+            if (matches) {
+                int end_pos = i + flag_len;
+                if (end_pos == shell_state.input_length || 
+                    shell_state.input_buffer[end_pos] == ' ') {
+                    return true;
+                }
+            }
+        }
+    }
+    
+    return false;
+}
+
+arg_type_t get_command_arg_type(const char* command, int arg_position) {
+    if (strcmp((char*)command, "help") == 0) return ARG_NONE;
+    if (strcmp((char*)command, "clear") == 0) return ARG_NONE;
+    if (strcmp((char*)command, "cls") == 0) return ARG_NONE;
+    if (strcmp((char*)command, "ps") == 0) return ARG_NONE;
+    if (strcmp((char*)command, "ikuyokita") == 0) return ARG_NONE;
+    if (strcmp((char*)command, "show_color") == 0) return ARG_NONE;
+    if (strcmp((char*)command, "apple") == 0) return ARG_NONE;
+    if (strcmp((char*)command, "exit") == 0) return ARG_NONE;
+
+    if (strcmp((char*)command, "echo") == 0) return ARG_TEXT;
+    if (strcmp((char*)command, "find") == 0) return ARG_TEXT;  
+    if (strcmp((char*)command, "mkdir") == 0) return ARG_NEW_NAME;  
+    if (strcmp((char*)command, "touch") == 0) return ARG_NEW_NAME;  
+    if (strcmp((char*)command, "sleep") == 0) return ARG_INTEGER;   
+    if (strcmp((char*)command, "kill") == 0) return ARG_INTEGER;    
+    
+    if (strcmp((char*)command, "cat") == 0) return ARG_EXISTING_FILE;
+    if (strcmp((char*)command, "exec") == 0) return ARG_EXISTING_FILE;
+
+    if (strcmp((char*)command, "cd") == 0) return ARG_EXISTING_DIR;
+    if (strcmp((char*)command, "ls") == 0) return ARG_EXISTING_DIR;  
+
+    if (strcmp((char*)command, "rm") == 0) {
+        if (arg_position == 0) return ARG_EXISTING_ANY;
+
+        else if (flag_already_exists("--rf")) return ARG_NONE;
+        else return ARG_NONE;
+    }
+
+    if (strcmp((char*)command, "cp") == 0) {
+        if (arg_position == 0) return ARG_EXISTING_ANY;  // source
+        else if (arg_position == 1) return ARG_NEW_NAME;  // destination
+
+        else if (flag_already_exists("--rf")) return ARG_NONE;
+        else return ARG_NONE;
+    }
+    
+    if (strcmp((char*)command, "mv") == 0) {
+        if (arg_position == 0) return ARG_EXISTING_ANY;  // source  
+        else if (arg_position == 1) return ARG_NEW_NAME;  // destination
+        else return ARG_NONE;
+    }
+    
+    return ARG_NONE;
+}
+
+int get_current_arg_position(const char* command) {
+    (void)command;  // Suppress unused parameter warning
+    int arg_pos = 0;
+    
+    int cmd_end = 0;
+    for (int i = 0; i < shell_state.input_length; i++) {
+        if (shell_state.input_buffer[i] == ' ') {
+            cmd_end = i;
+            break;
+        }
+    }
+    
+    if (cmd_end == 0) cmd_end = shell_state.input_length;
+    
+    if (shell_state.cursor_position <= cmd_end) {
+        return -1;
+    }
+    
+    for (int i = cmd_end; i < shell_state.cursor_position; i++) {
+        if (shell_state.input_buffer[i] == ' ') {
+            while (i < shell_state.cursor_position && shell_state.input_buffer[i] == ' ') {
+                i++;
+            }
+
+            if (i < shell_state.cursor_position && shell_state.input_buffer[i] != ' ') {
+                arg_pos++;
+
+                while (i < shell_state.cursor_position && shell_state.input_buffer[i] != ' ') {
+                    i++;
+                }
+                i--;
+            } else if (i >= shell_state.cursor_position) {
+                break;
+            }
+        }
+    }
+    
+    return arg_pos;
+}
+
+completion_context analyze_completion_context() {
+    completion_context ctx = {0};
+    
+    ctx.word_start = shell_state.cursor_position;
+    while (ctx.word_start > 0 && shell_state.input_buffer[ctx.word_start - 1] != ' ') {
+        ctx.word_start--;
+    }
+
+    int word_len = shell_state.cursor_position - ctx.word_start;
+    if (word_len > 0 && word_len < MAX_COMPLETION_LENGTH) {
+        for (int i = 0; i < word_len; i++) {
+            ctx.current_word[i] = shell_state.input_buffer[ctx.word_start + i];
+        }
+    }
+    ctx.current_word[word_len] = '\0';
+
+    int cmd_end = 0;
+    bool found_pipeline = false;
+    int pipeline_pos = -1;
+
+    for (int i = 0; i < shell_state.input_length; i++) {
+        if (shell_state.input_buffer[i] == ' ' && cmd_end == 0) {
+            cmd_end = i;
+        }
+        if (shell_state.input_buffer[i] == '|') {
+            found_pipeline = true;
+            pipeline_pos = i;
+            break;
+        }
+    }
+    
+    if (cmd_end == 0) cmd_end = shell_state.input_length;
+
+    int cmd_len = (cmd_end < MAX_ARGS_LENGTH - 1) ? cmd_end : MAX_ARGS_LENGTH - 1;
+    for (int i = 0; i < cmd_len; i++) {
+        ctx.command[i] = shell_state.input_buffer[i];
+    }
+    ctx.command[cmd_len] = '\0';
+    
+    ctx.after_pipeline = found_pipeline && (shell_state.cursor_position > pipeline_pos);
+    
+    ctx.is_flag = (ctx.current_word[0] == '-');
+    
+    ctx.is_path = (strchr_local(ctx.current_word, '/') != NULL || 
+                   strcmp(ctx.current_word, ".") == 0 || 
+                   strcmp(ctx.current_word, "..") == 0 ||
+                   starts_with(ctx.current_word, "./") ||
+                   starts_with(ctx.current_word, "../"));
+    
+    if (ctx.after_pipeline) {
+        if (ctx.word_start == pipeline_pos + 1 || 
+            (ctx.word_start > pipeline_pos + 1 && 
+             shell_state.input_buffer[pipeline_pos + 1] == ' ')) {
+            ctx.context = COMPLETION_PIPELINE;
+        } else {
+            char piped_cmd[MAX_ARGS_LENGTH] = {0};
+            int pipe_cmd_start = pipeline_pos + 1;
+            while (pipe_cmd_start < shell_state.input_length && shell_state.input_buffer[pipe_cmd_start] == ' ') {
+                pipe_cmd_start++;
+            }
+            int pipe_cmd_end = pipe_cmd_start;
+            while (pipe_cmd_end < shell_state.input_length && shell_state.input_buffer[pipe_cmd_end] != ' ') {
+                pipe_cmd_end++;
+            }
+            for (int i = pipe_cmd_start; i < pipe_cmd_end && i - pipe_cmd_start < MAX_ARGS_LENGTH - 1; i++) {
+                piped_cmd[i - pipe_cmd_start] = shell_state.input_buffer[i];
+            }
+            
+            int pipe_arg_pos = get_current_arg_position(piped_cmd);
+            arg_type_t pipe_arg_type = get_command_arg_type(piped_cmd, pipe_arg_pos);
+            
+            if (pipe_arg_type == ARG_EXISTING_FILE || pipe_arg_type == ARG_EXISTING_DIR || pipe_arg_type == ARG_EXISTING_ANY) {
+                ctx.context = COMPLETION_FILE;
+            } else {
+                ctx.context = COMPLETION_COMMAND;
+            }
+        }
+    } else if (shell_state.cursor_position <= cmd_end) {
+        ctx.context = COMPLETION_COMMAND;
+    } else if (ctx.is_flag) {
+        ctx.context = COMPLETION_FLAG;
+    } else if (ctx.is_path) {
+        ctx.context = COMPLETION_PATH;
+    } else {
+        int arg_pos = get_current_arg_position(ctx.command);
+        arg_type_t arg_type = get_command_arg_type(ctx.command, arg_pos);
+        
+        switch (arg_type) {
+            case ARG_EXISTING_FILE:
+            case ARG_EXISTING_ANY:
+                ctx.context = COMPLETION_FILE;
+                break;
+            case ARG_EXISTING_DIR:
+                ctx.context = COMPLETION_DIRECTORY;
+                break;
+            case ARG_NONE:
+            case ARG_TEXT:
+            case ARG_INTEGER:
+            case ARG_NEW_NAME:
+            default:
+                if ((strcmp(ctx.command, "rm") == 0 || strcmp(ctx.command, "cp") == 0) && 
+                    arg_pos >= 1 && strlen(ctx.current_word) == 0) {
+                    if (!flag_already_exists("--rf")) {
+                        ctx.context = COMPLETION_FLAG;
+                    } else {
+                        ctx.context = COMPLETION_COMMAND;
+                    }
+                } else {
+                    ctx.context = COMPLETION_COMMAND;
+                }
+                break;
+        }
+    }
+    
+    return ctx;
+}
+
 void find_command_completions(const char* prefix) {
     completion_state.count = 0;
     
@@ -99,27 +491,78 @@ void find_command_completions(const char* prefix) {
     }
 }
 
-// Find file/directory completions
-void find_file_completions(const char* command, const char* prefix) {
+void find_flag_completions(const char* command, const char* prefix) {
     completion_state.count = 0;
     
-    // Read current directory contents
+    const char** flags = NULL;
+    
+    if (strcmp((char*)command, "rm") == 0) {
+        flags = rm_flags;
+    } else if (strcmp((char*)command, "cp") == 0) {
+        flags = cp_flags;
+    }
+    
+    if (flags) {
+        for (int i = 0; flags[i] != NULL && completion_state.count < MAX_COMPLETIONS; i++) {
+            if (starts_with(flags[i], prefix)) {
+                strcpy(completion_state.completions[completion_state.count], (char*)flags[i]);
+                completion_state.count++;
+            }
+        }
+    }
+}
+
+void find_pipeline_completions(const char* prefix) {
+    completion_state.count = 0;
+
+    for (int i = 0; pipeline_operators[i] != NULL && completion_state.count < MAX_COMPLETIONS; i++) {
+        if (starts_with(pipeline_operators[i], prefix)) {
+            strcpy(completion_state.completions[completion_state.count], (char*)pipeline_operators[i]);
+            completion_state.count++;
+        }
+    }
+
+    find_command_completions(prefix);
+}
+
+void find_smart_file_completions(const char* command, const char* prefix) {
+    completion_state.count = 0;
+    
+    int arg_pos = get_current_arg_position(command);
+    arg_type_t arg_type = get_command_arg_type(command, arg_pos);
+    
+    if (arg_type == ARG_NONE || arg_type == ARG_TEXT || 
+        arg_type == ARG_INTEGER || arg_type == ARG_NEW_NAME) {
+        return;
+    }
+    
+    char directory[MAX_PATH_LENGTH] = "";
+    char filename[MAX_COMPLETION_LENGTH] = "";
+    uint32_t target_inode;
+    
+    if (strchr_local(prefix, '/') != NULL) {
+        split_path(prefix, directory, filename);
+        target_inode = resolve_path_inode(directory);
+    } else {
+        strcpy(filename, (char*)prefix);
+        target_inode = DIR_INFO.dir[DIR_INFO.current_dir].inode;
+    }
+    
     uint8_t dir_buffer[BLOCK_SIZE];
     struct EXT2DriverRequest request = {
         .buf = dir_buffer,
-        .name = ".",
-        .parent_inode = DIR_INFO.dir[DIR_INFO.current_dir].inode,
+        .name = strlen(directory) == 0 ? "." : directory,
+        .parent_inode = target_inode,
         .buffer_size = BLOCK_SIZE,
-        .name_len = 1,
+        .name_len = strlen(directory) == 0 ? 1 : strlen(directory),
         .is_directory = false
     };
     
     int8_t result;
-    syscall(1, (uint32_t)&request, (uint32_t)&result, 0); // read_directory syscall
+    syscall(1, (uint32_t)&request, (uint32_t)&result, 0);
     
     if (result != 0) return;
     
-    // Parse directory entries
     uint32_t offset = 0;
     while (offset < BLOCK_SIZE && completion_state.count < MAX_COMPLETIONS) {
         struct EXT2DirectoryEntry *entry = (struct EXT2DirectoryEntry*)(dir_buffer + offset);
@@ -130,54 +573,137 @@ void find_file_completions(const char* command, const char* prefix) {
             continue;
         }
         
-        // Create null-terminated name
         char entry_name[256];
         for (int i = 0; i < entry->name_len && i < 255; i++) {
             entry_name[i] = entry->name[i];
         }
         entry_name[entry->name_len] = '\0';
         
-        // Skip . and .. for most commands
         if (strcmp(entry_name, ".") == 0 || strcmp(entry_name, "..") == 0) {
-            if (strcmp((char*)command, "cd") != 0) {
+            if (arg_type != ARG_EXISTING_DIR) {
                 offset += entry->rec_len;
                 continue;
             }
         }
-        
-        // Filter based on command type
+
         bool include = false;
-        if (strcmp((char*)command, "cd") == 0) {
-            // Only directories for cd
-            include = (entry->file_type == EXT2_FT_DIR);
-        } else if (strcmp((char*)command, "cat") == 0) {
-            // Only regular files for cat
-            include = (entry->file_type == EXT2_FT_REG_FILE);
-        } else {
-            // All entries for other commands
-            include = true;
+        switch (arg_type) {
+            case ARG_EXISTING_FILE:
+                include = (entry->file_type == EXT2_FT_REG_FILE);
+                break;
+            case ARG_EXISTING_DIR:
+                include = (entry->file_type == EXT2_FT_DIR);
+                break;
+            case ARG_EXISTING_ANY:
+                include = true;
+                break;
+            default:
+                include = false;
+                break;
         }
         
-        if (include && starts_with(entry_name, prefix)) {
-            strcpy(completion_state.completions[completion_state.count], entry_name);
-            completion_state.count++;
+        if (include && starts_with(entry_name, filename)) {
+            char full_completion[MAX_COMPLETION_LENGTH];
+            if (strlen(directory) > 0) {
+                strcpy(full_completion, directory);
+                strcat_local(full_completion, "/");
+                strcat_local(full_completion, entry_name);
+            } else {
+                strcpy(full_completion, entry_name);
+            }
+            
+            if (strlen(full_completion) < MAX_COMPLETION_LENGTH) {
+                strcpy(completion_state.completions[completion_state.count], full_completion);
+                completion_state.count++;
+            }
         }
         
         offset += entry->rec_len;
     }
 }
 
-// Apply current completion from the queue
+void find_directory_completions(const char* prefix) {
+    find_smart_file_completions("cd", prefix);
+}
+
+void find_file_completions(const char* command, const char* prefix) {
+    find_smart_file_completions(command, prefix);
+}
+
+void find_path_completions(const char* path_input) {
+    completion_state.count = 0;
+    
+    char directory[MAX_PATH_LENGTH];
+    char filename[MAX_COMPLETION_LENGTH];
+    
+    split_path(path_input, directory, filename);
+    
+    uint32_t target_inode;
+    if (strlen(directory) == 0) {
+        target_inode = DIR_INFO.dir[DIR_INFO.current_dir].inode;
+    } else {
+        target_inode = resolve_path_inode(directory);
+    }
+
+    uint8_t dir_buffer[BLOCK_SIZE];
+    struct EXT2DriverRequest request = {
+        .buf = dir_buffer,
+        .name = strlen(directory) == 0 ? "." : directory,
+        .parent_inode = target_inode,
+        .buffer_size = BLOCK_SIZE,
+        .name_len = strlen(directory) == 0 ? 1 : strlen(directory),
+        .is_directory = false
+    };
+    
+    int8_t result;
+    syscall(1, (uint32_t)&request, (uint32_t)&result, 0);
+    
+    if (result != 0) return;
+
+    uint32_t offset = 0;
+    while (offset < BLOCK_SIZE && completion_state.count < MAX_COMPLETIONS) {
+        struct EXT2DirectoryEntry *entry = (struct EXT2DirectoryEntry*)(dir_buffer + offset);
+        
+        if (entry->rec_len == 0) break;
+        if (entry->inode == 0) {
+            offset += entry->rec_len;
+            continue;
+        }
+        
+        char entry_name[256];
+        for (int i = 0; i < entry->name_len && i < 255; i++) {
+            entry_name[i] = entry->name[i];
+        }
+        entry_name[entry->name_len] = '\0';
+        
+        if (starts_with(entry_name, filename)) {
+            char full_completion[MAX_COMPLETION_LENGTH];
+            if (strlen(directory) > 0) {
+                strcpy(full_completion, directory);
+                strcat_local(full_completion, "/");
+                strcat_local(full_completion, entry_name);
+            } else {
+                strcpy(full_completion, entry_name);
+            }
+            
+            if (strlen(full_completion) < MAX_COMPLETION_LENGTH) {
+                strcpy(completion_state.completions[completion_state.count], full_completion);
+                completion_state.count++;
+            }
+        }
+        
+        offset += entry->rec_len;
+    }
+}
+
 void apply_current_completion() {
     if (completion_state.count == 0) return;
     
     hide_cursor();
     
-    // Get current completion
     const char* completion = completion_state.completions[completion_state.current_selection];
     int completion_len = strlen((char*)completion);
-    
-    // Remove current word (from word_start_pos to cursor)
+
     int current_word_len = shell_state.cursor_position - word_start_pos;
     for (int i = word_start_pos; i < shell_state.input_length - current_word_len; i++) {
         shell_state.input_buffer[i] = shell_state.input_buffer[i + current_word_len];
@@ -185,14 +711,11 @@ void apply_current_completion() {
     shell_state.input_length -= current_word_len;
     shell_state.cursor_position = word_start_pos;
     
-    // Insert the completion
     if (shell_state.input_length + completion_len < MAX_INPUT_LENGTH - 1) {
-        // Make room for the completion
         for (int i = shell_state.input_length + completion_len - 1; i >= word_start_pos + completion_len; i--) {
             shell_state.input_buffer[i] = shell_state.input_buffer[i - completion_len];
         }
-        
-        // Insert the completion
+
         for (int i = 0; i < completion_len; i++) {
             shell_state.input_buffer[word_start_pos + i] = completion[i];
         }
@@ -200,8 +723,7 @@ void apply_current_completion() {
         shell_state.input_length += completion_len;
         shell_state.cursor_position += completion_len;
         shell_state.input_buffer[shell_state.input_length] = '\0';
-        
-        // Add space after completion if we're at the end
+
         if (shell_state.cursor_position == shell_state.input_length && 
             shell_state.input_length < MAX_INPUT_LENGTH - 1) {
             shell_state.input_buffer[shell_state.input_length] = ' ';
@@ -214,7 +736,6 @@ void apply_current_completion() {
     redraw_input_line();
 }
 
-// Reset completion state
 void reset_completion_state() {
     completion_state.count = 0;
     completion_state.current_selection = 0;
@@ -223,20 +744,16 @@ void reset_completion_state() {
     original_prefix_len = 0;
 }
 
-// Handle tab completion with cycling
 void handle_tab_completion() {
-    // If we're already in completion mode, cycle to next completion
     if (completion_state.is_showing && completion_state.count > 0) {
         completion_state.current_selection = (completion_state.current_selection + 1) % completion_state.count;
         apply_current_completion();
         return;
     }
-    
-    // Start new completion
+
     reset_completion_state();
     
     if (shell_state.input_length == 0) {
-        // No input - complete with first command
         find_command_completions("");
         if (completion_state.count > 0) {
             word_start_pos = 0;
@@ -247,51 +764,49 @@ void handle_tab_completion() {
         }
         return;
     }
-    
-    // Parse current input to determine context
-    char temp_input[MAX_INPUT_LENGTH];
-    strcpy(temp_input, shell_state.input_buffer);
-    
-    // Find command end
-    int command_end = 0;
-    while (command_end < shell_state.input_length && temp_input[command_end] != ' ') {
-        command_end++;
-    }
-    
-    if (shell_state.cursor_position <= command_end) {
-        // Cursor is in command part - complete commands
-        word_start_pos = 0;
-        temp_input[command_end] = '\0';
-        strcpy(original_prefix, temp_input);
-        original_prefix_len = strlen(original_prefix);
-        find_command_completions(temp_input);
-    } else {
-        // Cursor is in arguments part - complete files/directories
-        temp_input[command_end] = '\0';
-        char* command = temp_input;
-        
-        // Find current word start
-        word_start_pos = shell_state.cursor_position;
-        while (word_start_pos > 0 && shell_state.input_buffer[word_start_pos - 1] != ' ') {
-            word_start_pos--;
-        }
-        
-        // Get current argument prefix
-        char arg_prefix[MAX_INPUT_LENGTH];
-        int prefix_len = shell_state.cursor_position - word_start_pos;
-        if (prefix_len > 0) {
-            for (int j = 0; j < prefix_len; j++) {
-                arg_prefix[j] = shell_state.input_buffer[word_start_pos + j];
+
+    completion_context ctx = analyze_completion_context();
+    word_start_pos = ctx.word_start;
+    strcpy(original_prefix, ctx.current_word);
+    original_prefix_len = strlen(original_prefix);
+
+    switch (ctx.context) {
+        case COMPLETION_COMMAND:
+            {
+                int arg_pos_check = get_current_arg_position(ctx.command);
+                if (arg_pos_check == -1) {
+                    find_command_completions(ctx.current_word);
+                } else {
+                    completion_state.count = 0;
+                }
             }
-        }
-        arg_prefix[prefix_len] = '\0';
-        
-        strcpy(original_prefix, arg_prefix);
-        original_prefix_len = strlen(original_prefix);
-        find_file_completions(command, arg_prefix);
+            break;
+            
+        case COMPLETION_FLAG:
+            find_flag_completions(ctx.command, ctx.current_word);
+            break;
+            
+        case COMPLETION_DIRECTORY:
+            find_directory_completions(ctx.current_word);
+            break;
+            
+        case COMPLETION_FILE:
+            find_file_completions(ctx.command, ctx.current_word);
+            break;
+            
+        case COMPLETION_PATH:
+            find_path_completions(ctx.current_word);
+            break;
+            
+        case COMPLETION_PIPELINE:
+            find_pipeline_completions(ctx.current_word);
+            break;
+            
+        default:
+            completion_state.count = 0;
+            break;
     }
-    
-    // Apply first completion if any found
+
     if (completion_state.count > 0) {
         completion_state.is_showing = true;
         apply_current_completion();
@@ -335,11 +850,15 @@ void load_history_entry(int index) {
         return;
     }
 
+    int old_length = shell_state.input_length;
+    
     clear_input_buffer();
 
     strcpy(shell_state.input_buffer, history.commands[index]);
     shell_state.input_length = strlen(shell_state.input_buffer);
     shell_state.cursor_position = shell_state.input_length;
+
+    previous_input_length = old_length;
     
     redraw_input_line();
 }
@@ -370,10 +889,16 @@ void handle_down_arrow() {
         load_history_entry(history.current_index);
     } else {
         history.current_index = -1;
+
+        int old_length = shell_state.input_length;
+        previous_input_length = old_length;
+        
         clear_input_buffer();
         redraw_input_line();
     }
 }
+
+// Graphics cursor syscalls
 void graphics_draw_cursor_syscall() {
     syscall(10, 0, 0, 0);
 }
@@ -390,7 +915,7 @@ void graphics_set_cursor_colors_syscall(uint8_t fg_color, uint8_t bg_color) {
     syscall(15, (uint32_t)fg_color, (uint32_t)bg_color, 0);
 }
 
-
+// Cursor management functions
 void show_cursor() {
     if (!shell_state.cursor_shown) {
         // Make sure cursor screen position is up to date
@@ -566,7 +1091,11 @@ void print_prompt() {
 void redraw_input_line() {
     hide_cursor();
 
-    int total_chars = shell_state.prompt_start_col + shell_state.input_length;
+    // Calculate area to clear based on MAXIMUM of current and previous input length
+    int max_input_length = (shell_state.input_length > previous_input_length) ? 
+                          shell_state.input_length : previous_input_length;
+    
+    int total_chars = shell_state.prompt_start_col + max_input_length;
     int total_rows = (total_chars + SCREEN_WIDTH - 1) / SCREEN_WIDTH;
     int end_row = shell_state.prompt_start_row + total_rows - 1;
 
@@ -576,6 +1105,7 @@ void redraw_input_line() {
         end_row--;
     }
 
+    // Clear the entire area that might have been used by previous input
     for (int row = shell_state.prompt_start_row; row <= end_row && row < SCREEN_HEIGHT; row++) {
         int start_col = (row == shell_state.prompt_start_row) ? shell_state.prompt_start_col : 0;
         for (int col = start_col; col < SCREEN_WIDTH; col++) {
@@ -585,6 +1115,7 @@ void redraw_input_line() {
         }
     }
 
+    // Draw the current input
     int draw_row = shell_state.prompt_start_row;
     int draw_col = shell_state.prompt_start_col;
     for (int i = 0; i < shell_state.input_length; i++) {
@@ -599,6 +1130,8 @@ void redraw_input_line() {
             }
         }
     }
+
+    previous_input_length = shell_state.input_length;
 
     update_cursor_row_col();
     set_hardware_cursor();
@@ -620,6 +1153,9 @@ void insert_char_at_cursor(char c) {
     shell_state.input_length++;
     shell_state.cursor_position++;
     shell_state.input_buffer[shell_state.input_length] = '\0';
+    
+    // Update previous length tracking
+    previous_input_length = shell_state.input_length;
 }
 
 void delete_char_before_cursor() {
@@ -636,7 +1172,7 @@ void delete_char_before_cursor() {
     shell_state.input_length--;
     shell_state.cursor_position--;
     shell_state.input_buffer[shell_state.input_length] = '\0';
-
+    
     update_cursor_row_col();
 }
 
@@ -656,6 +1192,7 @@ void delete_char_at_cursor() {
 
     update_cursor_row_col();
 }
+
 void move_cursor_left() {
     if (shell_state.cursor_position > 0) {
         shell_state.cursor_position--;
@@ -846,19 +1383,14 @@ void process_command() {
             cp(shell_state.args[0], shell_state.args[1], shell_state.args[2], shell_state.args[3]);
         } else if (strcmp("mv", shell_state.command) == 0) {
             mv(shell_state.args[0], shell_state.args[1], shell_state.args[2]);
-        } else if (strcmp("cls", shell_state.command) == 0) {
-            clear();
-        }
-        else if (strcmp("exit", shell_state.command) == 0) {
+        } else if (strcmp("exit", shell_state.command) == 0) {
             print_string_at_cursor("Goodbye!");
             print_newline();
-            while (1) {}
+            while (true) {}
         } else if (strcmp("apple", shell_state.command) == 0) {
             apple(&cursor);
         } else if (strcmp("ikuyokita", shell_state.command) == 0) {
             ikuyokita();
-        } else if (strcmp("clock", shell_state.command) == 0) {
-            exec("clock", DIR_INFO.dir[DIR_INFO.current_dir].inode);
         } else if (strcmp("ps", shell_state.command) == 0) {
             ps();
         } else if (strcmp("kill", shell_state.command) == 0) {
@@ -868,7 +1400,25 @@ void process_command() {
         } else if (shell_state.input_buffer[0] == 0x1B) { // ESC key
             print_string_colored("Exiting debug mode...", COLOR_LIGHT_RED);
             print_newline();
-        } else {
+        }else if (strcmp("sleep", shell_state.command) == 0) {
+            if (args_used_amount > 0) {
+                int sleep_time;
+                str_to_int(shell_state.args[0], &sleep_time);
+                if (sleep_time > 0) {
+                    syscall(35, sleep_time * 1000, 0, 0); // Sleep for specified seconds
+                    print_string_colored("Slept for ", COLOR_LIGHT_GREEN);
+                    print_string_colored(shell_state.args[0], COLOR_LIGHT_GREEN);
+                    print_string_colored(" seconds.", COLOR_LIGHT_GREEN);
+                    print_newline();
+                } else {
+                    print_string_colored("Invalid sleep time.", COLOR_LIGHT_RED);
+                    print_newline();
+                }
+            } else {
+                print_string_colored("Usage: sleep <seconds>", COLOR_LIGHT_RED);
+                print_newline();
+            }
+        }else {
             print_string_colored("Command not found: ", COLOR_LIGHT_RED);
 
             print_string_colored(shell_state.command, COLOR_WHITE);
@@ -880,6 +1430,7 @@ void process_command() {
 }
 
 int main(void) {
+    extern void cd_root();
     cd_root();
 
     cursor.row = 0;
@@ -894,7 +1445,7 @@ int main(void) {
 
     show_cursor();
 
-    while (1) {
+    while (true) {
         syscall(4, (uint32_t)&c, 0, 0);
         // syscall(14, 0, 0, 0);
 

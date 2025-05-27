@@ -63,10 +63,32 @@
 #define IRQ_SECOND_ATA   15
 
 // SYSCALLS BRUHHHHH
-#define SYSCALL_PS_CMD      30
-#define SYSCALL_GET_MAX_PS  31
-#define SYSCALL_KILL_PS     32
-#define SYSCALL_EXEC_PS     33
+#define SYSCALL_READ            0
+#define SYSCALL_READ_DIR        1
+#define SYSCALL_WRITE           2
+#define SYSCALL_DELETE          3
+#define SYSCALL_KEYBOARD        4
+#define SYSCALL_GRAPHICS_CHAR   5
+#define SYSCALL_GRAPHICS_STR    6
+#define SYSCALL_ACT_KEYBOARD    7
+#define SYSCALL_SET_CURSOR      8
+#define SYSCALL_PRINT_COLOR     9
+#define SYSCALL_DRAW_CURSOR     10
+#define SYSCALL_ERASE_CURSOR    11
+#define SYSCALL_STORE_CHAR      12
+#define SYSCALL_CURSOR_BLINK    14
+#define SYSCALL_CURSOR_COLOR    15
+#define SYSCALL_GRAPHICS_PIXEL  16
+#define SYSCALL_GRAPHICS_CLEAR  17
+#define SYSCALL_GRAPHICS_SCROLL 18
+#define SYSCALL_FILL_SCREEN     19
+#define SYSCALL_RENDER_FRAME    20
+#define SYSCALL_PS_CMD          30
+#define SYSCALL_GET_MAX_PS      31
+#define SYSCALL_KILL_PS         32
+#define SYSCALL_EXEC_PS         33
+#define SYSCALL_GET_TIME        34
+#define SYSCALL_SLEEP           35
 
 
 /**
