@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include "header/stdlib/string.h"
+#include "header/stdlib/string.h"z
 
 void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     __asm__ volatile("mov %0, %%ebx" : : "r"(ebx));
@@ -86,7 +86,7 @@ int main(void) {
     
     memset(&last_time, 0xFF, sizeof(struct Time));
 
-    syscall(7, 0, 0, 0);
+    //syscall(7, 0, 0, 0);
     
     while (true) {
         memset(&current_time, 0x0, sizeof(struct Time));

@@ -797,6 +797,35 @@ void process_command() {
                 print_string_colored("Usage: find <filename>", COLOR_LIGHT_RED);
                 print_newline();
             }
+        } else if (strcmp("size", shell_state.command) == 0) {
+            if (args_used_amount == 1) {
+                struct EXT2DriverRequest request = {
+                    .buf = NULL,
+                    .name = shell_state.args[0],
+                    .parent_inode = DIR_INFO.dir[DIR_INFO.current_dir].inode,
+                    .buffer_size = 0,
+                    .name_len = strlen(shell_state.args[0]),
+                };
+                
+                int size = 0;
+                syscall(19, (uint32_t)&request, (uint32_t)&size, 0);
+
+                print_string_colored("Size of '", COLOR_LIGHT_CYAN);
+                print_string_colored(shell_state.args[0], COLOR_WHITE);
+                print_string_colored("' is ", COLOR_LIGHT_CYAN);
+                if (size < 0) {
+                    print_string_colored("unknown", COLOR_LIGHT_RED);
+                } else {
+                    char size_str[20];
+                    int_toString(size, size_str);
+                    print_string_colored(size_str, COLOR_WHITE);
+                    print_string_colored(" bytes.", COLOR_LIGHT_CYAN);
+                }
+                print_newline();
+            } else {
+                print_string_colored("Usage: size <filename>", COLOR_LIGHT_RED);
+                print_newline();
+            }
         } else if (!strcmp("cat", shell_state.command)) {
             if (args_used_amount > 0) {
                 cat(shell_state.args[0]);
@@ -811,8 +840,6 @@ void process_command() {
                 print_string_colored("Usage: touch <filename>", COLOR_LIGHT_RED);
                 print_newline();
             }
-        } else if (strcmp("show_color", shell_state.command) == 0) {
-            syscall(19, 0, 0, 0);
         } else if (strcmp("rm", shell_state.command) == 0) {
             rm(shell_state.args[0], shell_state.args[1], shell_state.args[2]);
         } else if (strcmp("cp", shell_state.command) == 0) {
@@ -837,7 +864,7 @@ void process_command() {
         } else if (strcmp("kill", shell_state.command) == 0) {
             kill(shell_state.args[0]);
         } else if (strcmp("exec", shell_state.command) == 0) {
-            exec(shell_state.args[0], DIR_INFO.dir[DIR_INFO.current_dir].inode);
+            exec(shell_state.args[0], 1);
         } else if (shell_state.input_buffer[0] == 0x1B) { // ESC key
             print_string_colored("Exiting debug mode...", COLOR_LIGHT_RED);
             print_newline();

@@ -142,7 +142,10 @@ void syscall(struct InterruptFrame frame) {
             );
             break;
         case 19:
-            graphics_fill_screen_with_color();
+            //get buffer size
+             *((int32_t*) frame.cpu.general.ecx) = get_buffer_size(
+                (struct EXT2DriverRequest*) frame.cpu.general.ebx
+            );
             break;
         case 20:
             char* frame_buffer = (char*) frame.cpu.general.ebx;

@@ -6,7 +6,7 @@ void apple(CP* cursor){
   struct EXT2DriverRequest request = {
     .buf = (uint8_t*) &apple_frames,
     .name = "apple",
-    .parent_inode = 1,
+    .parent_inode = 2,
     .buffer_size = FRAME_COUNT / 2 * 512,
     .name_len = 5,
     .is_directory = false,
