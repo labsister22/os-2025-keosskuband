@@ -1,151 +1,3 @@
-/*
-#include <stdint.h>
-#include "header/cpu/gdt.h"
-#include "header/graphics/graphics.h"  
-#include "header/kernel-entrypoint.h"
-#include "header/interrupt/interrupt.h"
-#include "header/interrupt/idt.h"
-#include "header/driver/keyboard.h"
-#include "header/driver/disk.h"
-#include "header/filesys/ext2.h"
-#include "header/text/framebuffer.h"
-
-void kernel_setup(void) {
-    load_gdt(&_gdt_gdtr);
-
-    pic_remap();
-    initialize_idt();
-    activate_keyboard_interrupt();
-
-    // graphics_initialize();
-    // graphics_clear(COLOR_BLACK);
-    
-    // graphics_set_cursor(0, 0);
-    // graphics_store_char_at_cursor(0); 
-    // graphics_draw_cursor();
-
-    keyboard_state_activate();
-
-    // int row = 10, col = 0;
-    keyboard_state_activate();
-
-    initialize_filesystem_ext2();
-
-    struct EXT2DriverRequest req = {
-        .parent_inode = 1, // root directory
-        .name = "notes.txt",
-        .name_len = 9,
-        .buf = "mamah, aku gagal </3",
-        .buffer_size = 20,
-        .is_directory = false
-    };
-    // write(&req);
-
-    req.parent_inode = 1;
-    req.name =  "nigga.txt";
-    req.name_len = 9;
-    req.buf =   "bismillah";
-    req.buffer_size = 9;
-    req.is_directory = false;
-    // write(&req);
-
-    req.parent_inode = 1;
-    req.name =  "folder";
-    req.name_len = 6;
-    req.buf =   "";
-    req.buffer_size = 0;
-    req.is_directory = true;
-    // write(&req);
-
-    req.parent_inode = 4;
-    req.name =  "nigga2.txt";
-    req.name_len = 10;
-    req.buf =   "bismillah";
-    req.buffer_size = 9;
-    req.is_directory = false;
-    write(&req);
-
-    char buffer[100];
-    memset(buffer, 0, sizeof(buffer));
-
-    req = (struct EXT2DriverRequest){
-        .parent_inode = 1,
-        .name = "nigga2.txt",
-        .name_len = 10,
-        .buf = buffer,
-        .buffer_size = 80
-    };
-    read(req);
-
-    req = (struct EXT2DriverRequest){
-        .parent_inode = 4,
-        .name = "nigga2.txt",
-        .name_len = 10,
-        .buf = buffer,
-        .buffer_size = 80
-    };
-    read(req);
-
-    int x = 10, y = 0;
-    write_buffer(buffer, 80, x, y);
-
-    while (true) {
-        char c;
-        get_keyboard_buffer(&c);
-
-        // Only handle input if there is any
-        if (c != 0) {
-            graphics_erase_cursor();
-
-            // Handle backspace
-            if (c == '\b') {
-                uint16_t x, y;
-                graphics_get_cursor(&x, &y);
-                
-                if (x >= 8) {
-                    graphics_move_cursor(-8, 0);
-                } else if (y >= 8) {
-                    graphics_set_cursor(VGA_WIDTH - 8, y - 8);
-                }
-
-                graphics_get_cursor(&x, &y);
-                
-                graphics_rect_fill(x, y, 8, 8, COLOR_BLACK);
-                graphics_store_char_at_cursor(0); 
-            }
-            // Handle printable characters
-            else if (c >= ' ' && c <= '~') {
-                uint16_t x, y;
-                graphics_get_cursor(&x, &y);
-                
-                graphics_char(x, y, c, COLOR_PINK, COLOR_BLACK);
-                
-                graphics_move_cursor(8, 0);
-                
-                graphics_store_char_at_cursor(0);
-                
-                graphics_get_cursor(&x, &y);
-                
-                if (x >= VGA_WIDTH - 8) { 
-                    graphics_set_cursor(0, y + 8);
-                }
-
-                // Check if we need to scroll
-                graphics_get_cursor(&x, &y);
-                if (y >= VGA_HEIGHT - 8) {
-                    graphics_clear(COLOR_BLACK);  
-                    graphics_set_cursor(0, 0);
-                    graphics_store_char_at_cursor(0); 
-                }
-            }
-        
-            graphics_draw_cursor();
-        }
-        graphics_blink_cursor();
-    }
-}
-*/
-
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -161,16 +13,81 @@ void kernel_setup(void) {
 #include "header/memory/paging.h"
 #include "header/process/process.h"
 #include "header/scheduler/scheduler.h"
-#include "misc/apple.h"
 
-/*
-// Helper functions for printing to the framebuffer
-*/
-void print_string(const char* message, int row, int col, uint8_t color) {
-    int i = 0;
-    while (message[i] != '\0') {
-        framebuffer_write(row, col + i, message[i], color, 0);
-        i++;
+void boot_animation(void) {
+    int FRAME_COUNT = 44;
+    int FRAME_PER_SEGMENT = 4;
+    int segment_count = FRAME_COUNT / FRAME_PER_SEGMENT;
+    
+    for (int counter = 0; counter < 2; counter++) {
+        for (int i = 0; i < segment_count; i++) {
+            char ikuyokita_frames[4][200*512];
+            struct EXT2DriverRequest request;
+            request.buf = (uint8_t*) &ikuyokita_frames;
+            request.parent_inode = 1;
+            request.buffer_size = FRAME_PER_SEGMENT * 200 * 512;
+            request.is_directory = 0;
+
+            if (i == 0) {
+                request.name = "ikuyokita0-3";
+                request.name_len = 12;
+            } else if (i == 1) {
+                request.name = "ikuyokita4-7";
+                request.name_len = 12;
+            } else if (i == 2) {
+                request.name = "ikuyokita8-11";
+                request.name_len = 13;
+            } else if (i == 3) {
+                request.name = "ikuyokita12-15";
+                request.name_len = 14;
+            } else if (i == 4) {
+                request.name = "ikuyokita16-19";
+                request.name_len = 14;
+            } else if (i == 5) {
+                request.name = "ikuyokita20-23";
+                request.name_len = 14;
+            } else if (i == 6) {
+                request.name = "ikuyokita24-27";
+                request.name_len = 14;
+            } else if (i == 7) {
+                request.name = "ikuyokita28-31";
+                request.name_len = 14;
+            } else if (i == 8) {
+                request.name = "ikuyokita32-35";
+                request.name_len = 14;
+            } else if (i == 9) {
+                request.name = "ikuyokita36-39";
+                request.name_len = 14;
+            } else if (i == 10) {
+                request.name = "ikuyokita40-43";
+                request.name_len = 14;
+            }
+
+            int8_t read_result = read(request);
+            if (read_result != 0) {
+                continue;
+            }
+
+            for (int j = 0; j < FRAME_PER_SEGMENT; j++) {
+                for (int y = 0; y < 200 && y < VGA_HEIGHT; y++) {
+                    for (int x = 0; x < 320 && x < VGA_WIDTH; x++) {
+                        int data_index = y * 512 + x;
+                        if (data_index < 200 * 512) {
+                            uint8_t pixel_color = ikuyokita_frames[j][data_index];
+                            graphics_pixel(x, y, pixel_color);
+                        }
+                    }
+                }
+                
+                for (volatile int delay = 0; delay < 300000; delay++);
+
+                char skip_key = 0;
+                get_keyboard_buffer(&skip_key);
+                if (skip_key != 0) {
+                    return;
+                }
+            }
+        }
     }
 }
 
@@ -179,29 +96,28 @@ void kernel_setup(void) {
     pic_remap();
     initialize_idt();
     activate_keyboard_interrupt();
-    graphics_initialize();
-    graphics_clear(COLOR_BLACK);
-    // framebuffer_clear();
-    // framebuffer_set_cursor(0, 0);
+    
     initialize_filesystem_ext2();
     gdt_install_tss();
     set_tss_register();
 
-    // Allocate first 4 MiB virtual memory
     paging_allocate_user_page_frame(&_paging_kernel_page_directory, (uint8_t*) 0);
 
-    struct EXT2DriverRequest request1 = {
-        .buf                   = apple_frames,
-        .name                  = "apple.txt",
-        .parent_inode          = 1,
-        .buffer_size           = 1095*512,
-        .name_len              = 9,
-        .is_directory          = false,
-    };
-    write(&request1);
+    graphics_initialize();
+    
+    keyboard_state_activate();
+    
+    boot_animation();
+    
+    for (int fade_step = 0; fade_step < 20; fade_step++) {
+        for (int y = fade_step * 10; y < (fade_step + 1) * 10 && y < VGA_HEIGHT; y++) {
+            for (int x = 0; x < VGA_WIDTH; x++) {
+                graphics_pixel(x, y, COLOR_BLACK);
+            }
+        }
+        for (volatile int delay = 0; delay < 80000; delay++);
+    }
 
-
-    // Write shell into memory
     struct EXT2DriverRequest request2 = {
         .buf                   = (uint8_t*) 0,
         .name                  = "shell",
@@ -267,13 +183,9 @@ void kernel_setup(void) {
     request_test.name_len = 8;
     write(&request_test);
 
-    // Set TSS $esp pointer and jump into shell 
     set_tss_kernel_current_stack();
 
     process_create_user_process(request2);
     scheduler_init();
     scheduler_switch_to_next_process();
-
-    // paging_use_page_directory(_process_list[0].context.page_directory_virtual_addr);
-    // kernel_execute_user_program((void*) 0x0);
 }

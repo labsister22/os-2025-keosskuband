@@ -1,4 +1,5 @@
 #include "header/stdlib/strops.h"
+#include "header/stdlib/string.h"
 #include "header/usermode/commands/cat.h"
 
 // cat only be able to open 10 * 512 characters
@@ -76,7 +77,7 @@ void cat(char* name) {
         return;
     }
     else if (retcode == 3) {
-        print_string_colored("File is corrupted: ", COLOR_RED);
+        print_string_colored("File is corrupted or not found: ", COLOR_RED);
         print_string_colored(name, COLOR_RED);
         print_newline();
         return;

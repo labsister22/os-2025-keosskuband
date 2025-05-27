@@ -13,7 +13,12 @@ void ls(char* str) {
     int32_t retcode = 0;
     syscall(1, (uint32_t)&request, (uint32_t)&retcode, 0);
     if (retcode != 0) {
-        // error
+        if (retcode == 4) {
+            print_string_colored("Not a directory\n", COLOR_RED);
+        } else {
+            print_string_colored("Error reading directory\n", COLOR_RED);
+        }
+
         return;
     }
 

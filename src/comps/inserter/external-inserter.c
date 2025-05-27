@@ -6,19 +6,19 @@
 #include "header/stdlib/strops.h"
 #include "header/driver/disk.h"
 #include "header/stdlib/string.h"
+#include "misc/ikuyokita.h"
+#include "misc/apple.h"
 
 // Global variable
 uint8_t *image_storage;
 uint8_t *file_buffer;
 
 void read_blocks(void *ptr, uint32_t logical_block_address, uint8_t block_count) {
-    for (int i = 0; i < block_count; i++) {
-        memcpy(
-            (uint8_t*) ptr + BLOCK_SIZE*i, 
-            image_storage + BLOCK_SIZE*(logical_block_address+i), 
-            BLOCK_SIZE
-        );
-    }
+    memcpy(
+        (uint8_t*) ptr, 
+        image_storage + BLOCK_SIZE*(logical_block_address), 
+        block_count*BLOCK_SIZE
+    );
 }
 
 void write_blocks(const void *ptr, uint32_t logical_block_address, uint8_t block_count) {
@@ -94,6 +94,49 @@ int main(int argc, char *argv[]) {
         {
             printf("same\n");
         }
+    }
+
+    if (!memcmp(argv[1], "apple", 5)) {
+        request.buf = apple_frames;
+        request.name = "apple";
+        request.parent_inode = 1;
+        request.buffer_size = 1095*512;
+        request.name_len = 5;
+        request.is_directory = false;
+    }
+    if (!memcmp(argv[1], "ikuyokita", 9)) {
+        // 44 frames, split into 11 files: 4 frames each (last file has 4 frames)
+        int frame_counts[11] = {4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
+        int frame_starts[11] = {0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40};
+        char *names[11] = {
+            "ikuyokita0-3", "ikuyokita4-7", "ikuyokita8-11", "ikuyokita12-15",
+            "ikuyokita16-19", "ikuyokita20-23", "ikuyokita24-27", "ikuyokita28-31",
+            "ikuyokita32-35", "ikuyokita36-39", "ikuyokita40-43"
+        };
+        int name_lens[11] = {12, 12, 13, 14, 14, 14, 14, 14, 14, 14, 14};
+        for (int i = 0; i < 11; i++) {
+            request.buf = ikuyokita_frames[frame_starts[i]];
+            request.name = names[i];
+            request.parent_inode = 1;
+            request.buffer_size = frame_counts[i]*200*512;
+            request.name_len = name_lens[i];
+            request.is_directory = false;
+            retcode = write(&request);
+            if (retcode == 0)
+                puts("Write success");
+            else if (retcode == 1)
+                puts("Error: File/folder name already exist");
+            else if (retcode == 2)
+                puts("Error: Invalid parent node index");
+            else
+                puts("Error: Unknown error");
+        }
+        // Write image in memory into original, overwrite them
+        fptr = fopen(argv[3], "w");
+        fwrite(image_storage, 32 * 1024 * 1024, 1, fptr);
+        fclose(fptr);
+
+        return 0;
     }
 
     bool is_replace = false;

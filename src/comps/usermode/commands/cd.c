@@ -88,7 +88,8 @@ void cd(char* str) {
         uint32_t offset = 0;
         while (offset < BLOCK_SIZE) {
             if (entry->inode != 0 && entry->name_len == strlen(next_dir) &&
-                memcmp(entry->name, next_dir, strlen(next_dir)) == 0) {
+                memcmp(entry->name, next_dir, strlen(next_dir)) == 0 && 
+                entry->name_len == strlen(next_dir)) {
                 found = true;
                 break;
             }

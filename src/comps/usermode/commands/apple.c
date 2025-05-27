@@ -5,10 +5,10 @@ void apple(CP* cursor){
   char apple_frames[FRAME_COUNT/2][512];
   struct EXT2DriverRequest request = {
     .buf = (uint8_t*) &apple_frames,
-    .name = "apple.txt",
+    .name = "apple",
     .parent_inode = 1,
     .buffer_size = FRAME_COUNT / 2 * 512,
-    .name_len = 9,
+    .name_len = 5,
     .is_directory = false,
   };
   uint32_t res = 10;

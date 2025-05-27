@@ -12,9 +12,14 @@
 #include "header/usermode/commands/mkdir.h"
 #include "header/usermode/commands/find.h"
 #include "header/usermode/commands/cat.h"
+#include "header/usermode/commands/touch.h"
 #include "header/usermode/commands/ps.h"
 #include "header/usermode/commands/kill.h"
 #include "header/usermode/commands/exec.h"
+#include "header/usermode/commands/ikuyokita.h"
+#include "header/usermode/commands/rm.h"
+#include "header/usermode/commands/cp.h"
+#include "header/usermode/commands/mv.h"
 
 static CommandHistory history = {
     .count = 0,
@@ -298,16 +303,28 @@ void add_to_history(const char* command) {
         return;
     }
 
-    if (history.count > 0 && 
-        strcmp(history.commands[(history.count - 1) % MAX_HISTORY_ENTRIES], (char*)command) == 0) {
-        return;
+    if (history.count > 0) {
+        int most_recent_index;
+        if (history.count < MAX_HISTORY_ENTRIES) {
+            most_recent_index = history.count - 1;
+        } else {
+            most_recent_index = (history.count - 1) % MAX_HISTORY_ENTRIES;
+        }
+        
+        if (strcmp(history.commands[most_recent_index], (char*)command) == 0) {
+            return;
+        }
     }
 
-    int index = history.count % MAX_HISTORY_ENTRIES;
-    strcpy(history.commands[index], (char*)command);
-    
     if (history.count < MAX_HISTORY_ENTRIES) {
+        strcpy(history.commands[history.count], (char*)command);
         history.count++;
+    } else {
+        for (int i = 0; i < MAX_HISTORY_ENTRIES - 1; i++) {
+            strcpy(history.commands[i], history.commands[i + 1]);
+        }
+
+        strcpy(history.commands[MAX_HISTORY_ENTRIES - 1], (char*)command);
     }
 
     history.current_index = -1;
@@ -318,16 +335,9 @@ void load_history_entry(int index) {
         return;
     }
 
-    int actual_index;
-    if (history.count < MAX_HISTORY_ENTRIES) {
-        actual_index = index;
-    } else {
-        actual_index = (history.count + index) % MAX_HISTORY_ENTRIES;
-    }
-    
     clear_input_buffer();
 
-    strcpy(shell_state.input_buffer, history.commands[actual_index]);
+    strcpy(shell_state.input_buffer, history.commands[index]);
     shell_state.input_length = strlen(shell_state.input_buffer);
     shell_state.cursor_position = shell_state.input_length;
     
@@ -343,6 +353,8 @@ void handle_up_arrow() {
         history.current_index = history.count - 1;
     } else if (history.current_index > 0) {
         history.current_index--;
+    } else {
+        return;
     }
     
     load_history_entry(history.current_index);
@@ -362,7 +374,6 @@ void handle_down_arrow() {
         redraw_input_line();
     }
 }
-
 void graphics_draw_cursor_syscall() {
     syscall(10, 0, 0, 0);
 }
@@ -681,6 +692,60 @@ void process_command() {
            i++;
         }
         shell_state.command[i] = '\0';
+
+        if (strcmp(shell_state.command, "echo") == 0) {
+            while (i < shell_state.input_length && shell_state.input_buffer[i] == ' ')
+                i++;
+
+            int text_start = i;
+            int text_length = 0;
+            //find the args to be "echo-ed"
+            while (i < shell_state.input_length && shell_state.input_buffer[i] != '|' &&
+                shell_state.input_buffer[i] != '\n' && shell_state.input_buffer[i] != '\r') {
+                text_length++;
+                i++;
+            }
+
+            int args_idx = 0;
+            int args_buffer_idx = 0;
+            int args_used_amount = 0;
+
+            while (i < shell_state.input_length && args_idx < MAX_ARGS_AMOUNT) {
+                while (i < shell_state.input_length && shell_state.input_buffer[i] != ' ' &&
+                    shell_state.input_buffer[i] != '\n' && shell_state.input_buffer[i] != '\r' &&
+                    args_buffer_idx < MAX_ARGS_LENGTH - 1) {
+                    shell_state.args[args_idx][args_buffer_idx] = shell_state.input_buffer[i];
+                    args_buffer_idx++;
+                    i++;
+                }
+
+                if (args_buffer_idx > 0) {
+                    shell_state.args[args_idx][args_buffer_idx] = '\0'; // Null terminate
+                    args_buffer_idx = 0;
+                    args_idx++;
+                    args_used_amount++;
+                }
+
+                // skip whitespace
+                while (i < shell_state.input_length && shell_state.input_buffer[i] == ' ')
+                    i++;
+            }
+
+            if (args_used_amount == 0) {
+                echo(shell_state.input_buffer + text_start, text_length);
+            } else if (args_used_amount == 3 && 
+                       strcmp(shell_state.args[0], "|") == 0 &&
+                       strcmp(shell_state.args[1], "touch") == 0 ) {
+                // Special case for echo to file
+                shell_state.input_buffer[text_start + text_length] = '\0'; // Null terminate the echo text
+                touch(shell_state.args[2], shell_state.input_buffer + text_start, text_length);
+            } else {
+                print_string_colored("Usage: [echo <text>] or [echo <text> | touch <filename>]", COLOR_LIGHT_RED);
+                print_newline();
+            }
+
+            return;
+        }
             
 
         // skip the whitespaces to get to first args
@@ -716,10 +781,7 @@ void process_command() {
             help();
         } else if (strcmp("clear", shell_state.command) == 0) {
             clear();
-        } else if (strcmp("echo", shell_state.command) == 0) {
-            echo(shell_state.args[0]);
-        }
-        else if (strcmp("ls", shell_state.command) == 0) {
+        } else if (strcmp("ls", shell_state.command) == 0) {
             ls(shell_state.args[0]);
         }
         else if (strcmp("cd", shell_state.command) == 0) {
@@ -742,12 +804,32 @@ void process_command() {
                 print_string_colored("Usage: cat <filename>", COLOR_LIGHT_RED);
                 print_newline();
             }
-        } else if (strcmp("exit", shell_state.command) == 0) {
+        } else if (!strcmp("touch", shell_state.command)) {
+            if (args_used_amount > 0) {
+                touch(shell_state.args[0], NULL, 0);
+            } else {
+                print_string_colored("Usage: touch <filename>", COLOR_LIGHT_RED);
+                print_newline();
+            }
+        } else if (strcmp("show_color", shell_state.command) == 0) {
+            syscall(19, 0, 0, 0);
+        } else if (strcmp("rm", shell_state.command) == 0) {
+            rm(shell_state.args[0], shell_state.args[1], shell_state.args[2]);
+        } else if (strcmp("cp", shell_state.command) == 0) {
+            cp(shell_state.args[0], shell_state.args[1], shell_state.args[2], shell_state.args[3]);
+        } else if (strcmp("mv", shell_state.command) == 0) {
+            mv(shell_state.args[0], shell_state.args[1], shell_state.args[2]);
+        } else if (strcmp("cls", shell_state.command) == 0) {
+            clear();
+        }
+        else if (strcmp("exit", shell_state.command) == 0) {
             print_string_at_cursor("Goodbye!");
             print_newline();
             while (1) {}
         } else if (strcmp("apple", shell_state.command) == 0) {
             apple(&cursor);
+        } else if (strcmp("ikuyokita", shell_state.command) == 0) {
+            ikuyokita();
         } else if (strcmp("clock", shell_state.command) == 0) {
             exec("clock", DIR_INFO.dir[DIR_INFO.current_dir].inode);
         } else if (strcmp("ps", shell_state.command) == 0) {

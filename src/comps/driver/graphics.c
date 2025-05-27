@@ -328,6 +328,21 @@ void graphics_rect(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint
     }
 }
 
+void graphics_fill_screen_with_color() {
+    for (int i = 0; i < 256; i++) {
+        // width = 32
+        int col = i % 32;
+        int row = i / 32;
+
+        // Calculate the x and y position for the rectangle
+        uint16_t x = col * 10;
+        uint16_t y = row * 10;
+
+        // Fill the rectangle with the color
+        graphics_rect_fill(x, y, 10, 10, i);
+    }
+}
+
 void graphics_draw_cursor(void) {
     uint16_t x, y;
     graphics_get_cursor(&x, &y);

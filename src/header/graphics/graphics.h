@@ -119,6 +119,12 @@ void graphics_rect_fill(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
  */
 void graphics_rect(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t color);
 
+/**
+ * Fill the entire screen with all available colors
+ * 
+ * @param color Color value
+*/
+void graphics_fill_screen_with_color();
 
 /**
  * Draw the cursor at the current position

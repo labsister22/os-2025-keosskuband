@@ -88,6 +88,15 @@
     "process.h": "c",
     "exec.h": "c",
     "typeinfo": "c",
-    "text_encoding": "c"
+    "text_encoding": "c",
+    "ikuyokita.h": "c",
+    "rm.h": "c",
+    "find.h": "c",
+    "concepts": "c",
+    "type_traits": "c",
+    "new": "c",
+    "cat.h": "c",
+    "mv.h": "c",
+    "cp.h": "c"
   }
 }
