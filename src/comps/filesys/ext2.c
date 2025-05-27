@@ -207,7 +207,7 @@ void create_ext2(void) {
         }
         
         uint32_t base_block = (i == 0) ? 3 : group_start;
-        for (int j = 0; j < reserved_per_group; j++) {
+        for (uint32_t j = 0; j < reserved_per_group; j++) {
             uint32_t block_in_group = (base_block - group_start) + j;
             block_bitmap[block_in_group / 8] |= (1 << (block_in_group % 8));
         }
@@ -403,7 +403,7 @@ int8_t read(struct EXT2DriverRequest request) {
             }
             if (level2_block[level2_index] == 0) break;
 
-            int j = i + 1;
+            uint32_t j = i + 1;
             int j_relative = j - 140;
             uint32_t j_level1_index = j_relative / 127;
             uint32_t j_level2_index = j_relative % 127;
@@ -1152,4 +1152,30 @@ int8_t copy(struct EXT2DriverRequest *dest_request, struct EXT2DriverRequest *sr
     write_blocks(dest_dir_data, dest_parent_node.i_block[0], 1);
 
     return 0; // Success
+}
+
+uint32_t get_buffer_size(struct EXT2DriverRequest *request) {
+    struct EXT2Inode parent_node = load_inode(request->parent_inode);
+    if ((parent_node.i_mode & EXT2_S_IFDIR) == 0) return 0; // Not a directory
+
+    uint8_t dir_data[BLOCK_SIZE];
+    read_blocks(dir_data, parent_node.i_block[0], 1);
+
+    uint32_t offset = 0;
+    struct EXT2DirectoryEntry *entry = get_directory_entry(dir_data, offset);
+
+    while (offset < BLOCK_SIZE) {
+        if (entry->inode != 0 && entry->name_len == request->name_len &&
+            memcmp(entry->name, request->name, entry->name_len) == 0) {
+            break;
+        }
+        offset += entry->rec_len;
+        if (offset >= BLOCK_SIZE) break;
+        entry = get_directory_entry(dir_data, offset);
+    }
+
+    struct EXT2Inode target_node = load_inode(entry->inode);
+    return target_node.i_size;
+
+    return 0; // Not found
 }

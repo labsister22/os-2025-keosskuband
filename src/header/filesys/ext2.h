@@ -425,4 +425,10 @@ void allocate_node_blocks(void *ptr, struct EXT2Inode *node, uint32_t prefered_b
  */
 void sync_node(struct EXT2Inode *node, uint32_t inode);
 
+/**
+ * @brief get the size of the buffer of a entry with the given name
+ * @param request the EXT2DriverRequest that contains the name and parent inode
+ */
+uint32_t get_buffer_size(struct EXT2DriverRequest *request);
+
 #endif

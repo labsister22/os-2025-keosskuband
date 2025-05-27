@@ -9,6 +9,7 @@
 #include "header/memory/memory-manager.h"
 #include "header/process/process-commands/ps.h"
 #include "header/process/process-commands/exec.h"
+#include "header/process/process-commands/sleep.h"
 
 typedef struct {
     int32_t row;
@@ -156,6 +157,11 @@ void syscall(struct InterruptFrame frame) {
                 }
             }
             break;
+case SYSCALL_GET_BUFFER_SIZE:
+             *((int32_t*) frame.cpu.general.ecx) = get_buffer_size(
+                (struct EXT2DriverRequest*) frame.cpu.general.ebx
+            );
+            break;
         case SYSCALL_PS_CMD:
             ps((ProcessMetadata*) frame.cpu.general.ebx, (uint8_t) frame.cpu.general.ecx);
             break;
@@ -201,27 +207,23 @@ void syscall(struct InterruptFrame frame) {
             break;
         case SYSCALL_SLEEP:
             {
-                uint32_t sleep_ticks = (uint32_t) frame.cpu.general.ebx;
-                struct ProcessControlBlock* pcb = process_get_current_running_pcb_pointer();
+                int* sleep_time = (int*) frame.cpu.general.ebx;
+
+                // Create context from interrupt frame
+                struct Context ctx;
+                ctx.cpu = frame.cpu;
+                ctx.eip = frame.int_stack.eip;
+                ctx.eflags = frame.int_stack.eflags;
+                ctx.page_directory_virtual_addr = paging_get_current_page_directory_addr();
                 
-                if (pcb != NULL) {
-                    pcb->metadata.state = SLEEPING;
-                    pcb->sleep_ticks = sleep_ticks;
-                    
-                    // CRITICAL: Force context switch immediately after setting sleep
-                    // Save current context first
-                    struct Context ctx;
-                    ctx.cpu = frame.cpu;
-                    ctx.eip = frame.int_stack.eip;
-                    ctx.eflags = frame.int_stack.eflags;
-                    ctx.page_directory_virtual_addr = paging_get_current_page_directory_addr();
-                    
-                    // Save context to PCB
-                    pcb->context = ctx;
-                    
-                    // Force scheduler to switch to next process
-                    scheduler_switch_to_next_process();
-                }
+                // Save context
+                scheduler_save_context_to_current_running_pcb(ctx);
+                
+                //sleep
+                sleep(*sleep_time);
+
+                // switch
+                scheduler_switch_to_next_process();
             }
             break;
         case SYSCALL_HEAP_EXPAND:

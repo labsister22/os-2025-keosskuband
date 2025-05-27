@@ -24,14 +24,21 @@ void ls(char* str) {
 
     struct EXT2DirectoryEntry* entry = (struct EXT2DirectoryEntry*)request.buf;
 
+    char temp[1024];
     uint32_t offset = 0;
     while (offset < BLOCK_SIZE) {
         if (entry->file_type == EXT2_FT_DIR) {
-            print_string_colored(entry->name, COLOR_GREEN);
+            memcpy(temp, entry->name, entry->name_len);
+            temp[entry->name_len] = '\0';
+            print_string_colored(temp, COLOR_GREEN);
         } else if (entry->file_type == EXT2_FT_REG_FILE) {
-            print_string_colored(entry->name, COLOR_WHITE);
+            memcpy(temp, entry->name, entry->name_len);
+            temp[entry->name_len] = '\0'; 
+            print_string_colored(temp, COLOR_WHITE);
         } else {
-            print_string_colored(entry->name, COLOR_LIGHT_GRAY);
+            memcpy(temp, entry->name, entry->name_len);
+            temp[entry->name_len] = '\0';
+            print_string_colored(temp, COLOR_LIGHT_GRAY);
         }
         cursor.row++;
         cursor.col = 0;

@@ -67,6 +67,16 @@ int main(int argc, char *argv[]) {
     printf("Filename       : %s\n", name);
     uint8_t *read_buffer = malloc(32*1024*1024);
 
+
+    /* always try to make a directory first */
+    request.buf = NULL; 
+    request.name = "misc";
+    request.parent_inode = 1;
+    request.buffer_size = 0;
+    request.name_len = 4;
+    request.is_directory = true;
+    write(&request);
+
     request.buf = file_buffer;
     request.buffer_size = filesize;
     request.name = name;
@@ -99,12 +109,12 @@ int main(int argc, char *argv[]) {
     if (!memcmp(argv[1], "apple", 5)) {
         request.buf = apple_frames;
         request.name = "apple";
-        request.parent_inode = 1;
+        request.parent_inode = 2;
         request.buffer_size = 1095*512;
         request.name_len = 5;
         request.is_directory = false;
     }
-    if (!memcmp(argv[1], "ikuyokita", 9)) {
+    if (!memcmp(argv[1], "ikuyokita", 9) && strlen(argv[1]) == 9) {
         // 44 frames, split into 11 files: 4 frames each (last file has 4 frames)
         int frame_counts[11] = {4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
         int frame_starts[11] = {0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40};
@@ -117,7 +127,7 @@ int main(int argc, char *argv[]) {
         for (int i = 0; i < 11; i++) {
             request.buf = ikuyokita_frames[frame_starts[i]];
             request.name = names[i];
-            request.parent_inode = 1;
+            request.parent_inode = 2;
             request.buffer_size = frame_counts[i]*200*512;
             request.name_len = name_lens[i];
             request.is_directory = false;

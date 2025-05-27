@@ -6,7 +6,15 @@
 #include "header/stdlib/string.h"
 
 // Static variables for Round Robin scheduling
-static uint32_t current_process_idx = 0;
+uint32_t current_process_idx = 0;
+
+// ni punya jibril nyoba nyoba
+typedef unsigned long long int lluint;
+struct SleepManagerState sleep_manager = {
+    .tail = -1
+};
+lluint time_since_running = 0;
+
 
 void activate_timer_interrupt(void) {
     __asm__ volatile("cli");
@@ -35,6 +43,7 @@ void timer_isr(struct InterruptFrame frame) {
     pic_ack(IRQ_TIMER);
 
     // switch process
+    time_since_running += PIT_TIMER_FREQUENCY / 1000;
     scheduler_switch_to_next_process();
 }
 
@@ -91,18 +100,19 @@ __attribute__((noreturn)) void scheduler_switch_to_next_process(void) {
     uint32_t next_process_idx = current_process_idx;
     bool found_next = false;
     
-    for (uint32_t i = 0; i < PROCESS_COUNT_MAX; i++) {
-        if (process_manager_state._process_used[i] && 
-            _process_list[i].metadata.state == SLEEPING) {
-            if (_process_list[i].sleep_ticks > 0) {
-                _process_list[i].sleep_ticks--;
-                // Wake up process if sleep time is over
-                if (_process_list[i].sleep_ticks == 0) {
-                    _process_list[i].metadata.state = READY;
-                }
-            }
+    // wakeup if slept long enough
+    for (uint32_t i = 0; i < sleep_manager.sleep_process_count; i++) {
+        uint32_t idx = sleep_manager.head + i;
+        if (sleep_manager.wakeup_time[idx] <= time_since_running) {
+            _process_list[sleep_manager.sleep_queue_pid[idx]].metadata.state = READY;
+            sleep_manager.head = (sleep_manager.head + 1) % PROCESS_COUNT_MAX;
+            sleep_manager.sleep_process_count--;
         }
-    }
+        else {
+            // as its a sorted list if this one not waking up the next one doesnt as well
+            break;
+        }
+    }   
 
     // Round Robin: search for next READY process
     uint32_t search_start = current_process_idx;

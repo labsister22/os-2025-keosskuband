@@ -26,14 +26,17 @@
 #define COLOR_YELLOW      0x0E
 #define COLOR_WHITE       0x0F
 
-// Additional constants and structures
 #define MAX_INPUT_LENGTH 2048
 #define MAX_ARGS_AMOUNT 10
 #define MAX_ARGS_LENGTH 32
+#define MAX_PATH_LENGTH 256
 #define SHELL_PROMPT "Keossku-Band"
 #define SCREEN_WIDTH 64
 #define SCREEN_HEIGHT 25
 #define MAX_HISTORY_ENTRIES 20
+
+// ni punya jibril nyoba nyoba
+typedef unsigned long long int lluint;
 
 typedef struct {
     int32_t row;
@@ -55,6 +58,27 @@ typedef struct {
     int current_dir;
     dir_info dir[50];
 } absolute_dir_info;
+
+typedef enum {
+    COMPLETION_COMMAND,
+    COMPLETION_FLAG,
+    COMPLETION_FILE,
+    COMPLETION_DIRECTORY,
+    COMPLETION_PATH,
+    COMPLETION_PIPELINE,
+    COMPLETION_RELATIVE_PATH
+} completion_context_t;
+
+typedef struct {
+    completion_context_t context;
+    char command[MAX_ARGS_LENGTH];
+    char current_word[MAX_COMPLETION_LENGTH];
+    char path_prefix[MAX_PATH_LENGTH];
+    int word_start;
+    bool after_pipeline;
+    bool is_flag;
+    bool is_path;
+} completion_context;
 
 // Completion structures
 typedef struct {
@@ -91,23 +115,23 @@ extern absolute_dir_info DIR_INFO;
 
 void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx);
 
-// output commands
+// Output commands
 void print_string_at_cursor(const char* str);
 void print_string_colored(const char* str, uint8_t color);
 void print_newline();
 void set_hardware_cursor();
 
-// history
+// History functions
 void add_to_history(const char* command);
 void load_history_entry(int index);
 void handle_up_arrow();
 void handle_down_arrow();
 
-// misc
+// Misc utility functions
 void update_cursor_row_col();
 void print_prompt();
 
-// Additional function declarations
+// Input buffer and display functions
 void clear_input_buffer();
 void redraw_input_line();
 void show_cursor();
@@ -134,12 +158,47 @@ void graphics_set_cursor_colors_syscall(uint8_t fg_color, uint8_t bg_color);
 // Command processing
 void process_command();
 
-// Tab completion functions
+// Enhanced tab completion functions
 void handle_tab_completion();
+completion_context analyze_completion_context();
 void find_command_completions(const char* prefix);
+void find_flag_completions(const char* command, const char* prefix);
 void find_file_completions(const char* command, const char* prefix);
+void find_directory_completions(const char* prefix);
+void find_path_completions(const char* path_input);
+void find_pipeline_completions(const char* prefix);
+void find_smart_file_completions(const char* command, const char* prefix);
 void apply_current_completion();
 void reset_completion_state();
 bool starts_with(const char* str, const char* prefix);
+
+typedef enum {
+    ARG_NONE,           // No arguments needed
+    ARG_TEXT,           // Free text/string (no completion)
+    ARG_INTEGER,        // Integer value (no completion)
+    ARG_NEW_NAME,       // New file/directory name (no completion)
+    ARG_EXISTING_FILE,  // Existing file (file completion)
+    ARG_EXISTING_DIR,   // Existing directory (directory completion)
+    ARG_EXISTING_ANY,   // Existing file or directory
+    ARG_MIXED           // Special handling needed
+} arg_type_t;
+
+arg_type_t get_command_arg_type(const char* command, int arg_position);
+int get_current_arg_position(const char* command);
+
+// Path utility functions
+bool is_absolute_path(const char* path);
+bool is_relative_path(const char* path);
+void normalize_path(const char* input_path, char* output_path);
+void split_path(const char* path, char* directory, char* filename);
+uint32_t resolve_path_inode(const char* path);
+bool flag_already_exists(const char* flag);
+
+// String utility functions
+char* strchr_local(const char* str, int c);
+void strcat_local(char* dest, const char* src);
+
+// External function from cd.c
+extern void cd_root();
 
 #endif

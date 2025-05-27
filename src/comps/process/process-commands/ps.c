@@ -1,4 +1,5 @@
 #include "header/process/process-commands/ps.h"
+#include "header/stdlib/string.h"
 #include "header/process/process.h"
 
 void ps(ProcessMetadata* info, uint8_t idx) {

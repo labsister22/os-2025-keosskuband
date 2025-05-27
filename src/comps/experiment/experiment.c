@@ -1,6 +1,18 @@
-#include "header/usermode/commands/ikuyokita.h"
+#include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include "header/stdlib/string.h"
+#include "header/filesys/ext2.h"
 
-void ikuyokita() {
+void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
+    __asm__ volatile("mov %0, %%ebx" : : "r"(ebx));
+    __asm__ volatile("mov %0, %%ecx" : : "r"(ecx));
+    __asm__ volatile("mov %0, %%edx" : : "r"(edx));
+    __asm__ volatile("mov %0, %%eax" : : "r"(eax));
+    __asm__ volatile("int $0x30");
+}
+
+int main() {
   int FRAME_COUNT = 44;
   int FRAME_PER_SEGMENT = 4;
 

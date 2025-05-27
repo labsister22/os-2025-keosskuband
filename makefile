@@ -34,6 +34,10 @@ clean:
 	rm -rf $(OUTPUT_FOLDER)/clock
 	rm -rf $(OUTPUT_FOLDER)/*.bin
 	rm -rf $(OUTPUT_FOLDER)/*.txt
+	rm -rf $(OUTPUT_FOLDER)/experiment
+	rm -rf $(OUTPUT_FOLDER)/shell_elf
+	rm -rf $(OUTPUT_FOLDER)/clock_elf
+	rm -rf $(OUTPUT_FOLDER)/experiment_elf
 
 kernel:
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/kernel-entrypoint.s -o $(OUTPUT_FOLDER)/kernel-entrypoint.o
@@ -57,6 +61,7 @@ kernel:
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/process/process.c -o $(OUTPUT_FOLDER)/process.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/process/process-commands/ps.c -o $(OUTPUT_FOLDER)/ps.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/process/process-commands/exec.c -o $(OUTPUT_FOLDER)/exec.o
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/process/process-commands/sleep.c -o $(OUTPUT_FOLDER)/sleep.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/comps/scheduler/scheduler.c -o $(OUTPUT_FOLDER)/scheduler.o
 
 	
@@ -97,6 +102,7 @@ user-shell:
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/usermode/commands/touch.c -o touch.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/stdlib/string.c -o string.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/stdlib/strops.c -o strops.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/stdlib/sleep.c -o sleep.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/usermode/commands/apple.c -o apple.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/usermode/commands/ps.c -o ps.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/usermode/commands/kill.c -o kill.o
@@ -106,11 +112,11 @@ user-shell:
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/usermode/commands/cp.c -o cp.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/usermode/commands/mv.c -o mv.o
 	@$(LIN) -T $(SOURCE_FOLDER)/comps/usermode/user-linker.ld -melf_i386 --oformat=binary \
-		crt0.o user-shell.o string.o help.o clear.o echo.o apple.o cd.o ls.o mkdir.o find.o \
+		crt0.o user-shell.o string.o help.o clear.o echo.o apple.o sleep.o cd.o ls.o mkdir.o find.o \
 		cat.o strops.o ps.o kill.o exec.o touch.o ikuyokita.o rm.o cp.o mv.o -o $(OUTPUT_FOLDER)/shell
 	@echo Linking object shell object files and generate flat binary...
 	@$(LIN) -T $(SOURCE_FOLDER)/comps/usermode/user-linker.ld -melf_i386 --oformat=elf32-i386 \
-		crt0.o user-shell.o string.o help.o clear.o echo.o apple.o cd.o ls.o mkdir.o find.o \
+		crt0.o user-shell.o string.o help.o clear.o echo.o apple.o sleep.o cd.o ls.o mkdir.o find.o \
 		cat.o strops.o ps.o kill.o exec.o touch.o ikuyokita.o rm.o cp.o mv.o -o $(OUTPUT_FOLDER)/shell_elf
 	@echo Linking object shell object files and generate ELF32 for debugging...
 	@size --target=binary $(OUTPUT_FOLDER)/shell
@@ -130,6 +136,20 @@ user-clock:
 	@size --target=binary $(OUTPUT_FOLDER)/clock
 	@rm -f *.o
 
+user-experiment:
+	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/comps/experiment/crt0-c.s -o crt0-c.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/experiment/experiment.c -o experiment.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/stdlib/strops.c -o strops-c.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/stdlib/string.c -o string-c.o
+	@$(LIN) -T $(SOURCE_FOLDER)/comps/experiment/experiment-linker.ld -melf_i386 --oformat=binary \
+		crt0-c.o experiment.o strops-c.o string-c.o -o $(OUTPUT_FOLDER)/experiment
+	@echo Linking experiment object files and generate flat binary...
+	@$(LIN) -T $(SOURCE_FOLDER)/comps/experiment/experiment-linker.ld -melf_i386 --oformat=elf32-i386 \
+		crt0-c.o experiment.o strops-c.o string-c.o -o $(OUTPUT_FOLDER)/experiment_elf
+	@echo Linking experiment object files and generate ELF32 for debugging...
+	@size --target=binary $(OUTPUT_FOLDER)/experiment
+	@rm -f *.o
+
 insert-shell: inserter user-shell
 	@echo Inserting shell into root directory...
 	@cd $(OUTPUT_FOLDER); ./inserter shell 1 $(DISK_NAME).bin
@@ -137,6 +157,10 @@ insert-shell: inserter user-shell
 insert-clock: inserter user-clock
 	@echo Inserting clock into root directory...
 	@cd $(OUTPUT_FOLDER); ./inserter clock 1 $(DISK_NAME).bin
+
+insert-experiment: inserter user-experiment
+	@echo Inserting clock into root directory...
+	@cd $(OUTPUT_FOLDER); ./inserter experiment 1 $(DISK_NAME).bin
 
 insert-apple: inserter
 	@echo Inserting apple into root directory...
@@ -146,5 +170,5 @@ insert-ikuyokita: inserter
 	@echo Inserting ikuyokita into root directory...
 	@cd $(OUTPUT_FOLDER); ./inserter ikuyokita 1 $(DISK_NAME).bin
 
-test: clean disk insert-shell insert-clock insert-apple insert-ikuyokita
+init: clean disk insert-shell insert-clock insert-experiment insert-apple insert-ikuyokita 
 # test: clean disk insert-shell insert-clock

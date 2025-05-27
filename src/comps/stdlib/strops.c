@@ -8,6 +8,7 @@ int strlen(char str[]){
     return counter;
 }
 
+
 void int_toString(int x, char str[]){
     int i = 0;
     int negative = 0;
