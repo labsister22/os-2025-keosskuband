@@ -1345,7 +1345,7 @@ void process_command() {
                 };
                 
                 int size = 0;
-                syscall(19, (uint32_t)&request, (uint32_t)&size, 0);
+                syscall(21, (uint32_t)&request, (uint32_t)&size, 0);
 
                 print_string_colored("Size of '", COLOR_LIGHT_CYAN);
                 print_string_colored(shell_state.args[0], COLOR_WHITE);
