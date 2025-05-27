@@ -1,5 +1,7 @@
 #include "header/usermode/user-shell.h"
 #include "header/usermode/commands/mv.h"
+#include "header/stdlib/string.h"
+#include "header/stdlib/strops.h"
 
 void mv(char *src, char* dest, char* dump) {
   if (dump != NULL && *dump != '\0') {

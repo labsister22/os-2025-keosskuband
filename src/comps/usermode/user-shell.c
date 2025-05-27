@@ -846,17 +846,17 @@ void process_command() {
                 int sleep_time;
                 str_to_int(shell_state.args[0], &sleep_time);
                 if (sleep_time > 0) {
-                    syscall(35, sleep_time * 1000, 0, 0); // Sleep for specified seconds
+                    syscall(35, (uint32_t) &sleep_time, 0, 0); // Sleep for specified seconds
                     print_string_colored("Slept for ", COLOR_LIGHT_GREEN);
                     print_string_colored(shell_state.args[0], COLOR_LIGHT_GREEN);
-                    print_string_colored(" seconds.", COLOR_LIGHT_GREEN);
+                    print_string_colored(" milliseconds.", COLOR_LIGHT_GREEN);
                     print_newline();
                 } else {
                     print_string_colored("Invalid sleep time.", COLOR_LIGHT_RED);
                     print_newline();
                 }
             } else {
-                print_string_colored("Usage: sleep <seconds>", COLOR_LIGHT_RED);
+                print_string_colored("Usage: sleep <milliseconds>", COLOR_LIGHT_RED);
                 print_newline();
             }
         }else {

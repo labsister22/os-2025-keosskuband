@@ -38,7 +38,7 @@ void puts(char *buf, int size, int row, int col) {
     }
 }
 
-void put_char(char *buf, int size, int row, int col) {
+void put_char(char *buf, int row, int col) {
     framebuffer_write(row, col, *buf, 0xF, 0);
 }
 

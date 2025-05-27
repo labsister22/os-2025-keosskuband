@@ -207,7 +207,7 @@ void create_ext2(void) {
         }
         
         uint32_t base_block = (i == 0) ? 3 : group_start;
-        for (int j = 0; j < reserved_per_group; j++) {
+        for (uint32_t j = 0; j < reserved_per_group; j++) {
             uint32_t block_in_group = (base_block - group_start) + j;
             block_bitmap[block_in_group / 8] |= (1 << (block_in_group % 8));
         }
@@ -403,7 +403,7 @@ int8_t read(struct EXT2DriverRequest request) {
             }
             if (level2_block[level2_index] == 0) break;
 
-            int j = i + 1;
+            uint32_t j = i + 1;
             int j_relative = j - 140;
             uint32_t j_level1_index = j_relative / 127;
             uint32_t j_level2_index = j_relative % 127;

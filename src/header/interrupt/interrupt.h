@@ -202,5 +202,7 @@ struct TSSEntry {
 // Set kernel stack in TSS
 void set_tss_kernel_current_stack(void);
 
+// jibril ngide
+typedef unsigned long long int lluint;
 
 #endif

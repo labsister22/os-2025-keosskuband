@@ -65,8 +65,7 @@ typedef enum PROCESS_STATE {
     READY,
     RUNNING,
     TERMINATED,
-    SLEEPING,
-
+    SLEEPING
 } PROCESS_STATE;
 
 /**
@@ -89,7 +88,6 @@ struct ProcessControlBlock {
         void     *virtual_addr_used[PROCESS_PAGE_FRAME_COUNT_MAX];
         uint32_t page_frame_used_count;
     } memory;
-    uint32_t sleep_ticks;
 };
 
 /**

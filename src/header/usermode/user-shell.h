@@ -35,6 +35,9 @@
 #define SCREEN_HEIGHT 25
 #define MAX_HISTORY_ENTRIES 20
 
+// ni punya jibril nyoba nyoba
+typedef unsigned long long int lluint;
+
 typedef struct {
     int32_t row;
     int32_t col;
