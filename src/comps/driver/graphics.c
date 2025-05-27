@@ -398,6 +398,29 @@ void graphics_scroll(uint16_t lines, uint8_t fill_color) {
         return;
     }
     
+    if (lines > 1) {
+        uint16_t clock_pixel_x = 56 * 5;  // col * 5 (character width)
+        uint16_t clock_pixel_y = 24 * 8;  // row * 8 (character height)
+        
+        // Clear 8-character wide area (for "HH:MM:SS")
+        for (int char_offset = 0; char_offset < 8; char_offset++) {
+            uint16_t char_x = clock_pixel_x + (char_offset * 5);
+            
+            // Clear 5x8 pixel area for each character
+            for (int px = 0; px < 5; px++) {
+                for (int py = 0; py < 8; py++) {
+                    uint16_t pixel_x = char_x + px;
+                    uint16_t pixel_y = clock_pixel_y + py;
+                    
+                    // Clear pixel to background color
+                    if (pixel_x < VGA_WIDTH && pixel_y < VGA_HEIGHT) {
+                        graphics_pixel(pixel_x, pixel_y, fill_color);
+                    }
+                }
+            }
+        }
+    }
+    
     uint32_t pixels_per_line = VGA_WIDTH;
     uint32_t total_pixels_to_move = pixels_per_line * (VGA_HEIGHT - lines);
     uint32_t source_offset = pixels_per_line * lines;

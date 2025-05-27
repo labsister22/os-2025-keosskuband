@@ -25,8 +25,11 @@ struct Time {
     uint16_t year;
 };
 
+// Clock constants
 #define CLOCK_ROW 24
 #define CLOCK_COL 56
+#define SCREEN_WIDTH 64
+#define SCREEN_HEIGHT 25
 
 void format_two_digits(uint8_t num, char* str) {
     str[0] = '0' + (num / 10);
@@ -44,8 +47,23 @@ void print_at_position(const char* str, int row, int col, uint8_t color) {
 }
 
 void clear_clock_area() {
-    char spaces[] = "                    ";
-    print_at_position(spaces, CLOCK_ROW, CLOCK_COL, 0x00);
+    char spaces[] = "        ";
+    CP pos = {24, 56}; // CLOCK_ROW = 24, CLOCK_COL = 56
+    
+    for (int i = 0; i < 8; i++) {
+        CP current_pos = {pos.row, pos.col + i};
+        char space = ' ';
+        syscall(5, (uint32_t)&space, 0x00, (uint32_t)&current_pos);
+    }
+}
+
+void draw_clock_with_priority(const char* time_str) {
+    CP pos = {24, 56}; // CLOCK_ROW = 24, CLOCK_COL = 56
+    
+    for (int i = 0; i < 8 && time_str[i] != '\0'; i++) {
+        CP current_pos = {pos.row, pos.col + i};
+        syscall(5, (uint32_t)&time_str[i], 0x0E, (uint32_t)&current_pos);
+    }
 }
 
 bool is_leap_year(uint16_t year) {
@@ -86,7 +104,7 @@ int main(void) {
     
     memset(&last_time, 0xFF, sizeof(struct Time));
 
-    //syscall(7, 0, 0, 0);
+    syscall(7, 0, 0, 0);
     
     while (true) {
         memset(&current_time, 0x0, sizeof(struct Time));
@@ -108,8 +126,7 @@ int main(void) {
             format_two_digits(current_time.second, &time_str[6]);
             time_str[8] = '\0';
             
-            clear_clock_area();
-            print_at_position(time_str, CLOCK_ROW, CLOCK_COL, 0x0E);
+            draw_clock_with_priority(time_str);
             
             last_time = current_time;
         }
