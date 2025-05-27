@@ -89,7 +89,7 @@ kernel:
 	@$(LIN) $(LFLAGS) $(OUTPUT_FOLDER)/*.o -o $(OUTPUT_FOLDER)/kernel
 	@echo "Kernel linked successfully."
 
-	@rm -f *.o
+	# @rm -f *.o
 
 # Separate doom target that depends on kernel objects
 doom: kernel $(DOOM_OBJ)
