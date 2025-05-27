@@ -47,7 +47,7 @@ static CompletionState completion_state = {
 
 static const char* command_list[] = {
     "help", "clear", "echo", "ls", "cd", "mkdir", "find", "cat", 
-    "exit", "apple", "touch", "rm", "cp", "mv", "ps", 
+    "exit", "apple", "touch", "rm", "cp", "mv", "ps", "size",
     "kill", "exec", "ikuyokita", "show_color", "sleep", NULL
 };
 
