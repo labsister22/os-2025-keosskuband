@@ -24,30 +24,30 @@ typedef struct {
 
 void syscall(struct InterruptFrame frame) {
     switch (frame.cpu.general.eax) {
-        case 0:
+        case SYSCALL_READ:
             *((int8_t*) frame.cpu.general.ecx) = read(
                 *(struct EXT2DriverRequest*) frame.cpu.general.ebx
             );
             break;
-        case 1:
+        case SYSCALL_READ_DIR:
             *((int8_t*) frame.cpu.general.ecx) = read_directory(
                 (struct EXT2DriverRequest*) frame.cpu.general.ebx
             );
             break; 
-        case 2:  
+        case SYSCALL_WRITE:  
             *((int8_t*) frame.cpu.general.ecx) = write(
                 (struct EXT2DriverRequest*) frame.cpu.general.ebx
             );
             break;
-        case 3:
+        case SYSCALL_DELETE:
             *((int8_t*) frame.cpu.general.ecx) = delete(
                 *(struct EXT2DriverRequest*) frame.cpu.general.ebx
             );
             break;
-        case 4:
+        case SYSCALL_KEYBOARD:
             get_keyboard_buffer((char*) frame.cpu.general.ebx);
             break;
-        case 5:
+        case SYSCALL_GRAPHICS_CHAR:
             // 1 character writing
             char ch = *((char*) frame.cpu.general.ebx);
             uint8_t color = frame.cpu.general.ecx;
@@ -61,7 +61,7 @@ void syscall(struct InterruptFrame frame) {
                 COLOR_BLACK
             );
             break;
-        case 6:
+        case SYSCALL_GRAPHICS_STR:
             char* str = (char*) frame.cpu.general.ebx;
             int size = frame.cpu.general.ecx;
             int row = ((CP*) frame.cpu.general.edx)->row;
@@ -83,16 +83,16 @@ void syscall(struct InterruptFrame frame) {
             }
 
             break;
-        case 7: 
+        case SYSCALL_ACT_KEYBOARD: 
             keyboard_state_activate();
             break;
-        case 8:
+        case SYSCALL_SET_CURSOR:
             graphics_set_cursor(
                 (uint16_t) frame.cpu.general.ebx, 
                 (uint16_t) frame.cpu.general.ecx
             );
             break;
-        case 9:
+        case SYSCALL_PRINT_COLOR:
             graphics_char(
                 ((CP*) frame.cpu.general.edx)->col * 5, 
                 ((CP*) frame.cpu.general.edx)->row * 8, 
@@ -101,50 +101,50 @@ void syscall(struct InterruptFrame frame) {
                 ((PrintRequest*) frame.cpu.general.ecx)->bg_color
             );
             break;
-        case 10: 
+        case SYSCALL_DRAW_CURSOR: 
             graphics_draw_cursor();
             break;
-        case 11: 
+        case SYSCALL_ERASE_CURSOR: 
             graphics_erase_cursor();
             break;
-        case 12: 
+        case SYSCALL_STORE_CHAR: 
             graphics_store_char_at_cursor((char)frame.cpu.general.ebx);
             graphics_set_cursor_colors(
                 (uint8_t)frame.cpu.general.ecx,
                 COLOR_BLACK                       
             );
             break;
-        case 14: 
+        case SYSCALL_CURSOR_BLINK: 
             graphics_blink_cursor();
             break;
-        case 15: 
+        case SYSCALL_CURSOR_COLOR: 
             graphics_set_cursor_colors(
                 (uint8_t)frame.cpu.general.ebx,  
                 (uint8_t)frame.cpu.general.ecx   
             );
             break;
-        case 16:
+        case SYSCALL_GRAPHICS_PIXEL:
             graphics_pixel(
                 (uint16_t)frame.cpu.general.ebx, 
                 (uint16_t)frame.cpu.general.ecx, 
                 (uint8_t)frame.cpu.general.edx
             );
         break;
-        case 17:
+        case SYSCALL_GRAPHICS_CLEAR:
             graphics_clear(
                 (uint8_t)frame.cpu.general.ebx
             );
             break;
-        case 18:
+        case SYSCALL_GRAPHICS_SCROLL:
             graphics_scroll(
                 (uint8_t)frame.cpu.general.ebx, 
                 (uint8_t)frame.cpu.general.ecx
             );
             break;
-        case 19:
+        case SYSCALL_FILL_SCREEN:
             graphics_fill_screen_with_color();
             break;
-        case 20:
+        case SYSCALL_RENDER_FRAME:
             char* frame_buffer = (char*) frame.cpu.general.ebx;
             int buffer_width = (int) frame.cpu.general.edx;
             int offset = 0;
@@ -173,7 +173,7 @@ void syscall(struct InterruptFrame frame) {
                 (int32_t*) frame.cpu.general.edx
             );
             break;
-        case 34: // CMOS Read Time syscall
+        case SYSCALL_GET_TIME: // CMOS Read Time syscall
             {
                 // Define TimeInfo structure matching clock.c
                 struct {
