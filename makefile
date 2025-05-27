@@ -20,6 +20,14 @@ CFLAGS        = $(DEBUG_CFLAG) $(WARNING_CFLAG) $(STRIP_CFLAG) -m32 -c -I$(SOURC
 AFLAGS        = -f elf32 -g -F dwarf
 LFLAGS        = -T $(SOURCE_FOLDER)/linker.ld -melf_i386
 
+# DOOM File
+DOOM_SRC := $(wildcard src/misc/doom/*.c)
+DOOM_OBJ := $(patsubst src/misc/doom/%.c, $(OUTPUT_FOLDER)/doom/%.o, $(DOOM_SRC))
+
+$(OUTPUT_FOLDER)/doom/%.o: src/misc/doom/%.c
+	@mkdir -p $(OUTPUT_FOLDER)/doom
+	$(CC) $(CFLAGS) -c $< -o $@
+
 
 run: all
 	@qemu-system-i386 -s -m 1024M -drive file=bin/storage.bin,format=raw,if=ide,index=0,media=disk -cdrom $(OUTPUT_FOLDER)/$(ISO_NAME).iso
@@ -172,3 +180,10 @@ insert-ikuyokita: inserter
 
 init: clean disk insert-shell insert-clock insert-experiment insert-apple insert-ikuyokita 
 # test: clean disk insert-shell insert-clock
+
+doom: $(DOOM_OBJ)
+	$(CC) $(CFLAGS) $(DOOM_OBJ) -o $(OUTPUT_FOLDER)/doomgeneric $(LIBS)
+
+insert-doom: doom
+	@echo Inserting Doom executable into root directory...
+	@cd $(OUTPUT_FOLDER); ./inserter doomgeneric 1 $(DISK_NAME).bin

@@ -1,9 +1,11 @@
 #include "doomkeys.h"
 #include "doomgeneric.h"
+#include "header/graphics/graphics.h"
+#include "header/stdlib/sleep.h"
+#include "header/scheduler/scheduler.h"
 
+#define COLOR_BLACK       0x00
 #define KEYQUEUE_SIZE 16
-static uint64_t doom_start_time;
-static int framebuffer_fd, async_serial_fd;
 static unsigned short s_KeyQueue[KEYQUEUE_SIZE];
 static unsigned int s_KeyQueueWriteIndex = 0;
 static unsigned int s_KeyQueueReadIndex = 0;
@@ -61,18 +63,25 @@ static void addKeyToQueue(int pressed, unsigned int keyCode) {
 }
 
 void DG_Init() {
-    
+    //clear screen
+    graphics_clear(COLOR_BLACK);
+    return;
 }
 
 void DG_DrawFrame() {
-    
+    for(int i = 0 ; i < VGA_HEIGHT * VGA_WIDTH; i++) {
+        VGA_MEMORY[i] = DG_ScreenBuffer[i];
+    }
+    return;
 }
 
 void DG_SleepMs(uint32_t ms) {
+    sleep(ms);
+    return;
 }
 
 uint32_t DG_GetTicksMs() {
-    
+    return time_since_running;
 }
 
 int DG_GetKey(int *pressed, unsigned char *doomKey) {
@@ -96,11 +105,7 @@ int DG_GetKey(int *pressed, unsigned char *doomKey) {
     }
 }
 
-void DG_SetWindowTitle(const char *title) {
-}
-
 int main(int argc, char **argv) {
-    doom_start_time = time();
     doomgeneric_Create(argc, argv);
     for (int i = 0; ; i++)
         doomgeneric_Tick();
