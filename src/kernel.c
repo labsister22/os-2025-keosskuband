@@ -70,16 +70,14 @@ void boot_animation(void) {
 
             for (int j = 0; j < FRAME_PER_SEGMENT; j++) {
                 for (int y = 0; y < 200 && y < VGA_HEIGHT; y++) {
+                    int data_index = 512*y;
                     for (int x = 0; x < 320 && x < VGA_WIDTH; x++) {
-                        int data_index = y * 512 + x;
-                        if (data_index < 200 * 512) {
-                            uint8_t pixel_color = ikuyokita_frames[j][data_index];
-                            graphics_pixel(x, y, pixel_color);
-                        }
+                        graphics_pixel(x, y, ikuyokita_frames[j][data_index]);
+                        data_index++;
                     }
                 }
                 
-                for (volatile int delay = 0; delay < 300000; delay++);
+                //for (volatile int delay = 0; delay < 300000; delay++);
 
                 char skip_key = 0;
                 get_keyboard_buffer(&skip_key);

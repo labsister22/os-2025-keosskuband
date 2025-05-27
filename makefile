@@ -111,13 +111,14 @@ user-shell:
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/usermode/commands/rm.c -o rm.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/usermode/commands/cp.c -o cp.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/usermode/commands/mv.c -o mv.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/usermode/commands/torus.c -o torus.o
 	@$(LIN) -T $(SOURCE_FOLDER)/comps/usermode/user-linker.ld -melf_i386 --oformat=binary \
 		crt0.o user-shell.o string.o help.o clear.o echo.o apple.o sleep.o cd.o ls.o mkdir.o find.o \
-		cat.o strops.o ps.o kill.o exec.o touch.o ikuyokita.o rm.o cp.o mv.o -o $(OUTPUT_FOLDER)/shell
+		cat.o strops.o ps.o kill.o exec.o touch.o ikuyokita.o rm.o cp.o mv.o torus.o -o $(OUTPUT_FOLDER)/shell
 	@echo Linking object shell object files and generate flat binary...
 	@$(LIN) -T $(SOURCE_FOLDER)/comps/usermode/user-linker.ld -melf_i386 --oformat=elf32-i386 \
 		crt0.o user-shell.o string.o help.o clear.o echo.o apple.o sleep.o cd.o ls.o mkdir.o find.o \
-		cat.o strops.o ps.o kill.o exec.o touch.o ikuyokita.o rm.o cp.o mv.o -o $(OUTPUT_FOLDER)/shell_elf
+		cat.o strops.o ps.o kill.o exec.o touch.o ikuyokita.o rm.o cp.o mv.o torus.o -o $(OUTPUT_FOLDER)/shell_elf
 	@echo Linking object shell object files and generate ELF32 for debugging...
 	@size --target=binary $(OUTPUT_FOLDER)/shell
 	@rm -f *.o

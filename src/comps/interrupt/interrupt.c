@@ -150,14 +150,17 @@ void syscall(struct InterruptFrame frame) {
             char* frame_buffer = (char*) frame.cpu.general.ebx;
             int buffer_width = (int) frame.cpu.general.edx;
             int offset = 0;
+            int index_data;
             for (int i = 0; i < 200; i++) {
+                index_data = i * buffer_width;
                 for (int j = 0; j < 320; j++) {
-                   VGA_MEMORY[offset] = frame_buffer[i * buffer_width + j];
-                   offset++;
+                    VGA_MEMORY[offset] = frame_buffer[index_data];
+                    offset++;
+                    index_data++;
                 }
             }
             break;
-case SYSCALL_GET_BUFFER_SIZE:
+        case SYSCALL_GET_BUFFER_SIZE:
              *((int32_t*) frame.cpu.general.ecx) = get_buffer_size(
                 (struct EXT2DriverRequest*) frame.cpu.general.ebx
             );
@@ -226,6 +229,29 @@ case SYSCALL_GET_BUFFER_SIZE:
                 scheduler_switch_to_next_process();
             }
             break;
+        case SYSCALL_GRAPHICS_LINE:
+            {
+                // Draw line: ebx = x1, ecx = y1, edx = packed x2/y2, esi = color
+                uint16_t x1 = (uint16_t)frame.cpu.general.ebx;
+                uint16_t y1 = (uint16_t)frame.cpu.general.ecx;
+                uint32_t packed_coords = frame.cpu.general.edx;
+                uint16_t x2 = (packed_coords >> 16) & 0xFFFF;
+                uint16_t y2 = packed_coords & 0xFFFF;
+                uint8_t color = (uint8_t)frame.cpu.index.esi;
+                
+                graphics_line(x1, y1, x2, y2, color);
+            }
+            break;
+        case SYSCALL_GRAPHICS_CIRCLE:
+        {
+            uint16_t center_x = (uint16_t)frame.cpu.general.ebx;
+            uint16_t center_y = (uint16_t)frame.cpu.general.ecx;
+            uint16_t radius = (uint16_t)frame.cpu.general.edx;
+            uint8_t color = (uint8_t)frame.cpu.index.esi;
+            
+            graphics_circle_filled(center_x, center_y, radius, color);
+        }
+        break;
         case SYSCALL_GET_TICK:
             {
                 lluint* tick = (lluint*) frame.cpu.general.ebx;

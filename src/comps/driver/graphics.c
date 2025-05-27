@@ -436,3 +436,43 @@ void graphics_scroll(uint16_t lines, uint8_t fill_color) {
         VGA_MEMORY[start_clear + i] = fill_color;
     }
 }
+
+void graphics_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t color) {
+    int dx = x2 > x1 ? x2 - x1 : x1 - x2;
+    int dy = y2 > y1 ? y2 - y1 : y1 - y2;
+    int sx = x1 < x2 ? 1 : -1;
+    int sy = y1 < y2 ? 1 : -1;
+    int err = dx - dy;
+    
+    int x = x1, y = y1;
+    
+    while (1) {
+        graphics_pixel(x, y, color);
+        
+        if (x == x2 && y == y2) break;
+        
+        int e2 = 2 * err;
+        if (e2 > -dy) {
+            err -= dy;
+            x += sx;
+        }
+        if (e2 < dx) {
+            err += dx;
+            y += sy;
+        }
+    }
+}
+
+void graphics_circle_filled(uint16_t center_x, uint16_t center_y, uint16_t radius, uint8_t color) {
+    for (int y = -radius; y <= radius; y++) {
+        for (int x = -radius; x <= radius; x++) {
+            if (x*x + y*y <= radius*radius) {
+                int px = center_x + x;
+                int py = center_y + y;
+                if (px >= 0 && px < VGA_WIDTH && py >= 0 && py < VGA_HEIGHT) {
+                    graphics_pixel(px, py, color);
+                }
+            }
+        }
+    }
+}
