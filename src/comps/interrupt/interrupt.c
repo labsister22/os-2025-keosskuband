@@ -6,6 +6,7 @@
 #include "header/scheduler/scheduler.h"
 #include "header/memory/paging.h"
 #include "header/driver/cmos.h"
+#include "header/memory/memory-manager.h"
 #include "header/process/process-commands/ps.h"
 #include "header/process/process-commands/exec.h"
 #include "header/process/process-commands/sleep.h"
@@ -156,6 +157,11 @@ void syscall(struct InterruptFrame frame) {
                 }
             }
             break;
+case SYSCALL_GET_BUFFER_SIZE:
+             *((int32_t*) frame.cpu.general.ecx) = get_buffer_size(
+                (struct EXT2DriverRequest*) frame.cpu.general.ebx
+            );
+            break;
         case SYSCALL_PS_CMD:
             ps((ProcessMetadata*) frame.cpu.general.ebx, (uint8_t) frame.cpu.general.ecx);
             break;
@@ -220,6 +226,37 @@ void syscall(struct InterruptFrame frame) {
                 scheduler_switch_to_next_process();
             }
             break;
+        case SYSCALL_HEAP_EXPAND:
+        {
+            void* addr = (void*) frame.cpu.general.ebx;
+            size_t size = (size_t) frame.cpu.general.ecx;
+            int* result_ptr = (int*) frame.cpu.general.edx;
+            
+            int result = syscall_heap_expand(addr, size);
+            
+            if (result_ptr != NULL) {
+                *result_ptr = result;
+            }
+        }
+            break;
+        case SYSCALL_MALLOC:
+        {
+            size_t size = (size_t) frame.cpu.general.ebx;
+            void** ptr_ptr = (void**) frame.cpu.general.ecx;
+
+            void* ptr = malloc(size);
+            if (ptr_ptr != NULL) {
+                *ptr_ptr = ptr;
+            }
+        }
+            break;
+        case SYSCALL_FREE:
+        {
+            void* ptr = (void*) frame.cpu.general.ebx;
+            free(ptr);
+        }
+            break;
+
     }
 }
 

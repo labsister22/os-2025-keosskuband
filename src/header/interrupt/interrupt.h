@@ -83,12 +83,18 @@
 #define SYSCALL_GRAPHICS_SCROLL 18
 #define SYSCALL_FILL_SCREEN     19
 #define SYSCALL_RENDER_FRAME    20
+#define SYSCALL_GET_BUFFER_SIZE 21
 #define SYSCALL_PS_CMD          30
 #define SYSCALL_GET_MAX_PS      31
 #define SYSCALL_KILL_PS         32
 #define SYSCALL_EXEC_PS         33
 #define SYSCALL_GET_TIME        34
 #define SYSCALL_SLEEP           35
+#define SYSCALL_HEAP_EXPAND     50
+#define SYSCALL_MALLOC          51
+#define SYSCALL_FREE            52
+#define SYSCALL_REALLOC         53
+#define SYSCALL_CALLOC          54
 
 
 /**
