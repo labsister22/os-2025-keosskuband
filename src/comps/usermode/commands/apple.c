@@ -34,6 +34,8 @@ void apple(CP* cursor){
       }
     }
 
+    sleep(50);
+
     // second frame
     cursor->row = 0;
     cursor->col = 0;
@@ -51,11 +53,6 @@ void apple(CP* cursor){
       }
     }
 
-    // sleep(1);
-    int sleep_time = 1;
-    syscall(35, (uint32_t) &sleep_time, 0, 0);
-
-
-
+    sleep(50);
   }
 }

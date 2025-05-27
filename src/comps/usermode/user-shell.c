@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "header/filesys/ext2.h"
+#include "header/stdlib/string.h"
+#include "header/stdlib/sleep.h"
 #include "header/stdlib/strops.h"
 #include "header/usermode/user-shell.h"
 #include "header/usermode/commands/apple.h"
@@ -1207,6 +1209,58 @@ void move_cursor_right() {
     }
 }
 
+// syscall wrapper that returns pointer from malloc syscall
+void* user_malloc(size_t size) {
+    void* ptr = NULL;
+    syscall(51, (uint32_t)size, (uint32_t)&ptr, 0);
+    return ptr;
+}
+
+// syscall wrapper for free
+void user_free(void* ptr) {
+    syscall(52, (uint32_t)ptr, 0, 0);
+}
+
+
+// Simple test for malloc and free
+void test_malloc_free() {
+    print_string_at_cursor("Starting malloc/free test...\n");
+
+    // Allocate 64 bytes
+    void* p = user_malloc(64);
+    if (p == NULL) {
+        print_string_at_cursor("malloc failed\n");
+        return;
+    }
+    print_string_at_cursor("malloc succeeded\n");
+
+    // Write some data
+    char* data = (char*)p;
+    for (int i = 0; i < 64; i++) {
+        data[i] = (char)(i + 1);
+    }
+
+    // Verify data
+    int error = 0;
+    for (int i = 0; i < 64; i++) {
+        if (data[i] != (char)(i + 1)) {
+            error = 1;
+            break;
+        }
+    }
+    if (error) {
+        print_string_at_cursor("Data verification failed\n");
+    } else {
+        print_string_at_cursor("Data verification succeeded\n");
+    }
+
+    // Free allocated memory
+    user_free(p);
+    print_string_at_cursor("Memory freed\n");
+
+    print_string_at_cursor("malloc/free test done\n");
+}
+
 void process_command() {
     hide_cursor();
     print_newline();
@@ -1397,6 +1451,12 @@ void process_command() {
             kill(shell_state.args[0]);
         } else if (strcmp("exec", shell_state.command) == 0) {
             exec(shell_state.args[0], 1);
+        } else if (strcmp("time", shell_state.command) == 0) {
+            char temp[40];
+            int tick = getCurrentTick();
+            
+            int_toString(tick, temp);
+            print_string_at_cursor(temp);
         } else if (shell_state.input_buffer[0] == 0x1B) { // ESC key
             print_string_colored("Exiting debug mode...", COLOR_LIGHT_RED);
             print_newline();
@@ -1429,57 +1489,6 @@ void process_command() {
             print_newline();
         }
     }
-}
-
-// syscall wrapper that returns pointer from malloc syscall
-void* user_malloc(size_t size) {
-    void* ptr = NULL;
-    syscall(51, (uint32_t)size, (uint32_t)&ptr, 0);
-    return ptr;
-}
-
-// syscall wrapper for free
-void user_free(void* ptr) {
-    syscall(52, (uint32_t)ptr, 0, 0);
-}
-
-// Simple test for malloc and free
-void test_malloc_free() {
-    print_string_at_cursor("Starting malloc/free test...\n");
-
-    // Allocate 64 bytes
-    void* p = user_malloc(64);
-    if (p == NULL) {
-        print_string_at_cursor("malloc failed\n");
-        return;
-    }
-    print_string_at_cursor("malloc succeeded\n");
-
-    // Write some data
-    char* data = (char*)p;
-    for (int i = 0; i < 64; i++) {
-        data[i] = (char)(i + 1);
-    }
-
-    // Verify data
-    int error = 0;
-    for (int i = 0; i < 64; i++) {
-        if (data[i] != (char)(i + 1)) {
-            error = 1;
-            break;
-        }
-    }
-    if (error) {
-        print_string_at_cursor("Data verification failed\n");
-    } else {
-        print_string_at_cursor("Data verification succeeded\n");
-    }
-
-    // Free allocated memory
-    user_free(p);
-    print_string_at_cursor("Memory freed\n");
-
-    print_string_at_cursor("malloc/free test done\n");
 }
 
 int main(void) {

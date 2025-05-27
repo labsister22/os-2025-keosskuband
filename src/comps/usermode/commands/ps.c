@@ -32,6 +32,9 @@ void ps() {
         case 2: // TERMINATED
             print_string_at_cursor(" - TERMINATED");
             break;
+        case 3: // SLEEPING
+            print_string_at_cursor(" - SLEEPING");
+            break;
         default: // bruhh
             print_string_at_cursor(" - LAH KOK BISA");
             break;

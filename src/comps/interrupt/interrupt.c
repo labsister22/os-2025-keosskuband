@@ -25,7 +25,7 @@ typedef struct {
 // Add this to the syscall function in interrupt.c after the existing cases
 
 void syscall(struct InterruptFrame frame) {
-    switch (frame.cpu.general.eax) {
+        switch (frame.cpu.general.eax) {
         case SYSCALL_READ:
             *((int8_t*) frame.cpu.general.ecx) = read(
                 *(struct EXT2DriverRequest*) frame.cpu.general.ebx
@@ -224,6 +224,12 @@ case SYSCALL_GET_BUFFER_SIZE:
 
                 // switch
                 scheduler_switch_to_next_process();
+            }
+            break;
+        case SYSCALL_GET_TICK:
+            {
+                lluint* tick = (lluint*) frame.cpu.general.ebx;
+                *tick = time_since_running;
             }
             break;
         case SYSCALL_HEAP_EXPAND:

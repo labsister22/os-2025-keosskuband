@@ -2,6 +2,7 @@
 #include "header/memory/paging.h"
 #include "header/stdlib/string.h"
 #include "header/cpu/gdt.h"
+#include "header/graphics/graphics.h"
 
 // Process list and manager state
 struct ProcessControlBlock _process_list[PROCESS_COUNT_MAX] = {0};

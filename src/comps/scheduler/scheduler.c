@@ -4,6 +4,7 @@
 #include "header/process/process.h"
 #include "header/memory/paging.h"
 #include "header/stdlib/string.h"
+#include "header/stdlib/strops.h"
 
 // Static variables for Round Robin scheduling
 uint32_t current_process_idx = 0;
@@ -61,6 +62,7 @@ void scheduler_init(void) {
             break;
         }
     }
+    
     
     if (!found_process) {
         // No process to run - system halt
@@ -143,6 +145,7 @@ __attribute__((noreturn)) void scheduler_switch_to_next_process(void) {
         while(1) {}
     }
     
+
     current_process_idx = next_process_idx;
     _process_list[current_process_idx].metadata.state = RUNNING;
     
