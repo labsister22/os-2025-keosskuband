@@ -198,6 +198,31 @@ void syscall(struct InterruptFrame frame) {
                 time_info->year = cmos_data.year;
             }
             break;
+        case SYSCALL_SLEEP:
+            {
+                uint32_t sleep_ticks = (uint32_t) frame.cpu.general.ebx;
+                struct ProcessControlBlock* pcb = process_get_current_running_pcb_pointer();
+                
+                if (pcb != NULL) {
+                    pcb->metadata.state = SLEEPING;
+                    pcb->sleep_ticks = sleep_ticks;
+                    
+                    // CRITICAL: Force context switch immediately after setting sleep
+                    // Save current context first
+                    struct Context ctx;
+                    ctx.cpu = frame.cpu;
+                    ctx.eip = frame.int_stack.eip;
+                    ctx.eflags = frame.int_stack.eflags;
+                    ctx.page_directory_virtual_addr = paging_get_current_page_directory_addr();
+                    
+                    // Save context to PCB
+                    pcb->context = ctx;
+                    
+                    // Force scheduler to switch to next process
+                    scheduler_switch_to_next_process();
+                }
+            }
+            break;
     }
 }
 

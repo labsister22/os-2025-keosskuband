@@ -841,7 +841,25 @@ void process_command() {
         } else if (shell_state.input_buffer[0] == 0x1B) { // ESC key
             print_string_colored("Exiting debug mode...", COLOR_LIGHT_RED);
             print_newline();
-        } else {
+        }else if (strcmp("sleep", shell_state.command) == 0) {
+            if (args_used_amount > 0) {
+                int sleep_time;
+                str_to_int(shell_state.args[0], &sleep_time);
+                if (sleep_time > 0) {
+                    syscall(35, sleep_time * 1000, 0, 0); // Sleep for specified seconds
+                    print_string_colored("Slept for ", COLOR_LIGHT_GREEN);
+                    print_string_colored(shell_state.args[0], COLOR_LIGHT_GREEN);
+                    print_string_colored(" seconds.", COLOR_LIGHT_GREEN);
+                    print_newline();
+                } else {
+                    print_string_colored("Invalid sleep time.", COLOR_LIGHT_RED);
+                    print_newline();
+                }
+            } else {
+                print_string_colored("Usage: sleep <seconds>", COLOR_LIGHT_RED);
+                print_newline();
+            }
+        }else {
             print_string_colored("Command not found: ", COLOR_LIGHT_RED);
 
             print_string_colored(shell_state.command, COLOR_WHITE);
