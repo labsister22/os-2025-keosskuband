@@ -1,4 +1,5 @@
 #include "header/usermode/commands/apple.h"
+#include "header/stdlib/sleep.h"
 
 void apple(CP* cursor){
   int FRAME_COUNT = 1095*2;
@@ -33,13 +34,6 @@ void apple(CP* cursor){
       }
     }
 
-    int time_out = 30000000;
-    /*
-    while (time_out > 0) {
-      time_out--;
-    } 
-    */
-
     // second frame
     cursor->row = 0;
     cursor->col = 0;
@@ -57,9 +51,11 @@ void apple(CP* cursor){
       }
     }
 
-    time_out = 30000000;
-    //while (time_out > 0) {
-      //time_out--;
-    //} 
+    // sleep(1);
+    int sleep_time = 1;
+    syscall(35, (uint32_t) &sleep_time, 0, 0);
+
+
+
   }
 }

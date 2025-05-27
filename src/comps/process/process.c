@@ -210,6 +210,29 @@ bool process_destroy(uint32_t pid) {
                 return false;
             }
             
+            // Check if this is a clock process and clean up the clock area
+            if (memcmp(pcb->metadata.name, "clock", 5) == 0) {
+                // Clear clock area at standard position: row 24, col 56 (8 characters for "HH:MM:SS")
+                uint16_t clock_pixel_x = 56 * 5;  // col * 5 (character width)
+                uint16_t clock_pixel_y = 24 * 8;  // row * 8 (character height)
+                
+                // Clear exactly 8 characters wide (for "HH:MM:SS")
+                for (int char_offset = 0; char_offset < 8; char_offset++) {
+                    uint16_t char_x = clock_pixel_x + (char_offset * 5);
+                    
+                    // Clear 5x8 pixel area for each character
+                    for (int px = 0; px < 5; px++) {
+                        for (int py = 0; py < 8; py++) {
+                            uint16_t pixel_x = char_x + px;
+                            uint16_t pixel_y = clock_pixel_y + py;
+                            
+                            // Directly call graphics_pixel function
+                            graphics_pixel(pixel_x, pixel_y, 0x00); // Black color
+                        }
+                    }
+                }
+            }
+            
             // Free all allocated page frames
             for (uint32_t j = 0; j < pcb->memory.page_frame_used_count; j++) {
                 if (pcb->memory.virtual_addr_used[j] != NULL) {

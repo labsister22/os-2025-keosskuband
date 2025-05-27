@@ -4,7 +4,6 @@
 void exec(char* exec_filename, uint32_t parent_inode) {
     int32_t retcode;
 
-
     // validate here plis
     if (parent_inode < 1 || strlen(exec_filename) < 1) {
         print_string_at_cursor("file doesnt exist");

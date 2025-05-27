@@ -90,6 +90,11 @@
 #define SYSCALL_EXEC_PS         33
 #define SYSCALL_GET_TIME        34
 #define SYSCALL_SLEEP           35
+#define SYSCALL_HEAP_EXPAND     50
+#define SYSCALL_MALLOC          51
+#define SYSCALL_FREE            52
+#define SYSCALL_REALLOC         53
+#define SYSCALL_CALLOC          54
 
 
 /**
@@ -203,5 +208,7 @@ struct TSSEntry {
 // Set kernel stack in TSS
 void set_tss_kernel_current_stack(void);
 
+// jibril ngide
+typedef unsigned long long int lluint;
 
 #endif

@@ -4,6 +4,7 @@
 #include "header/process/process.h"
 
 #define PIT_MAX_FREQUENCY   1193182
+// please please plase dont change this to something thats not a multiplier of 1000
 #define PIT_TIMER_FREQUENCY 1000
 #define PIT_TIMER_COUNTER   (PIT_MAX_FREQUENCY / PIT_TIMER_FREQUENCY)
 
@@ -59,5 +60,20 @@ void scheduler_save_context_to_current_running_pcb(struct Context ctx);
  * Uses Round Robin scheduling algorithm
  */
 __attribute__((noreturn)) void scheduler_switch_to_next_process(void);
+
+
+// jibril ngide
+struct SleepManagerState {
+    uint32_t sleep_queue_pid[PROCESS_COUNT_MAX];
+    lluint wakeup_time[PROCESS_COUNT_MAX];
+    uint32_t sleep_process_count;
+    uint32_t head;
+    uint32_t tail;
+};
+
+extern struct SleepManagerState sleep_manager;
+extern lluint time_since_running;
+extern uint32_t current_process_idx;
+
 
 #endif

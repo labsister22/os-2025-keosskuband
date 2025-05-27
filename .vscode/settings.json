@@ -97,6 +97,14 @@
     "new": "c",
     "cat.h": "c",
     "mv.h": "c",
-    "cp.h": "c"
+    "cp.h": "c",
+    "scheduler.h": "c",
+    "array": "c",
+    "string_view": "c",
+    "span": "c",
+    "variant": "c",
+    "paging.h": "c",
+    "sleep.h": "c",
+    "stddef.h": "c"
   }
 }

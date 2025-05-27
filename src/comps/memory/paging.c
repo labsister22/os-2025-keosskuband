@@ -155,10 +155,8 @@ bool paging_free_user_page_frame(struct PageDirectory *page_dir, void *virtual_a
     }
     
     // Clear the page directory entry
-    memset(&page_dir->table[page_index], 0, sizeof(struct PageDirectoryEntry));
-    
-    // Flush the TLB for this virtual address
-    flush_single_tlb(virtual_addr);
+    struct PageDirectoryEntryFlag emptyFlag;
+    update_page_directory_entry(page_dir, 0, virtual_addr, emptyFlag);
     
     return true;
 }

@@ -24,7 +24,7 @@ void boot_animation(void) {
             char ikuyokita_frames[4][200*512];
             struct EXT2DriverRequest request;
             request.buf = (uint8_t*) &ikuyokita_frames;
-            request.parent_inode = 1;
+            request.parent_inode = 2;
             request.buffer_size = FRAME_PER_SEGMENT * 200 * 512;
             request.is_directory = 0;
 
