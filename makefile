@@ -21,9 +21,11 @@ AFLAGS        = -f elf32 -g -F dwarf
 LFLAGS        = -T $(SOURCE_FOLDER)/linker.ld -melf_i386
 
 
-run: all
+run: 
 	@qemu-system-i386 -s -m 1024M -drive file=bin/storage.bin,format=raw,if=ide,index=0,media=disk -cdrom $(OUTPUT_FOLDER)/$(ISO_NAME).iso
-all: build
+new : all
+	@qemu-system-i386 -s -m 1024M -drive file=bin/storage.bin,format=raw,if=ide,index=0,media=disk -cdrom $(OUTPUT_FOLDER)/$(ISO_NAME).iso
+all: init build
 build: iso
 clean:
 	rm -rf $(OUTPUT_FOLDER)/*.o
@@ -38,6 +40,8 @@ clean:
 	rm -rf $(OUTPUT_FOLDER)/shell_elf
 	rm -rf $(OUTPUT_FOLDER)/clock_elf
 	rm -rf $(OUTPUT_FOLDER)/experiment_elf
+	rm -rf $(OUTPUT_FOLDER)/idler
+	rm -rf $(OUTPUT_FOLDER)/idler_elf
 
 kernel:
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/kernel-entrypoint.s -o $(OUTPUT_FOLDER)/kernel-entrypoint.o
@@ -151,6 +155,19 @@ user-experiment:
 	@size --target=binary $(OUTPUT_FOLDER)/experiment
 	@rm -f *.o
 
+user-idle-process:
+	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/comps/idle_process/crt0-c.s -o crt0-c.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/idle_process/idler.c -o idler.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/stdlib/sleep.c -o sleep.o
+	@$(LIN) -T $(SOURCE_FOLDER)/comps/experiment/experiment-linker.ld -melf_i386 --oformat=binary \
+		crt0-c.o sleep.o idler.o -o $(OUTPUT_FOLDER)/idler
+	@echo Linking experiment object files and generate flat binary...
+	@$(LIN) -T $(SOURCE_FOLDER)/comps/experiment/experiment-linker.ld -melf_i386 --oformat=elf32-i386 \
+		crt0-c.o sleep.o idler.o -o $(OUTPUT_FOLDER)/idler_elf
+	@echo Linking experiment object files and generate ELF32 for debugging...
+	@size --target=binary $(OUTPUT_FOLDER)/idler
+	@rm -f *.o
+
 insert-shell: inserter user-shell
 	@echo Inserting shell into root directory...
 	@cd $(OUTPUT_FOLDER); ./inserter shell 1 $(DISK_NAME).bin
@@ -163,7 +180,7 @@ insert-experiment: inserter user-experiment
 	@echo Inserting clock into root directory...
 	@cd $(OUTPUT_FOLDER); ./inserter experiment 1 $(DISK_NAME).bin
 
-insert-apple: inserter
+insert-apple: inserter 
 	@echo Inserting apple into root directory...
 	@cd $(OUTPUT_FOLDER); ./inserter apple 1 $(DISK_NAME).bin
 
@@ -171,5 +188,8 @@ insert-ikuyokita: inserter
 	@echo Inserting ikuyokita into root directory...
 	@cd $(OUTPUT_FOLDER); ./inserter ikuyokita 1 $(DISK_NAME).bin
 
-init: clean disk insert-shell insert-clock insert-experiment insert-apple insert-ikuyokita 
+insert-idle-process: inserter user-idle-process
+	@cd $(OUTPUT_FOLDER); ./inserter idler 1 $(DISK_NAME).bin
+
+init: clean disk insert-shell insert-clock insert-experiment insert-apple insert-ikuyokita insert-idle-process
 # test: clean disk insert-shell insert-clock

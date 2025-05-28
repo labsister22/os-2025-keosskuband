@@ -51,7 +51,7 @@ static CompletionState completion_state = {
 static const char* command_list[] = {
     "help", "clear", "echo", "ls", "cd", "mkdir", "find", "cat", 
     "exit", "apple", "touch", "rm", "cp", "mv", "ps", "size",
-    "kill", "exec", "ikuyokita", "show_color", "sleep", NULL
+    "kill", "exec", "ikuyokita", "show_color", "sleep", "balls", "testmalloc", "time", "size", NULL
 };
 
 static const char* rm_flags[] = {"--rf", NULL};
@@ -287,7 +287,10 @@ arg_type_t get_command_arg_type(const char* command, int arg_position) {
     if (strcmp((char*)command, "ikuyokita") == 0) return ARG_NONE;
     if (strcmp((char*)command, "show_color") == 0) return ARG_NONE;
     if (strcmp((char*)command, "apple") == 0) return ARG_NONE;
+    if (strcmp((char*)command, "balls") == 0) return ARG_NONE;
     if (strcmp((char*)command, "exit") == 0) return ARG_NONE;
+    if (strcmp((char*)command, "testmalloc") == 0) return ARG_NONE;
+    if (strcmp((char*)command, "time") == 0) return ARG_NONE;
 
     if (strcmp((char*)command, "echo") == 0) return ARG_TEXT;
     if (strcmp((char*)command, "find") == 0) return ARG_TEXT;  
@@ -298,6 +301,7 @@ arg_type_t get_command_arg_type(const char* command, int arg_position) {
     
     if (strcmp((char*)command, "cat") == 0) return ARG_EXISTING_FILE;
     if (strcmp((char*)command, "exec") == 0) return ARG_EXISTING_FILE;
+    if (strcmp((char*)command, "size") == 0) return ARG_EXISTING_ANY;
 
     if (strcmp((char*)command, "cd") == 0) return ARG_EXISTING_DIR;
     if (strcmp((char*)command, "ls") == 0) return ARG_EXISTING_DIR;  
