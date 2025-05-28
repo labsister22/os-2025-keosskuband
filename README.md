@@ -2,6 +2,8 @@
 # Keossku Band!
 
 > IF2130 - 2025 - Operating System from scratch, based on C lang and some asm stuff.
+<br/>
+
 <p align="center">
     <img src="https://github.com/user-attachments/assets/a2aef526-bd35-4267-845b-2a836dcb45a7">
 </p>
@@ -89,16 +91,20 @@
    ```
 ---
 
+<a id="makefile"></a>
 ## Guide For Makefile
+
+**Here are some of important commands**
+
 1.
       ```bash
    make run
    ```
-   runs the operating system, will do if the bin file and kernel is initiated
+   runs the operating system, will do if the bin file, kernel, and iso is initiated
    
 2.
       ```bash
-   make run
+   make new
    ```
    Building all (new), also runs the operating system
 3.
@@ -108,24 +114,30 @@
    Build all (without running the os)
 4.
       ```bash
-   make clean
+   make build
    ```
-   to remove *.o and *.iso from the bin folder
+   make the iso and kernel
 5.
       ```bash
-   make kernel
+   make clean
    ```
-   Build kernel to bin folder
+   cleaning the bin folder
 6.
-      ```bash
-   make iso
-   ```
-   Build iso to bin folder
-7.
       ```bash
    make disk
    ```
-   Build non-volatile memory to bin folder
+   Initialize a disk
+7.
+      ```bash
+   make inserter
+   ```
+   Making inserter to insert a binary file
+8.
+      ```bash
+   make init
+   ```
+   Initiate all
+
 ---
 
 ## How To Run
@@ -136,8 +148,9 @@
    git clone https://github.com/labsister22/os-2025-keosskuband.git
    ```
 3. Make os-2025-keosskuband as root directory
-4. Run any make commands as you like (refer to this guide):
----
+4. Run any make commands as you like (refer to makefile's [guide](#makefile)):
+
+<br/>
 
 ### **VSCode debugger (Linux/Windows)**
 1. Open VSCode
