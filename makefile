@@ -191,5 +191,5 @@ insert-ikuyokita: inserter
 insert-idle-process: inserter user-idle-process
 	@cd $(OUTPUT_FOLDER); ./inserter idler 1 $(DISK_NAME).bin
 
-init: clean disk insert-shell insert-clock insert-experiment insert-apple insert-ikuyokita insert-idle-process
+init: clean disk insert-shell insert-clock insert-experiment insert-apple insert-ikuyokita insert-idle-process build
 # test: clean disk insert-shell insert-clock
