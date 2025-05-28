@@ -20,22 +20,30 @@ CFLAGS        = $(DEBUG_CFLAG) $(WARNING_CFLAG) $(STRIP_CFLAG) -m32 -c -I$(SOURC
 AFLAGS        = -f elf32 -g -F dwarf
 LFLAGS        = -T $(SOURCE_FOLDER)/linker.ld -melf_i386
 
-# DOOM Flags and Files  
-DOOM_CFLAGS   = -m32 -c -I$(SOURCE_FOLDER) -g -Wall -Wextra -fno-stack-protector
-DOOM_LFLAGS   = -m32 -nostartfiles -nodefaultlibs
-DOOM_SRC     := $(wildcard src/misc/doom/*.c)
-DOOM_OBJ     := $(patsubst src/misc/doom/%.c, $(OUTPUT_FOLDER)/doom/%.o, $(DOOM_SRC))
+# DOOM Configuration
+DOOM_DIR      = src/misc/doom
+DOOM_OBJDIR   = $(OUTPUT_FOLDER)/doom
+DOOM_OUTPUT   = doomgeneric
+DOOM_CFLAGS   = -ggdb3 -Os -Wall -DNORMALUNIX -DLINUX -DSNDSERV -D_DEFAULT_SOURCE -m32 -c -I$(SOURCE_FOLDER) -fno-stack-protector
+DOOM_LFLAGS   = -m32 -nostartfiles -Wl,--gc-sections -static -no-pie
+DOOM_LIBS     = -lm -lgcc -lgcc_eh -lc
 
-# Kernel objects (excluding doom objects)
-KERNEL_OBJS  := $(filter-out $(OUTPUT_FOLDER)/doom/%.o, $(wildcard $(OUTPUT_FOLDER)/*.o))
+# DOOM source files (based on the standalone makefile)
+DOOM_SRC_FILES = dummy.c am_map.c doomdef.c doomstat.c dstrings.c d_event.c d_items.c d_iwad.c d_loop.c d_main.c d_mode.c d_net.c f_finale.c f_wipe.c g_game.c hu_lib.c hu_stuff.c info.c i_cdmus.c i_endoom.c i_joystick.c i_scale.c i_sound.c i_system.c i_timer.c memio.c m_argv.c m_bbox.c m_cheat.c m_config.c m_controls.c m_fixed.c m_menu.c m_misc.c m_random.c p_ceilng.c p_doors.c p_enemy.c p_floor.c p_inter.c p_lights.c p_map.c p_maputl.c p_mobj.c p_plats.c p_pspr.c p_saveg.c p_setup.c p_sight.c p_spec.c p_switch.c p_telept.c p_tick.c p_user.c r_bsp.c r_data.c r_draw.c r_main.c r_plane.c r_segs.c r_sky.c r_things.c sha1.c sounds.c statdump.c st_lib.c st_stuff.c s_sound.c tables.c v_video.c wi_stuff.c w_checksum.c w_file.c w_main.c w_wad.c z_zone.c w_file_stdc.c i_input.c i_video.c doomgeneric.c doomgeneric_keosskubandOS.c
+
+# Generate DOOM object file paths
+DOOM_OBJ := $(addprefix $(DOOM_OBJDIR)/, $(DOOM_SRC_FILES:.c=.o))
 
 run: all
 	@qemu-system-i386 -s -m 1024M -drive file=bin/storage.bin,format=raw,if=ide,index=0,media=disk -cdrom $(OUTPUT_FOLDER)/$(ISO_NAME).iso
+
 all: build
+
 build: iso
+
 clean:
 	rm -rf $(OUTPUT_FOLDER)/*.o
-	rm -rf $(OUTPUT_FOLDER)/doom/*.o
+	rm -rf $(DOOM_OBJDIR)
 	rm -rf *.o *.iso $(OUTPUT_FOLDER)/kernel
 	rm -rf $(OUTPUT_FOLDER)/*.iso
 	rm -rf $(OUTPUT_FOLDER)/inserter
@@ -47,16 +55,14 @@ clean:
 	rm -rf $(OUTPUT_FOLDER)/shell_elf
 	rm -rf $(OUTPUT_FOLDER)/clock_elf
 	rm -rf $(OUTPUT_FOLDER)/experiment_elf
-	rm -rf $(OUTPUT_FOLDER)/doomgeneric
+	rm -rf $(OUTPUT_FOLDER)/$(DOOM_OUTPUT)
+	rm -rf $(OUTPUT_FOLDER)/$(DOOM_OUTPUT).map
 
 # Create doom directory if it doesn't exist
-$(OUTPUT_FOLDER)/doom:
-	@mkdir -p $(OUTPUT_FOLDER)/doom
+$(DOOM_OBJDIR):
+	@mkdir -p $(DOOM_OBJDIR)
 
-# Compile doom source files
-$(OUTPUT_FOLDER)/doom/%.o: src/misc/doom/%.c | $(OUTPUT_FOLDER)/doom
-	@echo "Compiling Doom: $<"
-	@$(CC) $(DOOM_CFLAGS) $< -o $@
+# This pattern rule is now integrated above in the DOOM build system section
 
 kernel:
 	@echo "Assembling kernel entrypoint and interrupt setup..."
@@ -89,14 +95,29 @@ kernel:
 	@$(LIN) $(LFLAGS) $(OUTPUT_FOLDER)/*.o -o $(OUTPUT_FOLDER)/kernel
 	@echo "Kernel linked successfully."
 
-	# @rm -f *.o
+# DOOM build system (integrated from standalone makefile)
+ifeq ($(V),1)
+	VB=''
+else
+	VB=@
+endif
 
-# Separate doom target that depends on kernel objects
+# DOOM target - standalone version (no kernel objects)
 doom: $(DOOM_OBJ)
-	@echo "Compiling and linking Doom executable..."
-	@$(CC) $(DOOM_LFLAGS) -fno-pie $(DOOM_OBJ) $(KERNEL_OBJS) -o $(OUTPUT_FOLDER)/doomgeneric -lm -lgcc -lc
-	@echo "Doom executable linked successfully."
+	@echo [Linking $(DOOM_OUTPUT)]
+	$(VB)$(CC) $(DOOM_LFLAGS) $(DOOM_OBJ) \
+	-o $(OUTPUT_FOLDER)/$(DOOM_OUTPUT) $(DOOM_LIBS) -Wl,-Map,$(OUTPUT_FOLDER)/$(DOOM_OUTPUT).map \
+	-Wl,--entry=main -Wl,--allow-multiple-definition
+	@echo [Size]
+	-size $(OUTPUT_FOLDER)/$(DOOM_OUTPUT)
 
+# Ensure DOOM objects depend on directory creation
+$(DOOM_OBJ): | $(DOOM_OBJDIR)
+
+# Pattern rule for compiling DOOM source files
+$(DOOM_OBJDIR)/%.o: $(DOOM_DIR)/%.c
+	@echo [Compiling $<]
+	$(VB)$(CC) $(DOOM_CFLAGS) -c $< -o $@
 
 iso: kernel
 	@mkdir -p $(OUTPUT_FOLDER)/iso/boot/grub
@@ -188,7 +209,7 @@ insert-clock: inserter user-clock
 	@cd $(OUTPUT_FOLDER); ./inserter clock 1 $(DISK_NAME).bin
 
 insert-experiment: inserter user-experiment
-	@echo Inserting clock into root directory...
+	@echo Inserting experiment into root directory...
 	@cd $(OUTPUT_FOLDER); ./inserter experiment 1 $(DISK_NAME).bin
 
 insert-apple: inserter
@@ -200,13 +221,26 @@ insert-ikuyokita: inserter
 	@cd $(OUTPUT_FOLDER); ./inserter ikuyokita 1 $(DISK_NAME).bin
 
 insert-doom: inserter doom
-	@echo Inserting Doom executable into root directory...
-	@cd $(OUTPUT_FOLDER); ./inserter doomgeneric 1 $(DISK_NAME).bin
+	@echo Inserting DOOM executable into root directory...
+	@cd $(OUTPUT_FOLDER); ./inserter $(DOOM_OUTPUT) 1 $(DISK_NAME).bin
 
 insert-doomwad: inserter
-	@echo Inserting Doom WAD file into root directory...
+	@echo Inserting DOOM WAD file into root directory...
 	@cd $(OUTPUT_FOLDER); ./inserter doom1.wad 1 $(DISK_NAME).bin
 
 init: clean disk kernel doom insert-doom insert-shell insert-clock insert-experiment insert-apple insert-ikuyokita insert-doomwad
-	@echo "Initialization complete. Disk and executables are ready."
-# test: clean disk insert-shell insert-clock
+	# @echo "Initialization complete. Disk and executables are ready."
+
+# Debug targets
+doom-debug: $(DOOM_OBJ)
+	@echo "DOOM Object files:"
+	@echo $(DOOM_OBJ)
+	@echo "Kernel Object files:"
+	@echo $(KERNEL_OBJS)
+
+print-doom:
+	@echo "DOOM_SRC_FILES: $(DOOM_SRC_FILES)"
+	@echo "DOOM_OBJ: $(DOOM_OBJ)"
+	@echo "DOOM_CFLAGS: $(DOOM_CFLAGS)"
+	@echo "DOOM_LFLAGS: $(DOOM_LFLAGS)"
+

@@ -1,9 +1,6 @@
 #include "doomkeys.h"
 #include "doomgeneric.h"
-// #include "header/graphics/graphics.h"
 #include "header/stdlib/sleep.h"
-// #include "header/scheduler/scheduler.h"
-// #include "header/interrupt/interrupt.h"
 
 #define COLOR_BLACK       0x00
 #define KEYQUEUE_SIZE 16
@@ -75,8 +72,6 @@ static void addKeyToQueue(int pressed, unsigned int keyCode) {
 }
 
 void DG_Init() {
-    //clear screen
-    // graphics_clear(COLOR_BLACK);
     doom_syscall(17, COLOR_BLACK, 0, 0); // Clear screen doom_syscall
     return;
 }
