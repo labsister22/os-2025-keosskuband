@@ -107,6 +107,14 @@
     "sleep.h": "c",
     "stddef.h": "c",
     "doomgeneric.h": "c",
-    "graphics.h": "c"
+    "graphics.h": "c",
+    "v_video.h": "c",
+    "dstrings.h": "c",
+    "deh_main.h": "c",
+    "stdlib.h": "c",
+    "stdio.h": "c",
+    "fd.h": "c",
+    "cstdlib": "c",
+    "memory-manager.h": "c"
   }
 }

@@ -24,7 +24,8 @@ LFLAGS        = -T $(SOURCE_FOLDER)/linker.ld -melf_i386
 DOOM_DIR      = src/misc/doom
 DOOM_OBJDIR   = $(OUTPUT_FOLDER)/doom
 DOOM_OUTPUT   = doomgeneric
-DOOM_CFLAGS   = -ggdb3 -Os -Wall -DNORMALUNIX -DLINUX -DSNDSERV -D_DEFAULT_SOURCE -m32 -c -I$(SOURCE_FOLDER) -fno-stack-protector
+# DOOM_CFLAGS   = -ggdb3 -Os -Wall -DNORMALUNIX -DLINUX -DSNDSERV -D_DEFAULT_SOURCE -m32 -c -I$(SOURCE_FOLDER) -fno-stack-protector
+DOOM_CFLAG    = -nostdlib -fno-stack-protector -nostartfiles -nodefaultlibs -ffreestanding -I$(SOURCE_FOLDER)
 DOOM_LFLAGS   = -m32 -nostartfiles -Wl,--gc-sections -static -no-pie
 DOOM_LIBS     = -lm -lgcc -lgcc_eh -lc
 
@@ -232,7 +233,7 @@ insert-doomwad: inserter
 	@echo Inserting DOOM WAD file into root directory...
 	@cd $(OUTPUT_FOLDER); ./inserter doom1.wad 1 $(DISK_NAME).bin
 
-init: clean disk kernel doom insert-doom insert-shell insert-clock insert-experiment insert-apple insert-ikuyokita insert-doomwad
+init: clean disk kernel  insert-shell insert-clock insert-experiment insert-apple insert-ikuyokita 
 	# @echo "Initialization complete. Disk and executables are ready."
 
 # Debug targets
