@@ -22,7 +22,7 @@ uint32_t process_list_get_inactive_index(void) {
 }
 
 uint32_t process_generate_new_pid(void) {
-    static uint32_t pid_counter = 1;
+    static uint32_t pid_counter = 0;
     return pid_counter++;
 }
 
@@ -151,7 +151,7 @@ int32_t process_create_user_process(struct EXT2DriverRequest request) {
         .is_directory = false
     };
     
-            int8_t read_result = read(read_req);
+    int8_t read_result = read(read_req);
     
     // Switch back to kernel page directory
     paging_use_page_directory(current_pd);

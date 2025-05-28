@@ -81,13 +81,9 @@ void scheduler_save_context_to_current_running_pcb(struct Context ctx) {
     // Find current running process
     struct ProcessControlBlock *current_pcb = NULL;
     
-    for (uint32_t i = 0; i < PROCESS_COUNT_MAX; i++) {
-        if (process_manager_state._process_used[i] && 
-            _process_list[i].metadata.state == RUNNING) {
-            current_pcb = &_process_list[i];
-            current_process_idx = i;
-            break;
-        }
+    if (process_manager_state._process_used[current_process_idx] && 
+        _process_list[current_process_idx].metadata.state == RUNNING) {
+        current_pcb = &_process_list[current_process_idx];
     }
     
     if (current_pcb != NULL) {
@@ -146,6 +142,9 @@ __attribute__((noreturn)) void scheduler_switch_to_next_process(void) {
     }
     
 
+    if (_process_list[current_process_idx].metadata.state == RUNNING) {
+        _process_list[current_process_idx].metadata.state = READY;
+    }
     current_process_idx = next_process_idx;
     _process_list[current_process_idx].metadata.state = RUNNING;
     

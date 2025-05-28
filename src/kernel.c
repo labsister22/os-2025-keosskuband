@@ -125,6 +125,15 @@ void kernel_setup(void) {
         .is_directory          = false,
     };
 
+    struct EXT2DriverRequest request_idle_process = {
+        .buf                   = (uint8_t*) 0,
+        .name                  = "idler",
+        .parent_inode          = 1,
+        .buffer_size           = 0x100000,
+        .name_len              = 5,
+        .is_directory          = false,
+    };
+
     struct EXT2DriverRequest request_test = {
         .buf                   = "something1",
         .name                  = "check1",
@@ -183,6 +192,7 @@ void kernel_setup(void) {
 
     set_tss_kernel_current_stack();
 
+    process_create_user_process(request_idle_process);
     process_create_user_process(request2);
     scheduler_init();
     scheduler_switch_to_next_process();

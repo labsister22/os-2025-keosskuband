@@ -1,5 +1,6 @@
 // torus.c
 #include "header/usermode/commands/torus.h"
+#include "header/stdlib/string.h"
 
 
 /*
