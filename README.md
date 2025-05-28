@@ -49,6 +49,7 @@
   </p>
 
 </div>
+
 ---
 
 ## 📦 Installation & Setup
@@ -66,8 +67,10 @@
 - genisoimage (https://linux.die.net/man/1/genisoimage) 
 - GDB (https://man7.org/linux/man-pages/man1/gdb.1.html) 
 
+<br/>
+
 ### Installing dependencies
-#### On Windows, do this
+#### On Windows:
 1. VSCode
       ```bash
    winget install microsoft.visualstudiocode
@@ -78,7 +81,7 @@
    code --install-extension ms-vscode-remote.remote-wsl
    ```
 
-#### On Linux, do this
+#### On Linux:
 1. All dependencies and Qemu
       ```bash
    sudo apt update
@@ -91,17 +94,18 @@
       ```bash
    make run
    ```
-   Build iso and kernel to bin folder, also running the operating system
+   runs the operating system, will do if the bin file and kernel is initiated
+   
 2.
       ```bash
-   make build
+   make run
    ```
-   Build iso and kernel to bin folder
+   Building all (new), also runs the operating system
 3.
       ```bash
    make all
    ```
-   Build iso and kernel to bin folder
+   Build all (without running the os)
 4.
       ```bash
    make clean
@@ -125,26 +129,17 @@
 ---
 
 ## How To Run
-### **1. Windows**
-#### **Makefile (Linux)**
+### **Makefile (Linux)**
 1. Open a terminal
 2. Clone the repository
       ```bash
    git clone https://github.com/labsister22/os-2025-keosskuband.git
    ```
 3. Make os-2025-keosskuband as root directory
-4. Run the following command to start the application in Qemu:
-   ```bash
-   make run
-   ```
-5. If you want to develop it with non volatile memory, do:
-   ```bash
-   make disk
-   make run
-   ```
+4. Run any make commands as you like (refer to this guide):
 ---
 
-#### **VSCode debugger (Linux/Windows)**
+### **VSCode debugger (Linux/Windows)**
 1. Open VSCode
 2. Clone the repository
       ```bash
@@ -157,16 +152,19 @@
    ```
 ---
 
-## ✨ Note
-
-### ???
-  
+## ✨ Features
 ---
 
-## 📃 Miscellaneous
 
-| Milestone    | Topic                                         | Progress  |
-|--------------|-----------------------------------------------|--------|
-| 0            | Kernel, GDT                                       | 100/100|
-| 1            | Framebuffer, Interrupter, Keyboard                                       | 90/100|
-| 2            |Disk, filesys (EXT2)                                      | 50/100|
+
+<p align="center">
+    <img src="https://github.com/user-attachments/assets/ee8099f8-e009-4e5f-b51d-03d1e8717972">
+</p>
+    <h5 align="center">"I often compare open source to science. To where science took this whole notion of developing ideas in the open and improving on other peoples' ideas and making it into what science is today and the incredible advances that we have had. And I compare that to witchcraft and alchemy, where openness was something you didn't do."</h5>
+
+<br/>
+<br/>
+
+<div align="center">
+ Operating System • © 2025 • Keossku Band!
+</div>
