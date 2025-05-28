@@ -1,14 +1,26 @@
 #include "doomkeys.h"
 #include "doomgeneric.h"
-#include "header/graphics/graphics.h"
+// #include "header/graphics/graphics.h"
 #include "header/stdlib/sleep.h"
-#include "header/scheduler/scheduler.h"
+// #include "header/scheduler/scheduler.h"
+// #include "header/interrupt/interrupt.h"
 
 #define COLOR_BLACK       0x00
 #define KEYQUEUE_SIZE 16
+#define VGA_MEMORY ((uint8_t*)0xC00A0000) // Higher-half mapping for 0xA0000
+#define VGA_WIDTH   320
+#define VGA_HEIGHT  200
 static unsigned short s_KeyQueue[KEYQUEUE_SIZE];
 static unsigned int s_KeyQueueWriteIndex = 0;
 static unsigned int s_KeyQueueReadIndex = 0;
+
+void doom_syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
+    __asm__ volatile("mov %0, %%ebx" : /* <Empty> */ : "r"(ebx));
+    __asm__ volatile("mov %0, %%ecx" : /* <Empty> */ : "r"(ecx));
+    __asm__ volatile("mov %0, %%edx" : /* <Empty> */ : "r"(edx));
+    __asm__ volatile("mov %0, %%eax" : /* <Empty> */ : "r"(eax));
+    __asm__ volatile("int $0x30");
+}
 
 static unsigned char convertToDoomKey(unsigned int key) {
     switch (key) {
@@ -64,7 +76,8 @@ static void addKeyToQueue(int pressed, unsigned int keyCode) {
 
 void DG_Init() {
     //clear screen
-    graphics_clear(COLOR_BLACK);
+    // graphics_clear(COLOR_BLACK);
+    doom_syscall(17, COLOR_BLACK, 0, 0); // Clear screen doom_syscall
     return;
 }
 
@@ -81,7 +94,9 @@ void DG_SleepMs(uint32_t ms) {
 }
 
 uint32_t DG_GetTicksMs() {
-    return time_since_running;
+    uint32_t ticks;
+    doom_syscall(36, (uint32_t)&ticks,0,0);
+    return ticks;
 }
 
 void DG_SetWindowTitle(const char * title)

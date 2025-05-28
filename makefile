@@ -92,10 +92,11 @@ kernel:
 	# @rm -f *.o
 
 # Separate doom target that depends on kernel objects
-doom: kernel $(DOOM_OBJ)
+doom: $(DOOM_OBJ)
 	@echo "Compiling and linking Doom executable..."
 	@$(CC) $(DOOM_LFLAGS) -fno-pie $(DOOM_OBJ) $(KERNEL_OBJS) -o $(OUTPUT_FOLDER)/doomgeneric -lm -lgcc -lc
 	@echo "Doom executable linked successfully."
+
 
 iso: kernel
 	@mkdir -p $(OUTPUT_FOLDER)/iso/boot/grub
@@ -202,9 +203,10 @@ insert-doom: inserter doom
 	@echo Inserting Doom executable into root directory...
 	@cd $(OUTPUT_FOLDER); ./inserter doomgeneric 1 $(DISK_NAME).bin
 
-insert-doomwad: inserter doom.wad
-	@echo Inserting Doom WAD files into root directory...
-	@cd $(OUTPUT_FOLDER); ./inserter doomwad 1 $(DISK_NAME).bin
+insert-doomwad: inserter
+	@echo Inserting Doom WAD file into root directory...
+	@cd $(OUTPUT_FOLDER); ./inserter doom1.wad 1 $(DISK_NAME).bin
 
-init: clean disk kernel doom insert-doom insert-shell insert-clock insert-experiment insert-apple insert-ikuyokita 
+init: clean disk kernel doom insert-doom insert-shell insert-clock insert-experiment insert-apple insert-ikuyokita insert-doomwad
+	@echo "Initialization complete. Disk and executables are ready."
 # test: clean disk insert-shell insert-clock

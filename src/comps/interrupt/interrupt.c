@@ -256,17 +256,10 @@ void syscall(struct InterruptFrame frame) {
             free(ptr);
         }
             break;
-        case SYSCALL_DOOM:
+        case SYSCALL_GET_TICKS:
         {
-            //read doom from disk
-            struct EXT2DriverRequest request = {
-                .buf = (uint8_t*) frame.cpu.general.ebx,
-                .name = "doomgeneric",
-                .name_len = 11, // 
-                .parent_inode = 1, // Root inode
-                .buffer_size = (uint32_t) frame.cpu.general.ecx,
-                .is_directory = false
-            };
+            uint32_t ticks = time_since_running;
+            *((uint32_t*) frame.cpu.general.ebx) = ticks;
         }
             break;
     }
