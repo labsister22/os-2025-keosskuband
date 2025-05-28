@@ -1,6 +1,12 @@
 #include "header/usermode/commands/ls.h"
 
 void ls(char* str) {
+    if (str != NULL && strlen(str) > 0) {
+        print_string_colored("Usage: ls", COLOR_LIGHT_RED);
+        print_newline();
+        return;
+    }
+
     uint8_t dir_data[BLOCK_SIZE];
     struct EXT2DriverRequest request = {
         .buf = dir_data,

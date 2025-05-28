@@ -60,7 +60,7 @@ void syscall(struct InterruptFrame frame) {
                 cursor_pos->row * 8,  // Convert row to Y pixel
                 ch,
                 color,
-                COLOR_BLACK
+                255
             );
             break;
         case SYSCALL_GRAPHICS_STR:

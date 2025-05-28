@@ -2,6 +2,7 @@
 #define TORUS_H
 
 
+#include "header/stdlib/string.h"
 #include "header/usermode/commands/torus.h"
 #include "header/stdlib/sleep.h"
 #include "header/usermode/user-shell.h"

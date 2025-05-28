@@ -47,7 +47,7 @@ void print_at_position(const char* str, int row, int col, uint8_t color) {
 }
 
 void clear_clock_area() {
-    char spaces[] = "        ";
+    //char spaces[] = "        ";
     CP pos = {24, 56}; // CLOCK_ROW = 24, CLOCK_COL = 56
     
     for (int i = 0; i < 8; i++) {

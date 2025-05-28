@@ -38,15 +38,13 @@ void cp(char *src, char* dest, char* flag, char* dump) {
     return;
   }
   
-  if (!memcmp(dest, ".", 1) && strlen(dest) == 1 || 
-      !memcmp(src, ".", 1) && strlen(src) == 1) {
+  if ((!memcmp(dest, ".", 1) && strlen(dest) == 1) || (!memcmp(src, ".", 1) && strlen(src) == 1)) {
     print_string_colored("Cannot remove file with name '.'\n", COLOR_RED);
     print_newline();
     return;
   }
 
-  if (!memcmp(dest, "..", 2) && strlen(dest) == 2 || 
-      !memcmp(src, "..", 2) && strlen(src) == 2) {
+  if ((!memcmp(dest, "..", 2) && strlen(dest) == 2) || (!memcmp(src, "..", 2) && strlen(src) == 2)) {
     print_string_colored("Cannot remove file with name '..'\n", COLOR_RED);
     print_newline();
     return;
@@ -113,8 +111,6 @@ void cp(char *src, char* dest, char* flag, char* dump) {
   else if (recursive) {
     absolute_dir_info before = DIR_INFO;
 
-    int dest_parent_inode = DIR_INFO.dir[DIR_INFO.current_dir].inode;
-
     // Create destination directory
     struct EXT2DriverRequest request = {
         .name = dest,
@@ -157,13 +153,13 @@ void cp(char *src, char* dest, char* flag, char* dump) {
     memcpy(find_cur_directory, DIR_INFO.dir[DIR_INFO.current_dir].dir_name, DIR_INFO.dir[DIR_INFO.current_dir].dir_name_len);
     find_cur_directory_len = DIR_INFO.dir[DIR_INFO.current_dir].dir_name_len;
 
-    cp_recursive(dest_inode, dest_parent_inode);
+    cp_recursive(dest_inode);
   
     DIR_INFO = before;  // restore
   }
 }
 
-void cp_recursive(int cur_dest_inode, int parent_dest_inode) {
+void cp_recursive(int cur_dest_inode) {
     if (find_path_len >= 2048) {
         return; // Path too long
     }
@@ -259,7 +255,7 @@ void cp_recursive(int cur_dest_inode, int parent_dest_inode) {
                     return;
                 }
                 struct EXT2DirectoryEntry* entry2 = (struct EXT2DirectoryEntry*)dir_data2;
-                cp_recursive(entry2->inode, cur_dest_inode);
+                cp_recursive(entry2->inode);
 
                 // Restore state
                 find_path_len -= entry2->name_len + 1;

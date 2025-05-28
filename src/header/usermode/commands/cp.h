@@ -5,6 +5,6 @@
 #include "header/usermode/user-shell.h"
 
 void cp(char *src, char* dest, char* flag, char* dump); 
-void cp_recursive(int cur_dest_inode, int parent_dest_inode);
+void cp_recursive(int cur_dest_inode);
 
 #endif 
