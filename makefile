@@ -95,21 +95,25 @@ kernel:
 	@$(LIN) $(LFLAGS) $(OUTPUT_FOLDER)/*.o -o $(OUTPUT_FOLDER)/kernel
 	@echo "Kernel linked successfully."
 
-# DOOM build system (integrated from standalone makefile)
 ifeq ($(V),1)
 	VB=''
 else
 	VB=@
 endif
 
-# DOOM target - standalone version (no kernel objects)
 doom: $(DOOM_OBJ)
-	@echo [Linking $(DOOM_OUTPUT)]
-	$(VB)$(CC) $(DOOM_LFLAGS) $(DOOM_OBJ) \
-	-o $(OUTPUT_FOLDER)/$(DOOM_OUTPUT) $(DOOM_LIBS) -Wl,-Map,$(OUTPUT_FOLDER)/$(DOOM_OUTPUT).map \
-	-Wl,--entry=main -Wl,--allow-multiple-definition
-	@echo [Size]
+	@echo [Assembling DOOM crt0]
+	$(VB)$(ASM) $(AFLAGS) $(DOOM_DIR)/crt0.s -o $(DOOM_OBJDIR)/crt0.o
+	@echo [Linking $(DOOM_OUTPUT) ELF]
+	$(VB)$(CC) $(DOOM_LFLAGS) -T $(DOOM_DIR)/doom-linker.ld \
+		$(DOOM_OBJDIR)/crt0.o $(DOOM_OBJ) \
+		-o $(OUTPUT_FOLDER)/$(DOOM_OUTPUT).elf $(DOOM_LIBS) -Wl,-Map,$(OUTPUT_FOLDER)/$(DOOM_OUTPUT).map \
+		-Wl,--allow-multiple-definition
+	@echo [Converting ELF to raw binary]
+	objcopy -O binary $(OUTPUT_FOLDER)/$(DOOM_OUTPUT).elf $(OUTPUT_FOLDER)/$(DOOM_OUTPUT)
+	@echo [Size of raw binary]
 	-size $(OUTPUT_FOLDER)/$(DOOM_OUTPUT)
+
 
 # Ensure DOOM objects depend on directory creation
 $(DOOM_OBJ): | $(DOOM_OBJDIR)

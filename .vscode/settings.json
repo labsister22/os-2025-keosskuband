@@ -106,6 +106,7 @@
     "paging.h": "c",
     "sleep.h": "c",
     "stddef.h": "c",
-    "doomgeneric.h": "c"
+    "doomgeneric.h": "c",
+    "graphics.h": "c"
   }
 }

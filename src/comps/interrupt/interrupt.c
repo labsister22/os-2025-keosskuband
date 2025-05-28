@@ -262,6 +262,9 @@ void syscall(struct InterruptFrame frame) {
             *((uint32_t*) frame.cpu.general.ebx) = ticks;
         }
             break;
+        case 99:
+            scheduler_switch_to_next_process();
+            break;
     }
 }
 
