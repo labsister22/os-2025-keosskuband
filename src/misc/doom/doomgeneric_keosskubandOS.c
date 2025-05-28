@@ -4,9 +4,6 @@
 
 #define COLOR_BLACK       0x00
 #define KEYQUEUE_SIZE 16
-#define VGA_MEMORY ((uint8_t*)0xC00A0000) // Higher-half mapping for 0xA0000
-#define VGA_WIDTH   320
-#define VGA_HEIGHT  200
 static unsigned short s_KeyQueue[KEYQUEUE_SIZE];
 static unsigned int s_KeyQueueWriteIndex = 0;
 static unsigned int s_KeyQueueReadIndex = 0;
@@ -77,10 +74,7 @@ void DG_Init() {
 }
 
 void DG_DrawFrame() {
-    for(int i = 0 ; i < VGA_HEIGHT * VGA_WIDTH; i++) {
-        VGA_MEMORY[i] = DG_ScreenBuffer[i];
-    }
-    return;
+    doom_syscall(20, (uint32_t)DG_ScreenBuffer, 320, 0);
 }
 
 void DG_SleepMs(uint32_t ms) {
@@ -121,6 +115,7 @@ int DG_GetKey(int *pressed, unsigned char *doomKey) {
 }
 
 int main(int argc, char **argv) {
+    doom_syscall(6, "Keossku BandOS Doom", 0, 0); // Set title
     doomgeneric_Create(argc, argv);
     for (int i = 0; ; i++)
         doomgeneric_Tick();
