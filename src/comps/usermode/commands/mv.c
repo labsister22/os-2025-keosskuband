@@ -211,6 +211,7 @@ void mv(char *src, char* dest, char* dump) {
     request.name_len = strlen(src);
     request.buffer_size = sizeof(buf);
     request.parent_inode = bef.dir[bef.current_dir].inode;
+    request.is_directory = false;
     syscall(2, (uint32_t)&request, (uint32_t)&retcode, 0);
 
     if (retcode == 0) {

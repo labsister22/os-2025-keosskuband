@@ -75,7 +75,7 @@ struct EXT2DirectoryEntry *get_next_directory_entry(struct EXT2DirectoryEntry *e
 
 uint16_t get_entry_record_len(uint8_t name_len) {
     // Align to 4 bytes boundaries
-    return ((sizeof(struct EXT2DirectoryEntry) + name_len + 3) / 4) * 4;
+    return ((sizeof(struct EXT2DirectoryEntry) + name_len + 4) / 4) * 4;
 }
 
 uint32_t get_dir_first_child_offset(void *ptr) {
@@ -869,6 +869,8 @@ int8_t delete(struct EXT2DriverRequest request) {
         if (temp_offset + temp_entry->rec_len >= BLOCK_SIZE) {
             temp_entry->rec_len += deleted_entry_size;
             break;
+        } else {
+            temp_offset += temp_entry->rec_len;
         }
     }
 
@@ -1202,3 +1204,4 @@ uint32_t get_inode_from_name(struct EXT2DriverRequest *request) {
 
     return 0; // Not found
 }
+
