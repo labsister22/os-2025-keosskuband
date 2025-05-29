@@ -431,4 +431,12 @@ void sync_node(struct EXT2Inode *node, uint32_t inode);
  */
 uint32_t get_buffer_size(struct EXT2DriverRequest *request);
 
+
+/**
+ * @brief get the inode from the name and parent inode
+ * @param request the EXT2DriverRequest that contains the name and parent inode
+ * @return inode of the entry with the given name, 0 if not found
+ */
+uint32_t get_inode_from_name(struct EXT2DriverRequest *request);
+
 #endif

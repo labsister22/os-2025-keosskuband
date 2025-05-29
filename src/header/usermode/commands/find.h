@@ -13,6 +13,12 @@ extern int find_cur_inode;
 extern char find_cur_directory[12];
 extern char find_cur_directory_len;
 
-void find(char* str);
+void find(char* str, char* args1);
+void find_recursive(char* str);
+void initialize_indexing();
+void indexing_recursive();
+void debug_indexing();
+void print_path(int idx);
+void find_by_index(char* str);
 
 #endif 

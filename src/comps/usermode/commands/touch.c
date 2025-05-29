@@ -62,5 +62,19 @@ void touch(char* name, char* content, int len) {
 
     print_string_colored("File created successfully\n", COLOR_GREEN);
     print_newline();
+
+    // Add to indexing
+    struct EXT2DriverRequest inode_request = {
+        .name = name,
+        .name_len = strlen(name),
+        .parent_inode = DIR_INFO.dir[DIR_INFO.current_dir].inode,
+        .buf = NULL,
+        .buffer_size = 0,
+        .is_directory = false
+    };
+    int new_inode = 0;
+    syscall(53, (uint32_t)&inode_request, (uint32_t)&new_inode, 0);
+    dynamic_array_add(name, new_inode, DIR_INFO.dir[DIR_INFO.current_dir].inode);
+
     return;
 }

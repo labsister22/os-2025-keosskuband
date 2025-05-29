@@ -59,6 +59,22 @@ typedef struct {
     dir_info dir[50];
 } absolute_dir_info;
 
+typedef struct {
+    char* str;
+    int parent_inode;
+} node;
+
+typedef struct dynamic_array {
+    int capacity;
+    node** buffer;
+} dynamic_array;    
+
+void* create_node(char* str, int parent_inode);
+void dynamic_array_init(int initial_capacity);
+void dynamic_array_free();
+void dynamic_array_idx_free(int idx);
+void    dynamic_array_add(char* str, int idx, int parent_inode);
+
 typedef enum {
     COMPLETION_COMMAND,
     COMPLETION_FLAG,
@@ -109,6 +125,7 @@ typedef struct {
     uint8_t char_color_under_cursor;
 } ShellState;
 
+extern dynamic_array indexing;
 extern CP cursor;
 extern str_path path;
 extern absolute_dir_info DIR_INFO;
@@ -200,5 +217,10 @@ void strcat_local(char* dest, const char* src);
 
 // External function from cd.c
 extern void cd_root();
+
+void* user_malloc(size_t size);
+
+// syscall wrapper for free
+void user_free(void* ptr);
 
 #endif

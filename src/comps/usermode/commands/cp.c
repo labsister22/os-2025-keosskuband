@@ -96,6 +96,19 @@ void cp(char *src, char* dest, char* flag, char* dump) {
         print_string_colored("created : ", COLOR_LIGHT_BLUE);
         print_string_colored(dest, COLOR_GREEN);
         print_newline();
+
+        struct EXT2DriverRequest inode_request = {
+          .name = dest,
+          .name_len = strlen(dest),
+          .parent_inode = DIR_INFO.dir[DIR_INFO.current_dir].inode,
+          .buf = NULL,
+          .buffer_size = 0,
+          .is_directory = false
+        };
+        int new_inode = 0;
+        syscall(53, &inode_request, (uint32_t)&new_inode, 0);
+        dynamic_array_add(dest, new_inode, DIR_INFO.dir[DIR_INFO.current_dir].inode);
+
       } else if (copy_retcode == 1) {
         print_string_colored("Destination file already exists\n", COLOR_RED);
       } else if (copy_retcode == 2) {
@@ -120,6 +133,19 @@ void cp(char *src, char* dest, char* flag, char* dump) {
     }; 
     int32_t retcode = 0;
     syscall(2, (uint32_t)&request, (uint32_t)&retcode, 0);
+
+    struct EXT2DriverRequest inode_request = {
+        .name = dest,
+        .name_len = strlen(dest),
+        .parent_inode = DIR_INFO.dir[DIR_INFO.current_dir].inode,
+        .buf = NULL,
+        .buffer_size = 0,
+        .is_directory = true
+    };
+
+    int new_inode = 0;
+    syscall(53, (uint32_t)&inode_request, (uint32_t)&new_inode, 0);
+    dynamic_array_add(dest, new_inode, DIR_INFO.dir[DIR_INFO.current_dir].inode);
 
     if (retcode == 1) {
         print_string_colored("Destination directory already exists\n", COLOR_RED);
@@ -204,6 +230,20 @@ void cp_recursive(int cur_dest_inode) {
             syscall(2, (uint32_t)&copy_request, (uint32_t)&copy_retcode, 0);
 
             if (copy_retcode == 0) {
+                // add to indexing
+                struct EXT2DriverRequest inode_request = {
+                    .name = entry->name,
+                    .name_len = entry->name_len,
+                    .parent_inode = cur_dest_inode,
+                    .buf = NULL,
+                    .buffer_size = 0,
+                    .is_directory = true
+                };
+                int new_inode = 0;
+                syscall(53, (uint32_t)&inode_request, (uint32_t)&new_inode, 0);
+                dynamic_array_add(entry->name, new_inode, cur_dest_inode);
+
+
                 char cur_delete_path[2048];
                 int cur_delete_path_len = find_path_len;
                 memcpy(cur_delete_path, find_path, find_path_len);
@@ -301,7 +341,21 @@ void cp_recursive(int cur_dest_inode) {
             int copy_retcode = 0;
             syscall(2, (uint32_t)&copy_request, (uint32_t)&copy_retcode, 0);
 
+
             if (copy_retcode == 0) {
+                // add to indexing
+                struct EXT2DriverRequest inode_request = {
+                    .name = entry->name,
+                    .name_len = entry->name_len,
+                    .parent_inode = cur_dest_inode,
+                    .buf = NULL,
+                    .buffer_size = 0,
+                    .is_directory = false
+                };
+                int new_inode = 0;
+                syscall(53, (uint32_t)&inode_request, (uint32_t)&new_inode, 0);
+                dynamic_array_add(entry->name, new_inode, cur_dest_inode);
+
                 // Print copied file path
                 char cur_copy_path[2048];
                 int cur_copy_path_len = find_path_len;

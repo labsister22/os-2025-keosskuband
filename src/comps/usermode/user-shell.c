@@ -26,6 +26,82 @@
 
 static int previous_input_length = 0;
 
+dynamic_array indexing = {
+    .capacity = 0,
+    .buffer = NULL
+};
+
+void* create_node(char* str, int parent_inode) {
+    node* n = user_malloc(sizeof(node));
+    char* new_str = user_malloc(16 * sizeof(char));
+
+    for (int i = 0; i < 16; i++) {
+        new_str[i] = '\0';  // Initialize the string
+    }
+    for (int i = 0; i < strlen(str); i++) {
+        new_str[i] = str[i];
+    }
+
+    n->str = new_str;
+    n->parent_inode = parent_inode;
+
+    return n;
+}
+
+void dynamic_array_init(int initial_capacity) {
+    indexing.buffer = user_malloc(sizeof(node*) * initial_capacity);
+}
+
+void dynamic_array_free() {
+    for (int i = 0; i < indexing.capacity; i++) {
+        user_free(indexing.buffer[i]->str);
+        user_free(indexing.buffer[i]);
+    }
+}
+
+void dynamic_array_idx_free(int idx) {
+    if (idx < 0 || idx >= indexing.capacity || indexing.buffer[idx] == NULL) return;
+
+    user_free(indexing.buffer[idx]->str);
+    user_free(indexing.buffer[idx]);
+    indexing.buffer[idx] = NULL;
+}
+
+void dynamic_array_add(char* str, int idx, int parent_inode) {
+    if (!str || idx < 0) return;
+
+    node* new_node = create_node(str, parent_inode);
+
+    if (indexing.buffer == NULL) {
+        dynamic_array_init(200);  // Initialize with a default capacity
+        indexing.capacity = 200;
+    }
+
+    while (indexing.capacity <= idx) {
+        // Double the capacity if needed
+        node** new_buffer = user_malloc(sizeof(node*) * indexing.capacity * 2);
+        
+        for (int i = 0; i < indexing.capacity; i++) {
+            new_buffer[i] = indexing.buffer[i]; 
+        }
+        
+        for (int i = indexing.capacity; i < indexing.capacity * 2; i++) {
+            new_buffer[i] = NULL;  // Initialize new slots to NULL
+        }
+
+        for (int i = 0; i < indexing.capacity; i++) {
+            user_free(indexing.buffer[i]->str);
+            user_free(indexing.buffer[i]);
+        }
+
+        indexing.buffer = new_buffer;
+        indexing.capacity *= 2;
+    }
+
+    // Add the new node to the specified index
+    indexing.buffer[idx] = new_node;
+}
+
 static CommandHistory history = {
     .count = 0,
     .current_index = -1
@@ -1388,7 +1464,7 @@ void process_command() {
         }
         else if (strcmp("find", shell_state.command) == 0) {
             if (args_used_amount > 0) {
-                find(shell_state.args[0]);
+                find(shell_state.args[0], shell_state.args[1]);
             } else {
                 print_string_colored("Usage: find <filename>", COLOR_LIGHT_RED);
                 print_newline();
@@ -1452,6 +1528,8 @@ void process_command() {
             ikuyokita();
         } else if (strcmp("balls", shell_state.command) == 0) {
             torus();
+        } else if (strcmp("index", shell_state.command) == 0) {
+            debug_indexing();
         } else if (strcmp("ps", shell_state.command) == 0) {
             ps();
         } else if (strcmp("kill", shell_state.command) == 0) {
@@ -1501,6 +1579,8 @@ void process_command() {
 int main(void) {
     extern void cd_root();
     cd_root();
+
+    initialize_indexing();
 
     cursor.row = 0;
     cursor.col = 0;

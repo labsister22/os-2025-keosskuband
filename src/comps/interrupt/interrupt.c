@@ -288,6 +288,11 @@ void syscall(struct InterruptFrame frame) {
             free(ptr);
         }
             break;
+        case 53:
+        //get inode name
+        {
+            *(uint32_t*) frame.cpu.general.ecx = get_inode_from_name((struct EXT2DriverRequest*) frame.cpu.general.ebx);
+        }
 
     }
 }
