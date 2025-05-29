@@ -11,7 +11,7 @@ void cp(char *src, char* dest, char* flag, char* dump) {
     print_string_colored("Too many arguments\n", COLOR_RED);
     print_newline();
 
-    print_string_colored("Usage: copy <src> <dest> [--rf]", COLOR_LIGHT_RED);
+    print_string_colored("Usage: cp <src> <dest> [--rf]", COLOR_LIGHT_RED);
     print_newline();
 
     return;

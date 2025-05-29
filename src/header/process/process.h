@@ -125,7 +125,7 @@ int32_t process_create_user_process(struct EXT2DriverRequest request);
  * @param pid Process ID to delete
  * @return    True if process destruction success
  */
-bool process_destroy(uint32_t pid);
+bool process_destroy(uint32_t pid, bool force);
 
 /**
  * Get process control block from PID

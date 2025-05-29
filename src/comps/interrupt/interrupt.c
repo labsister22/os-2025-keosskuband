@@ -172,9 +172,13 @@ void syscall(struct InterruptFrame frame) {
             uint32_t* max_amount = (uint32_t*) frame.cpu.general.ebx;
             *max_amount = PROCESS_COUNT_MAX;
             break;
+        case SYSCALL_TERMINATE_PROCESS:
+            struct ProcessControlBlock* cur_pcb = process_get_current_running_pcb_pointer();
+            process_destroy(cur_pcb->metadata.pid, 1);
+            break;
         case SYSCALL_KILL_PS:
             bool* success = (bool*) frame.cpu.general.ecx;
-            *success = process_destroy((uint32_t) frame.cpu.general.ebx);
+            *success = process_destroy((uint32_t) frame.cpu.general.ebx, 0);
             break;
         case SYSCALL_EXEC_PS:
             exec(
