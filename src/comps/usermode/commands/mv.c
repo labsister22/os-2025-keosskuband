@@ -55,14 +55,17 @@ void mv(char *src, char* dest, char* dump) {
   if (retcode == 1) {
     print_string_colored("Source file is a directory\n", COLOR_RED);
     print_newline();
+    return;
   }
   else if (retcode == 2) {
     print_string_colored("Cannot move : file too large\n", COLOR_RED);
     print_newline();
+    return;
   }
   else if (retcode == 3) {
     print_string_colored("Source file not found\n", COLOR_RED);
     print_newline();
+    return;
   }
   else if (retcode != 0) {
     print_string_colored("Error reading source file\n", COLOR_RED);
