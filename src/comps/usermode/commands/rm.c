@@ -65,6 +65,11 @@ void rm(char *args1, char* args2, char* args3) {
       .is_directory = false
     };
 
+    int inode = 0;
+    syscall(53, (uint32_t)&request, (uint32_t)&inode, 0);
+    dynamic_array_idx_free(inode);
+
+
     int retcode = 0;
     syscall(3, (uint32_t)&request, (uint32_t)&retcode, 0);
 
@@ -93,6 +98,10 @@ void rm(char *args1, char* args2, char* args3) {
       .buffer_size = 0, 
       .is_directory = false
     };
+
+    int inode = 0;
+    syscall(53, (uint32_t)&request, (uint32_t)&inode, 0);
+    dynamic_array_idx_free(inode);
 
     int retcode = 0;
     syscall(3, (uint32_t)&request, (uint32_t)&retcode, 0);
@@ -200,6 +209,11 @@ void rm_recursive() {
                 .buffer_size = 0,
                 .is_directory = true
             };
+
+            int inode = 0;
+            syscall(53, (uint32_t)&delete_request, (uint32_t)&inode, 0);
+            dynamic_array_idx_free(inode);
+
             int delete_retcode = 0;
             syscall(3, (uint32_t)&delete_request, (uint32_t)&delete_retcode, 0);
             
@@ -250,6 +264,11 @@ void rm_recursive() {
                 .buffer_size = 0,
                 .is_directory = false
             };
+
+            int inode = 0;
+            syscall(53, (uint32_t)&delete_request, (uint32_t)&inode, 0);
+            dynamic_array_idx_free(inode);
+
             int delete_retcode = 0;
             syscall(3, (uint32_t)&delete_request, (uint32_t)&delete_retcode, 0);
             

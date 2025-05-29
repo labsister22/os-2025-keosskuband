@@ -73,9 +73,13 @@ void mv(char *src, char* dest, char* dump) {
   if (dest[0] == '.') {
     // case : move
 
+    struct EXT2DriverRequest inode_request = request;
+    int inode = 0;
+    syscall(53, (uint32_t)&inode_request, (uint32_t)&inode, 0);
+    dynamic_array_idx_free(inode);
+
     // delete first
     syscall(3, (uint32_t)&request, (uint32_t)&retcode, 0);
-
 
     // move to the destination directory
     absolute_dir_info bef = DIR_INFO;
@@ -215,6 +219,20 @@ void mv(char *src, char* dest, char* dump) {
       print_string_colored(" to ", COLOR_LIGHT_BLUE);
       print_string_colored(dest, COLOR_GREEN);
       print_newline();
+
+
+      // add to indexing
+      struct EXT2DriverRequest inode_request = {
+        .name = dest,
+        .name_len = strlen(dest),
+        .parent_inode = bef.dir[bef.current_dir].inode,
+        .buf = NULL,
+        .buffer_size = 0,
+        .is_directory = false
+      };
+      int new_inode = 0;
+      syscall(53, (uint32_t)&inode_request, (uint32_t)&new_inode, 0);
+      dynamic_array_add(dest, new_inode, bef.dir[bef.current_dir].inode);
     } else {
       if (retcode == 1) {
         print_string_colored("Destination file already exists\n", COLOR_RED);
@@ -225,6 +243,11 @@ void mv(char *src, char* dest, char* dump) {
     }
   } else {
     // case rename
+
+    struct EXT2DriverRequest inode_request = request;
+    int inode = 0;
+    syscall(53, (uint32_t)&inode_request, (uint32_t)&inode, 0);
+    dynamic_array_idx_free(inode);
 
     // delete first
     retcode = 0;
@@ -244,6 +267,19 @@ void mv(char *src, char* dest, char* dump) {
       print_string_colored(" to ", COLOR_LIGHT_BLUE);
       print_string_colored(dest, COLOR_GREEN);
       print_newline();
+
+      // add to indexing
+      struct EXT2DriverRequest inode_request = {
+        .name = dest,
+        .name_len = strlen(dest),
+        .parent_inode = DIR_INFO.dir[DIR_INFO.current_dir].inode,
+        .buf = NULL,
+        .buffer_size = 0,
+        .is_directory = false
+      };
+      int new_inode = 0;
+      syscall(53, (uint32_t)&inode_request, (uint32_t)&new_inode, 0);
+      dynamic_array_add(dest, new_inode, DIR_INFO.dir[DIR_INFO.current_dir].inode);
     } else {
       print_string_colored("Error renaming file\n", COLOR_RED);
       print_newline();

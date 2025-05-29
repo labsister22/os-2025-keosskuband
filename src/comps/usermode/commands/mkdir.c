@@ -74,6 +74,18 @@ void mkdir(char* str) {
         print_string_colored("Directory created successfully\n", COLOR_GREEN);
         print_newline();
 
+        struct EXT2DriverRequest inode_request = {
+            .name = str,
+            .name_len = strlen(str),
+            .parent_inode = DIR_INFO.dir[DIR_INFO.current_dir].inode,
+            .buf = NULL,
+            .buffer_size = 0,
+            .is_directory = true
+        };
+        int new_inode = 0;
+        syscall(53, (uint32_t)&inode_request, (uint32_t)&new_inode, 0);
+        dynamic_array_add(str, new_inode, DIR_INFO.dir[DIR_INFO.current_dir].inode);
+
         return;
     } else {
         print_string_colored("Unknown error occurred while creating directory\n", COLOR_RED);

@@ -1179,3 +1179,26 @@ uint32_t get_buffer_size(struct EXT2DriverRequest *request) {
 
     return 0; // Not found
 }
+
+uint32_t get_inode_from_name(struct EXT2DriverRequest *request) {
+    struct EXT2Inode parent_node = load_inode(request->parent_inode);
+    if ((parent_node.i_mode & EXT2_S_IFDIR) == 0) return 0; // Not a directory
+
+    uint8_t dir_data[BLOCK_SIZE];
+    read_blocks(dir_data, parent_node.i_block[0], 1);
+
+    uint32_t offset = 0;
+    struct EXT2DirectoryEntry *entry = get_directory_entry(dir_data, offset);
+
+    while (offset < BLOCK_SIZE) {
+        if (entry->inode != 0 && entry->name_len == request->name_len &&
+            memcmp(entry->name, request->name, entry->name_len) == 0) {
+            return entry->inode; // Found
+        }
+        offset += entry->rec_len;
+        if (offset >= BLOCK_SIZE) break;
+        entry = get_directory_entry(dir_data, offset);
+    }
+
+    return 0; // Not found
+}
