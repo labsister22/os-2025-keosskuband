@@ -35,7 +35,7 @@ void find_recursive(char* str) {
     uint32_t offset = 0;
     while (offset < BLOCK_SIZE) {
         if (entry->inode != 0 &&
-            memcmp(entry->name, str, entry->name_len) == 0) {
+            strcmp(entry->name, str) == 0) {
             // Found the entry
 
             char cur_find_path[2048];

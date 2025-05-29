@@ -89,11 +89,6 @@ void dynamic_array_add(char* str, int idx, int parent_inode) {
             new_buffer[i] = NULL;  // Initialize new slots to NULL
         }
 
-        for (int i = 0; i < indexing.capacity; i++) {
-            user_free(indexing.buffer[i]->str);
-            user_free(indexing.buffer[i]);
-        }
-
         indexing.buffer = new_buffer;
         indexing.capacity *= 2;
     }
