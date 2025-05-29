@@ -76,14 +76,6 @@ void mv(char *src, char* dest, char* dump) {
   if (dest[0] == '.') {
     // case : move
 
-    struct EXT2DriverRequest inode_request = request;
-    int inode = 0;
-    syscall(53, (uint32_t)&inode_request, (uint32_t)&inode, 0);
-    dynamic_array_idx_free(inode);
-
-    // delete first
-    syscall(3, (uint32_t)&request, (uint32_t)&retcode, 0);
-
     // move to the destination directory
     absolute_dir_info bef = DIR_INFO;
 
@@ -224,6 +216,21 @@ void mv(char *src, char* dest, char* dump) {
       print_string_colored(dest, COLOR_GREEN);
       print_newline();
 
+      // delete request
+      struct EXT2DriverRequest delete_request = {
+        .name = src,
+        .name_len = strlen(src),
+        .parent_inode = DIR_INFO.dir[DIR_INFO.current_dir].inode,
+        .buf = buf,
+        .buffer_size = sizeof(buf),
+        .is_directory = false
+      };
+      int inode = 0;
+      syscall(53, (uint32_t)&delete_request, (uint32_t)&inode, 0);
+      dynamic_array_idx_free(inode);
+
+      int delete_retcode = 0;
+      syscall(3, (uint32_t)&delete_request, (uint32_t)&delete_retcode, 0);
 
       // add to indexing
       struct EXT2DriverRequest inode_request = {
@@ -248,15 +255,6 @@ void mv(char *src, char* dest, char* dump) {
   } else {
     // case rename
 
-    struct EXT2DriverRequest inode_request = request;
-    int inode = 0;
-    syscall(53, (uint32_t)&inode_request, (uint32_t)&inode, 0);
-    dynamic_array_idx_free(inode);
-
-    // delete first
-    retcode = 0;
-    syscall(3, (uint32_t)&request, (uint32_t)&retcode, 0);
-
     // write again
     request.name = dest;
     request.name[strlen(dest)] = '\0'; // Ensure null-termination
@@ -271,6 +269,23 @@ void mv(char *src, char* dest, char* dump) {
       print_string_colored(" to ", COLOR_LIGHT_BLUE);
       print_string_colored(dest, COLOR_GREEN);
       print_newline();
+
+      // delete request
+      struct EXT2DriverRequest delete_request = {
+        .name = src,
+        .name_len = strlen(src),
+        .parent_inode = DIR_INFO.dir[DIR_INFO.current_dir].inode,
+        .buf = buf,
+        .buffer_size = sizeof(buf),
+        .is_directory = false
+      };
+      int inode = 0;
+      syscall(53, (uint32_t)&delete_request, (uint32_t)&inode, 0);
+      dynamic_array_idx_free(inode);
+
+      // delete first
+      retcode = 0;
+      syscall(3, (uint32_t)&request, (uint32_t)&retcode, 0);
 
       // add to indexing
       struct EXT2DriverRequest inode_request = {
