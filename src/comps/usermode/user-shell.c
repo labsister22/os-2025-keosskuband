@@ -1526,7 +1526,7 @@ void process_command() {
             apple(&cursor);
         } else if (strcmp("ikuyokita", shell_state.command) == 0) {
             ikuyokita();
-        } else if (strcmp("balls", shell_state.command) == 0) {
+        } else if (strcmp("donut", shell_state.command) == 0) {
             torus();
         } else if (strcmp("index", shell_state.command) == 0) {
             debug_indexing();

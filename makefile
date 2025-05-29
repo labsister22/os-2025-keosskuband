@@ -36,10 +36,10 @@ clean:
 	rm -rf $(OUTPUT_FOLDER)/clock
 	rm -rf $(OUTPUT_FOLDER)/*.bin
 	rm -rf $(OUTPUT_FOLDER)/*.txt
-	rm -rf $(OUTPUT_FOLDER)/experiment
+	rm -rf $(OUTPUT_FOLDER)/ikuyo
 	rm -rf $(OUTPUT_FOLDER)/shell_elf
 	rm -rf $(OUTPUT_FOLDER)/clock_elf
-	rm -rf $(OUTPUT_FOLDER)/experiment_elf
+	rm -rf $(OUTPUT_FOLDER)/ikuyo_elf
 	rm -rf $(OUTPUT_FOLDER)/idler
 	rm -rf $(OUTPUT_FOLDER)/idler_elf
 
@@ -141,30 +141,30 @@ user-clock:
 	@size --target=binary $(OUTPUT_FOLDER)/clock
 	@rm -f *.o
 
-user-experiment:
-	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/comps/experiment/crt0-c.s -o crt0-c.o
-	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/experiment/experiment.c -o experiment.o
+user-ikuyo:
+	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/comps/ikuyo/crt0-c.s -o crt0-c.o
+	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/ikuyo/ikuyo.c -o ikuyo.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/stdlib/strops.c -o strops-c.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/stdlib/string.c -o string-c.o
-	@$(LIN) -T $(SOURCE_FOLDER)/comps/experiment/experiment-linker.ld -melf_i386 --oformat=binary \
-		crt0-c.o experiment.o strops-c.o string-c.o -o $(OUTPUT_FOLDER)/experiment
-	@echo Linking experiment object files and generate flat binary...
-	@$(LIN) -T $(SOURCE_FOLDER)/comps/experiment/experiment-linker.ld -melf_i386 --oformat=elf32-i386 \
-		crt0-c.o experiment.o strops-c.o string-c.o -o $(OUTPUT_FOLDER)/experiment_elf
-	@echo Linking experiment object files and generate ELF32 for debugging...
-	@size --target=binary $(OUTPUT_FOLDER)/experiment
+	@$(LIN) -T $(SOURCE_FOLDER)/comps/ikuyo/ikuyo-linker.ld -melf_i386 --oformat=binary \
+		crt0-c.o ikuyo.o strops-c.o string-c.o -o $(OUTPUT_FOLDER)/ikuyo
+	@echo Linking ikuyo object files and generate flat binary...
+	@$(LIN) -T $(SOURCE_FOLDER)/comps/ikuyo/ikuyo-linker.ld -melf_i386 --oformat=elf32-i386 \
+		crt0-c.o ikuyo.o strops-c.o string-c.o -o $(OUTPUT_FOLDER)/ikuyo_elf
+	@echo Linking ikuyo object files and generate ELF32 for debugging...
+	@size --target=binary $(OUTPUT_FOLDER)/ikuyo
 	@rm -f *.o
 
 user-idle-process:
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/comps/idle_process/crt0-c.s -o crt0-c.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/idle_process/idler.c -o idler.o
 	@$(CC)  $(CFLAGS) -fno-pie $(SOURCE_FOLDER)/comps/stdlib/sleep.c -o sleep.o
-	@$(LIN) -T $(SOURCE_FOLDER)/comps/experiment/experiment-linker.ld -melf_i386 --oformat=binary \
+	@$(LIN) -T $(SOURCE_FOLDER)/comps/idle_process/idler-linker.ld -melf_i386 --oformat=binary \
 		crt0-c.o sleep.o idler.o -o $(OUTPUT_FOLDER)/idler
-	@echo Linking experiment object files and generate flat binary...
-	@$(LIN) -T $(SOURCE_FOLDER)/comps/experiment/experiment-linker.ld -melf_i386 --oformat=elf32-i386 \
+	@echo Linking idle_process object files and generate flat binary...
+	@$(LIN) -T $(SOURCE_FOLDER)/comps/idle_process/idler-linker.ld -melf_i386 --oformat=elf32-i386 \
 		crt0-c.o sleep.o idler.o -o $(OUTPUT_FOLDER)/idler_elf
-	@echo Linking experiment object files and generate ELF32 for debugging...
+	@echo Linking idle_process object files and generate ELF32 for debugging...
 	@size --target=binary $(OUTPUT_FOLDER)/idler
 	@rm -f *.o
 
@@ -176,9 +176,9 @@ insert-clock: inserter user-clock
 	@echo Inserting clock into root directory...
 	@cd $(OUTPUT_FOLDER); ./inserter clock 1 $(DISK_NAME).bin
 
-insert-experiment: inserter user-experiment
+insert-ikuyo: inserter user-ikuyo
 	@echo Inserting clock into root directory...
-	@cd $(OUTPUT_FOLDER); ./inserter experiment 1 $(DISK_NAME).bin
+	@cd $(OUTPUT_FOLDER); ./inserter ikuyo 1 $(DISK_NAME).bin
 
 insert-apple: inserter 
 	@echo Inserting apple into root directory...
@@ -191,5 +191,5 @@ insert-ikuyokita: inserter
 insert-idle-process: inserter user-idle-process
 	@cd $(OUTPUT_FOLDER); ./inserter idler 1 $(DISK_NAME).bin
 
-init: clean disk insert-shell insert-clock insert-experiment insert-apple insert-ikuyokita insert-idle-process build
+init: clean disk insert-shell insert-clock insert-ikuyo insert-apple insert-ikuyokita insert-idle-process build
 # test: clean disk insert-shell insert-clock

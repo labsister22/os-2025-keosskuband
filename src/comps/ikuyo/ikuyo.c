@@ -17,7 +17,7 @@ int main() {
   int FRAME_PER_SEGMENT = 4;
 
   int segment_count = FRAME_COUNT / FRAME_PER_SEGMENT;
-  for (int counter = 0; counter < 100; counter++) {
+  for (int counter = 0; counter < 10; counter++) {
     for (int i = 0; i < segment_count; i++) {
       char ikuyokita_frames[4][200*512];
       struct EXT2DriverRequest request;

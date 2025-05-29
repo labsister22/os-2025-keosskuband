@@ -198,7 +198,7 @@ exit_cleanup:
     return retcode;
 }
 
-bool process_destroy(uint32_t pid) {
+bool process_destroy(uint32_t pid, bool force) {
     // Find the process by PID
     for (uint32_t i = 0; i < PROCESS_COUNT_MAX; i++) {
         if (process_manager_state._process_used[i] && 
@@ -207,7 +207,7 @@ bool process_destroy(uint32_t pid) {
             struct ProcessControlBlock *pcb = &_process_list[i];
             
             // Don't destroy the currently running process
-            if (pcb->metadata.state == RUNNING) {
+            if (pcb->metadata.state == RUNNING && !force) {
                 return false;
             }
             
