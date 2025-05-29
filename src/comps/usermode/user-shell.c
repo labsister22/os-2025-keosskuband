@@ -1466,7 +1466,7 @@ void process_command() {
             if (args_used_amount > 0) {
                 find(shell_state.args[0], shell_state.args[1]);
             } else {
-                print_string_colored("Usage: find <filename>", COLOR_LIGHT_RED);
+                print_string_colored("Usage: find <filename> [--i]", COLOR_LIGHT_RED);
                 print_newline();
             }
         } else if (strcmp("size", shell_state.command) == 0) {

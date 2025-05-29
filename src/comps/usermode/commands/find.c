@@ -101,6 +101,7 @@ void find(char* str, char* args1) {
     find_by_index(str);
     return;
   }
+  
 
   absolute_dir_info bef = DIR_INFO;
 
